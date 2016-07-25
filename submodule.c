@@ -1161,3 +1161,63 @@ void prepare_submodule_repo_env(struct argv_array *out)
 			argv_array_push(out, *var);
 	}
 }
+
+void submodule_protect_from_gc(const struct cache_entry *ce)
+{
+	//~ int i;
+	struct child_process cp = CHILD_PROCESS_INIT;
+	//~ struct string_list sl = STRING_LIST_INIT_NODUP;
+	struct strbuf sb = STRBUF_INIT;
+
+	cp.git_cmd = 1;
+	cp.dir = ce->name;
+	cp.no_stdin = 1;
+	cp.no_stderr = 1;
+	cp.out = -1;
+	argv_array_pushl(&cp.args, "rev-list", //"--parents",
+		"refs/superproject/gc_protector^..refs/superproject/gc_protector", NULL);
+
+	if (start_command(&cp))
+		die(_("could not rev-list"));
+
+	strbuf_read(&sb, cp.out, 0);
+	finish_command(&cp);
+	//string_list_split_in_place(&sl, sb.buf, ' ', -1);
+
+	cp.git_cmd = 1;
+	cp.dir = ce->name;
+	cp.no_stdin = 1;
+	cp.no_stderr = 1;
+	cp.out = -1;
+
+	argv_array_clear(&cp.args);
+	argv_array_pushl(&cp.args, "commit-tree",
+		"-p", sb.buf,
+		"-p", sha1_to_hex(ce->sha1),
+		"-m", "protect commits from gc",
+		"-m",
+	"Objects that are unreachable from within this repository, \n" \
+	"but are referenced by the superproject, should not be garbage" \
+	"collected. This ref protects these objects.", NULL);
+
+	if (start_command(&cp))
+		die(_("could not commit-tree"));
+
+	strbuf_reset(&sb);
+	strbuf_read(&sb, cp.out, 0);
+	finish_command(&cp);
+
+	cp.git_cmd = 1;
+	cp.dir = ce->name;
+	cp.no_stdin = 1;
+	cp.no_stderr = 1;
+	cp.no_stdout = 1;
+	//~ cp.out = -1;
+
+	argv_array_clear(&cp.args);
+	argv_array_pushl(&cp.args, "update-ref",
+		"refs/superproject/gc_protector",
+		sb.buf, NULL);
+	if (run_command(&cp))
+		die(_("could not update-ref refs/superproject/gc_protector"));
+}

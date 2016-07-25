@@ -18,6 +18,7 @@
 #include "varint.h"
 #include "split-index.h"
 #include "utf8.h"
+#include "submodule.h"
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 					       unsigned int options);
@@ -1032,6 +1033,9 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 			return ret;
 		pos = ret - 1;
 	}
+
+	if (S_ISGITLINK(ce->ce_mode))
+		submodule_protect_from_gc(ce);
 
 	/* Make sure the array is big enough .. */
 	ALLOC_GROW(istate->cache, istate->cache_nr + 1, istate->cache_alloc);

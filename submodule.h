@@ -61,6 +61,7 @@ int find_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_nam
 int push_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_name);
 void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);
 int parallel_submodules(void);
+void submodule_protect_from_gc(const struct cache_entry *ce);
 
 /*
  * Prepare the "env_array" parameter of a "struct child_process" for executing
