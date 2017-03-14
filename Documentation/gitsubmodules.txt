@@ -55,16 +55,25 @@ WHEN TO USE
 Submodules, repositories inside other repositories,
 can be used for different use cases:
 
+1. Using another project that stands on its own.
+
 * Keeping the Git histories separate.
   Using submodules for a library allows you to have a clean history for
   your own project and only updating the library in the submodule when needed.
 
+2. artificially split a (logically single) project into multiple
+  repositories and tying them back together.
 
 * To have finer grained access control.
   The design principles of Git do not allow for partial repositories to be
   checked out or transferred. A repository is the smallest unit that a user
   can be given access to. Submodules are separate repositories, such that
   you can restrict access to parts of your project via the use of submodules.
+
+
+
+
+
 
 * To decouple Git histories.
   Decoupling histories has different benefits.
