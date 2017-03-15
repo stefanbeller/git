@@ -191,17 +191,45 @@ as configured or given in the .gitmodules would only be used as a backup.
 SAMPLE WORKFLOWS (RFC/TODO)
 ---------------------------
 
-Do we need
+Workflow using exact revisions
+con:
+* overhead of keeping superproject up to date in a timely manner.
+  can be supported by tools, e.g. Gerrit can be configured to perform
+  actions equivalent to running:
 
-* an opinionated way to check for a specific state of a submodule
-* (submodule helper to be plumbing?)
-* expose the design mistake of having the (name->path) mapping inside the
-  working tree, i.e. never remove a name from the submodule config even when
-  the submodule doesn't exist any more.
+      while true
+      do
+        git submodule update --remote
+        git commit -a -m "update submodules"
+      done
+
+Workflow using inexact revisions
+git submodule update --remote
+similar to e.g. the repo tool
+config to ignore submodules!
+pro: easy to be up to date all the time, no need for timely submodule updates
+con: inexact, cannot bisect across submodules
+
+SUBMODULE OPTIONS
+
+There are different classes of options.
+
+ linkgit:gitmodules[5]
+
+options relevant to obtain the submodule
+
+options how individual commands interact with submodules
+(e.g. push.recursesubmodules)
+
+options for an individual submodule, respected by a couple commands.
+
+Options applied to submodule at the time of cloning
+
+
 
 SEE ALSO
 --------
-linkgit:git-submodule[1], linkgit:gitmodules[1].
+linkgit:git-submodule[1], linkgit:gitmodules[5].
 
 GIT
 ---
