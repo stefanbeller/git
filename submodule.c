@@ -1415,6 +1415,13 @@ int submodule_move_head(const char *path,
 	if (!sub)
 		die("BUG: could not get submodule information for '%s'", path);
 
+	if (find_hook("submodule-update"))
+		return run_hook_le(NULL, "submodule-update",
+					 old ? old : "NEW_SUBMODULE",
+					 new ? new : "DELETED_SUBMODULE"
+					 (flags & SUBMODULE_MOVE_HEAD_FORCE) ?
+						"force" : NULL);
+
 	if (old && !(flags & SUBMODULE_MOVE_HEAD_FORCE)) {
 		/* Check if the submodule has a dirty index. */
 		if (submodule_has_dirty_index(sub))

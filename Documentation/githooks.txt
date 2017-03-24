@@ -445,6 +445,18 @@ rebase::
 The commits are guaranteed to be listed in the order that they were
 processed by rebase.
 
+submodule-update
+~~~~~~~~~~~~~~~~
+
+Whenever a submodule worktree needs to be updated and this hook is present,
+this hook will be called instead of the default git behaviour.
+
+The arguments for this hook are <old tree-ish> <new tree-ish>, followed by
+optional flags, such as "forced".
+
+When a submodule comes to life (i.e. it was not there before), the old tree-ish
+is "NEW_SUBMODULE" and when a  submodule is removed the new tree-ish is
+"DELETED_SUBMODULE".
 
 GIT
 ---
