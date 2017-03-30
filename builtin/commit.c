@@ -1664,7 +1664,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	status_init_config(&s, git_commit_config);
 	s.commit_template = 1;
 	status_format = STATUS_FORMAT_NONE; /* Ignore status.short */
-	s.colopts = 0;
 
 	if (get_oid("HEAD", &oid))
 		current_head = NULL;
