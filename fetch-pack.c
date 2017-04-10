@@ -377,12 +377,12 @@ static int find_common(struct fetch_pack_args *args,
 		       char *wants)
 {
 	int count = 0, flushes = 0, flush_at = INITIAL_FLUSH, retval;
-	const unsigned char *sha1;
 	unsigned in_vain = 0;
 	int got_continue = 0;
 	int got_ready = 0;
 	struct strbuf req_buf = STRBUF_INIT;
 	size_t state_len = 0;
+	struct object_id *oid;
 
 	if (args->stateless_rpc && multi_ack == 1)
 		die(_("--stateless-rpc requires multi_ack_detailed"));
