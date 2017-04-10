@@ -318,29 +318,14 @@ static int next_flush(struct fetch_pack_args *args, int count)
 	return count;
 }
 
-static int find_common(struct fetch_pack_args *args,
-		       int fd[2], struct object_id *result_oid,
-		       struct ref *refs)
+/*
+ * Generate the "want" lines to be sent. If there are no "want" lines to be
+ * sent, return NULL.
+ */
+static char *get_wants(const struct fetch_pack_args *args, struct ref *refs)
 {
-	int fetching;
-	int count = 0, flushes = 0, flush_at = INITIAL_FLUSH, retval;
-	const struct object_id *oid;
-	unsigned in_vain = 0;
-	int got_continue = 0;
-	int got_ready = 0;
 	struct strbuf req_buf = STRBUF_INIT;
-	size_t state_len = 0;
 
-	if (args->stateless_rpc && multi_ack == 1)
-		die(_("--stateless-rpc requires multi_ack_detailed"));
-	if (marked)
-		for_each_ref(clear_marks, NULL);
-	marked = 1;
-
-	for_each_ref(rev_list_insert_ref_oid, NULL);
-	for_each_cached_alternate(insert_one_alternate_object);
-
-	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
 		struct object_id *remote = &refs->old_oid;
 		const char *remote_hex;
@@ -362,7 +347,7 @@ static int find_common(struct fetch_pack_args *args,
 		}
 
 		remote_hex = oid_to_hex(remote);
-		if (!fetching) {
+		if (!req_buf.len) {
 			struct strbuf c = STRBUF_INIT;
 			if (multi_ack == 2)     strbuf_addstr(&c, " multi_ack_detailed");
 			if (multi_ack == 1)     strbuf_addstr(&c, " multi_ack");
@@ -382,14 +367,37 @@ static int find_common(struct fetch_pack_args *args,
 			strbuf_release(&c);
 		} else
 			packet_buf_write(&req_buf, "want %s\n", remote_hex);
-		fetching++;
 	}
 
-	if (!fetching) {
-		strbuf_release(&req_buf);
+	return req_buf.len ? strbuf_detach(&req_buf, NULL) : NULL;
+}
+
+static int find_common(struct fetch_pack_args *args,
+		       int fd[2], const struct object_id *result_oid,
+		       char *wants)
+{
+	int count = 0, flushes = 0, flush_at = INITIAL_FLUSH, retval;
+	const unsigned char *sha1;
+	unsigned in_vain = 0;
+	int got_continue = 0;
+	int got_ready = 0;
+	struct strbuf req_buf = STRBUF_INIT;
+	size_t state_len = 0;
+
+	if (args->stateless_rpc && multi_ack == 1)
+		die(_("--stateless-rpc requires multi_ack_detailed"));
+	if (marked)
+		for_each_ref(clear_marks, NULL);
+	marked = 1;
+
+	for_each_ref(rev_list_insert_ref_oid, NULL);
+	for_each_cached_alternate(insert_one_alternate_object);
+
+	if (!wants) {
 		packet_flush(fd[1]);
 		return 1;
 	}
+	strbuf_attach(&req_buf, wants, strlen(wants), strlen(wants));
 
 	if (is_repository_shallow())
 		write_shallow_commits(&req_buf, 1, NULL);
@@ -983,7 +991,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		packet_flush(fd[1]);
 		goto all_done;
 	}
-	if (find_common(args, fd, &oid, ref) < 0)
+	if (find_common(args, fd, &oid, get_wants(args, ref)) < 0)
 		if (!args->keep_pack)
 			/* When cloning, it is not unusual to have
 			 * no common commit.
