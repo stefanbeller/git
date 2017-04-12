@@ -1152,6 +1152,65 @@ static int is_active(int argc, const char **argv, const char *prefix)
 	return !is_submodule_initialized(argv[1]);
 }
 
+
+
+int reattach_HEAD(const char *submodule_path)
+{
+	const char *branch;
+	struct object_id sub_head_object;
+	struct object_id sub_branch_object;
+
+	const struct submodule *sub = submodule_from_path(null_sha1, submodule_path);
+
+	if (!sub)
+		die(_("no submodule mapping found in .gitmodules for path '%s'"),
+			submodule_path);
+
+	/* lookup branch value in .gitmodules */
+	if (!strcmp(".", sub->branch)) {
+		struct object_id oid;
+		/* special care for '.': Is the superproject on a branch? */
+		branch = resolve_refdup("HEAD", 0, oid.hash, NULL);
+		if (!branch)
+			die(_("Not on any branch, but submodule configured to follow superprojects branch"));
+	} else
+		branch = sub->branch;
+
+	fprintf(stderrm
+
+	/*
+	 * check if submodule branch equals its sha1?
+	 * (Recorded hash or HEAD?)
+	 */
+	resolve_gitlink_ref(sub->path, "HEAD", sub_head_object.hash);
+	resolve_gitlink_ref(sub->path, branch, sub_branch_object.hash);
+
+	if (!oidcmp(&sub_head_object, &sub_branch_object)) {
+		struct child_process cp = CHILD_PROCESS_INIT;
+		cp.dir = sub->path;
+		prepare_submodule_repo_env(&cp.env_array);
+		argv_array_pushl(&cp.args, "git", "update-ref", "HEAD",
+				 branch, NULL);
+		if (run_command(&cp))
+			die(_("could not update HEAD in submodule '%s'"),
+			    sub->path);
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+static int cmd_reattach_HEAD(int argc, const char **argv, const char *prefix)
+{
+	if (argc != 2)
+		die("submodule--helper reattach-HEAD takes exactly 1 argument");
+
+	gitmodules_config();
+	git_config(submodule_config, NULL);
+
+	return reattach_HEAD(argv[1]);
+}
+
 #define SUPPORT_SUPER_PREFIX (1<<0)
 
 struct cmd_struct {
@@ -1172,6 +1231,7 @@ static struct cmd_struct commands[] = {
 	{"remote-branch", resolve_remote_submodule_branch, 0},
 	{"absorb-git-dirs", absorb_git_dirs, SUPPORT_SUPER_PREFIX},
 	{"is-active", is_active, 0},
+	{"reattach-HEAD", cmd_reattach_HEAD, 0}
 };
 
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
