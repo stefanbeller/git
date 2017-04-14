@@ -1166,6 +1166,10 @@ int reattach_HEAD(const char *submodule_path)
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
 			submodule_path);
 
+	if (!sub->branch)
+		die(_("no branch configured to follow for submodule '%s'"),
+			sub->path);
+
 	/* lookup branch value in .gitmodules */
 	if (!strcmp(".", sub->branch)) {
 		struct object_id oid;
@@ -1176,7 +1180,10 @@ int reattach_HEAD(const char *submodule_path)
 	} else
 		branch = sub->branch;
 
-	fprintf(stderrm
+	fprintf(stderr, "branch=%s\n", branch);
+
+	if (!strcmp("HEAD", branch))
+		return 0;
 
 	/*
 	 * check if submodule branch equals its sha1?
@@ -1187,6 +1194,7 @@ int reattach_HEAD(const char *submodule_path)
 
 	if (!oidcmp(&sub_head_object, &sub_branch_object)) {
 		struct child_process cp = CHILD_PROCESS_INIT;
+		fprintf(stderr, "oids equal to HEAD\n");
 		cp.dir = sub->path;
 		prepare_submodule_repo_env(&cp.env_array);
 		argv_array_pushl(&cp.args, "git", "update-ref", "HEAD",
@@ -1196,6 +1204,7 @@ int reattach_HEAD(const char *submodule_path)
 			    sub->path);
 		return 0;
 	} else {
+		fprintf(stderr, "oids differ:\nHEAD is %s\n branch is %s", oid_to_hex(&sub_head_object), oid_to_hex(&sub_branch_object));
 		return 1;
 	}
 }
