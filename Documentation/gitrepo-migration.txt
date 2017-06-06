@@ -1,0 +1,65 @@
+gitrepo-migration(7)
+===================
+
+NAME
+----
+gitrepo-migration - Submodules for repo-tool users
+
+DESCRIPTION
+-----------
+
+Git submodules differs from the repo-tool in that it allows cross repository
+version relationships. For example when a bug is introduced that only surfaces
+when looking across repositories the use of submodule enable linkgit:git-bisect[1]
+across the repositories as well.
+
+Command Cheat sheet
+-------------------
+
+.Submodule command equivalents
+[width="90%",frame="topbot",options="header,footer"]
+|======================
+|repo command                              |Submodule equivalent
+|repo help                                 |man gitsubmodules
+|repo init -u <URL>                        |git clone --recurse-submodules <superproject URL>
+|repo sync [<PROJECT_LIST>]                |git pull --rebase --recurse-submodules
+|repo upload [<PROJECT_LIST>]              |git push --recurse-submodules=only origin HEAD:refs/for/master
+|repo diff [<PROJECT_LIST>]                |git diff --submodule=short
+|repo download <TARGET> <CHANGE>           |Gerrit offers a copy command to download change into a submodule.
+|repo forall                               |git submodule foreach
+|repo prune                                |git branch -d
+|repo start <BRANCH_NAME> [<PROJECT_LIST>] |git checkout --recurse-submodules  -b <BRANCH_NAME>
+|repo status [<PROJECT_LIST>]              |git status <pathspec>
+|repo command                              |Submodule equivalent
+|======================
+
+
+How Gerrit supports submodule workflow
+-------------------------------------
+
+Workflow using exact revisions
+con:
+* overhead of keeping superproject up to date in a timely manner.
+  can be supported by tools, e.g. Gerrit can be configured to perform
+  actions equivalent to running:
+
+      while true
+      do
+        git submodule update --remote
+        git commit -a -m "update submodules"
+      done
+
+Workflow using inexact revisions
+git submodule update --remote
+similar to e.g. the repo tool
+config to ignore submodules!
+pro: easy to be up to date all the time, no need for timely submodule updates
+con: inexact, cannot bisect across submodules
+
+SEE ALSO
+--------
+linkgit:gitsubmodules[7], linkgit:gitmodules[5], linkgit:git-submodule[1].
+
+GIT
+---
+Part of the linkgit:git[1] suite
