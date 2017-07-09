@@ -1853,6 +1853,377 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+struct add_data{
+	const char *prefix;
+	const char *branch;
+	const char *reference_path;
+	char *sm_path;
+	const char *sm_name;
+	const char *repo;
+	const char *realrepo;
+	int depth;
+	unsigned int force: 1;
+	unsigned int quiet: 1;
+};
+#define ADD_DATA_INIT { NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0 }
+
+/*
+ * Guess dir name from repository: strip leading '.*[/:]',
+ * strip trailing '[:/]*.git'.
+ */
+static char *guess_dir_name(const char *repo)
+{
+	const char *p, *start, *end, *limit;
+	int after_slash_or_colon;
+
+	after_slash_or_colon = 0;
+	limit = repo + strlen(repo);
+	start = repo;
+	end = limit;
+	for (p = repo; p < limit; p++) {
+		if (starts_with(p, ".git")) {
+			/* strip trailing '[:/]*.git' */
+			if (!after_slash_or_colon)
+				end = p;
+			p += 3;
+		} else if (*p == '/' || *p == ':') {
+			/* strip leading '.*[/:]' */
+			if (end == limit)
+				end = p;
+			after_slash_or_colon = 1;
+		} else if (after_slash_or_colon) {
+			start = p;
+			end = limit;
+			after_slash_or_colon = 0;
+		}
+	}
+
+	return xstrndup(start, end - start);
+}
+
+static int check_already_existing_submodule(unsigned int force, const char *sm_path)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	cp.git_cmd = 1;
+	cp.no_stdout = 1;
+	cp.no_stderr = 1;
+	argv_array_push(&cp.args, "ls-files");
+	if (!force) {
+		argv_array_pushl(&cp.args, "--error-unmatch",
+				 sm_path, NULL);
+		if (!run_command(&cp))
+			die(_("'%s' already exists in the index"), sm_path);
+	} else {
+		struct strbuf sb = STRBUF_INIT;
+		/* NEEDSWORK: we want to put -- between -s and path? */
+		argv_array_pushl(&cp.args, "-s",
+				 sm_path, NULL);
+		/* NEEDSWORK: convert ls-files call to index_name_pos */
+		if (!capture_command(&cp, &sb, 0) &&
+		    starts_with(sb.buf, "160000"))
+			die(_("'%s' already exists in the index and is not a "
+			      "submodule"), sm_path);
+		strbuf_release(&sb);
+	}
+	return 0;
+}
+
+static void fprintf_submodule_remote(const char *str)
+{
+	const char *p = str;
+	const char *start;
+	const char *end;
+	char *name, *url;
+
+	start = p;
+	while (*p != ' ')
+		p++;
+	end = p;
+	name = xstrndup(start, end - start);
+
+	while(*p == ' ')
+		p++;
+	start = p;
+	while (*p != ' ')
+		p++;
+	end = p;
+	url = xstrndup(start, end - start);
+
+	fprintf(stderr, "  %s\t%s\n", name, url);
+	free(name);
+	free(url);
+}
+
+static void modify_remote_v(struct strbuf *sb)
+{
+	int i;
+	for (i = 0; i < sb->len; i++) {
+		const char *start = sb->buf + i;
+		const char *end = start;
+		while (sb->buf[i++] != '\n')
+			end++;
+		if (!strcmp("fetch", xstrndup(end - 6, 5)))
+			fprintf_submodule_remote(xstrndup(start, end - start - 7));
+	}
+}
+
+static int add_submodule(struct add_data *info)
+{
+	/* perhaps the path exists and is already a git repo, else clone it */
+	if (is_directory(info->sm_path)) {
+		char *sub_git_path = xstrfmt("%s/.git", info->sm_path);
+		if (file_exists(sub_git_path) || is_directory(sub_git_path))
+			printf(_("Adding existing repo at '%s' to the index\n"),
+				 info->sm_path);
+		else
+			die(_("'%s' already exists and is not a valid git repo"),
+			      info->sm_path);
+		free(sub_git_path);
+	} else {
+		struct argv_array clone_args = ARGV_ARRAY_INIT;
+		struct child_process cp = CHILD_PROCESS_INIT;
+		char *submodule_git_dir = xstrfmt(".git/modules/%s", info->sm_name);
+
+		if (is_directory(submodule_git_dir)) {
+			if (!info->force) {
+				struct child_process cp_rem = CHILD_PROCESS_INIT;
+				struct strbuf sb_rem = STRBUF_INIT;
+				cp_rem.git_cmd = 1;
+				fprintf(stderr, _("A git directory for '%s' is "
+					"found locally with remote(s):\n"),
+					info->sm_name);
+				argv_array_pushf(&cp_rem.env_array,
+						 "GIT_DIR=%s;", submodule_git_dir);
+				argv_array_push(&cp_rem.env_array,
+						"GIT_WORK_TREE=.");
+				argv_array_pushl(&cp_rem.args, "remote", "-v",
+						 NULL);
+				if (!capture_command(&cp_rem, &sb_rem, 0)) {
+					modify_remote_v(&sb_rem);
+				}
+				die(_("If you want to reuse this local git "
+				      "directory instead of cloning again from "
+				      "%s use the '--force' option. If the local "
+				      "git directory is not the correct repo or "
+				      "you are unsure what this means choose "
+				      "another name with the '--name' option."),
+				      info->realrepo);
+			} else {
+				printf(_("Reactivating local git directory for "
+					 "submodule '%s'."), info->sm_path);
+			}
+		}
+		free(submodule_git_dir);
+
+		argv_array_push(&clone_args, "clone");
+
+		if (info->quiet)
+			argv_array_push(&clone_args, "--quiet");
+
+		if (info->prefix)
+			argv_array_pushl(&clone_args, "--prefix", info->prefix,
+					 NULL);
+		argv_array_pushl(&clone_args, "--path", info->sm_path, "--name",
+				 info->sm_name, "--url", info->realrepo, NULL);
+		if (info->reference_path)
+			argv_array_pushl(&clone_args, "--reference",
+					 info->reference_path, NULL);
+		if (info->depth >= 0)
+			argv_array_pushf(&clone_args, "--depth=%d", info->depth);
+
+		if (module_clone(clone_args.argc, clone_args.argv, info->prefix)) {
+			argv_array_clear(&clone_args);
+			return -1;
+		}
+
+		prepare_submodule_repo_env(&cp.env_array);
+		cp.git_cmd = 1;
+		cp.dir = info->sm_path;
+		argv_array_pushl(&cp.args, "checkout", "-f", "-q", NULL);
+
+		if (info->branch) {
+			argv_array_pushl(&cp.args, "-B", info->branch, NULL);
+			argv_array_pushf(&cp.args, "origin/%s", info->branch);
+		}
+
+		if (run_command(&cp))
+			die(_("Unable to checkout submodule '%s'"), info->sm_path);
+	}
+	return 0;
+}
+
+void config_added_submodule(struct add_data *info)
+{
+	char *key;
+	struct child_process cp = CHILD_PROCESS_INIT;
+	char *var = NULL;
+
+	key = xstrfmt("submodule.%s.url", info->sm_name);
+	git_config_set_gently(key, info->realrepo);
+	free(key);
+
+	cp.git_cmd = 1;
+	argv_array_pushl(&cp.args, "add", "--no-warn-embedded-repo", NULL);
+	if (info->force)
+		argv_array_push(&cp.args, "--force");
+	argv_array_pushl(&cp.args, "--", info->sm_path, ".gitmodules", NULL);
+
+	key = xstrfmt("submodule.%s.path", info->sm_name);
+	git_config_set_in_file_gently(".gitmodules", key, info->sm_path);
+	free(key);
+	key = xstrfmt("submodule.%s.url", info->sm_name);
+	git_config_set_in_file_gently(".gitmodules", key, info->repo);
+	free(key);
+	key = xstrfmt("submodule.%s.branch", info->sm_name);
+	if (info->branch)
+		git_config_set_in_file_gently(".gitmodules", key, info->branch);
+	free(key);
+
+	if (run_command(&cp))
+		die(_("Failed to add submodule '%s'"), info->sm_path);
+
+	/*
+	 * NEEDSWORK: In a multi-working-tree world, this needs to be
+	 * set in the per-worktree config.
+	 */
+	if (!git_config_get_string("submodule.active", &var) && var) {
+		/*
+		 * If the submodule being adding isn't already covered by the
+		 * current configured pathspec, set the submodule's active flag
+		 */
+		if (!is_submodule_active(the_repository, info->sm_path)) {
+			key = xstrfmt("submodule.%s.active", info->sm_name);
+			git_config_set_gently(key, "true");
+			free(key);
+		}
+	} else {
+		key = xstrfmt("submodule.%s.active", info->sm_name);
+		git_config_set_gently(key, "true");
+		free(key);
+	}
+}
+
+static int module_add(int argc, const char **argv, const char *prefix)
+{
+	const char *branch = NULL;
+	const char *custom_name = NULL;
+	const char *reference_path = NULL;
+	int force = 0;
+	int quiet = 0;
+	int depth = -1;
+	struct add_data info = ADD_DATA_INIT;
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	struct option module_add_options[] = {
+		OPT_STRING('b', "branch", &branch, N_("branch"),
+			   N_("Branch of repository to add as submodule")),
+		OPT_BOOL('f', "force", &force, N_("Allow adding an otherwise "
+						  "ignored submodule path")),
+		OPT__QUIET(&quiet, N_("Print only error messages")),
+		OPT_STRING(0, "reference", &reference_path, N_("repository"),
+			   N_("reference repository")),
+		OPT_STRING(0, "name", &custom_name, N_("name"),
+			   N_("Sets the submodule’s name to the given string "
+			      "instead of defaulting to its path")),
+		OPT_INTEGER(0, "depth", &depth, N_("depth for shallow clones")),
+		OPT_END()
+	};
+
+	const char *const git_submodule_helper_usage[] = {
+		N_("git submodule--helper add [<options>] [--] [<path>]"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, module_add_options,
+			     git_submodule_helper_usage, 0);
+
+	info.prefix = prefix;
+	info.reference_path = reference_path;
+	info.branch = branch;
+	info.depth = depth;
+	info.force = !!force;
+	info.quiet = !!quiet;
+
+	if (info.reference_path && !is_absolute_path(info.reference_path) && info.prefix)
+			info.reference_path = xstrfmt("%s%s", info.prefix, info.reference_path);
+
+	if (argc == 0 || argc > 2) {
+		 usage_with_options(git_submodule_helper_usage,
+				    module_add_options);
+	} else if (argc == 1) {
+		info.repo = argv[0];
+		info.sm_path = guess_dir_name(info.repo);
+	} else {
+		info.repo = argv[0];
+		info.sm_path = xstrdup(argv[1]);
+	}
+
+	if (!is_absolute_path(info.sm_path) && info.prefix)
+		info.sm_path = xstrfmt("%s%s", info.prefix, info.sm_path);
+
+	/* assure repo is absolute or relative to parent */
+	if (starts_with_dot_dot_slash(info.repo) || starts_with_dot_slash(info.repo)) {
+		char *remote = get_default_remote();
+		char *remoteurl;
+		struct strbuf sb = STRBUF_INIT;
+
+		if (info.prefix)
+			die(_("Relative path can only be used from the toplevel "
+			      "of the working tree"));
+		/* dereference source url relative to parent's url */
+		strbuf_addf(&sb, "remote.%s.url", remote);
+
+		if (git_config_get_string(sb.buf, &remoteurl))
+			remoteurl = xgetcwd();
+		info.realrepo = relative_url(remoteurl, info.repo, NULL);
+
+		free(remoteurl);
+		free(remote);
+	} else if (is_dir_sep(info.repo[0]) || strchr(info.repo, ':')) {
+		info.realrepo = xstrdup(info.repo);
+	} else {
+		die(_("repo URL: '%s' must be absolute or begin with ./|../"),
+		      info.repo);
+	}
+
+	/*
+	 * normalize path:
+	 * multiple //; leading ./; /./; /../;
+	 */
+	normalize_path_copy(info.sm_path, info.sm_path);
+	/* strip trailing '/' */
+	if (is_dir_sep(info.sm_path[strlen(info.sm_path) -1]))
+		info.sm_path[strlen(info.sm_path) - 1] = '\0';
+
+	if (check_already_existing_submodule(info.force, info.sm_path))
+		return 1;
+
+	if (custom_name)
+		info.sm_name = custom_name;
+	else
+		info.sm_name = info.sm_path;
+
+	cp.git_cmd = 1;
+	cp.no_stdout = 1;
+	cp.no_stderr = 1;
+	argv_array_pushl(&cp.args, "add", "--dry-run", "--ignore-missing",
+			 "--no-warn-embedded-repo", info.sm_path, NULL);
+	if (!info.force && run_command(&cp)) {
+		fprintf(stderr, _("The following path is ignored by one of your "
+			".gitignore files:\n%s\nUse -f if you really want to "
+			"add it.\n"), info.sm_path);
+		return 1;
+	}
+
+	if (add_submodule(&info) < 0)
+		return 0;
+
+	config_added_submodule(&info);
+
+	return 0;
+}
+
 struct submodule_update_clone {
 	/* index into 'list', the list of submodules to look into for cloning */
 	int current;
@@ -2408,6 +2779,7 @@ static struct cmd_struct commands[] = {
 	{"sync", module_sync, SUPPORT_SUPER_PREFIX},
 	{"deinit", module_deinit, SUPPORT_SUPER_PREFIX},
 	{"summary", module_summary, SUPPORT_SUPER_PREFIX},
+	{"add", module_add, SUPPORT_SUPER_PREFIX},
 	{"remote-branch", resolve_remote_submodule_branch, 0},
 	{"push-check", push_check, 0},
 	{"absorb-git-dirs", absorb_git_dirs, SUPPORT_SUPER_PREFIX},
