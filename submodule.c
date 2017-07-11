@@ -1418,7 +1418,7 @@ int submodule_move_head(const char *path,
 	if (find_hook("submodule-update"))
 		return run_hook_le(NULL, "submodule-update",
 					 old ? old : "NEW_SUBMODULE",
-					 new ? new : "DELETED_SUBMODULE"
+					 new ? new : "DELETED_SUBMODULE",
 					 (flags & SUBMODULE_MOVE_HEAD_FORCE) ?
 						"force" : NULL);
 
