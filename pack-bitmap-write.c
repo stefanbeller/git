@@ -73,7 +73,8 @@ void bitmap_writer_build_type_index(struct pack_idx_entry **index,
 			break;
 
 		default:
-			real_type = sha1_object_info(entry->idx.sha1, NULL);
+			real_type = sha1_object_info(entry->idx.oid.hash,
+						     NULL);
 			break;
 		}
 
@@ -96,7 +97,8 @@ void bitmap_writer_build_type_index(struct pack_idx_entry **index,
 
 		default:
 			die("Missing type information for %s (%d/%d)",
-			    sha1_to_hex(entry->idx.sha1), real_type, entry->type);
+			    oid_to_hex(&entry->idx.oid), real_type,
+			    entry->type);
 		}
 	}
 }
@@ -459,7 +461,7 @@ static inline void dump_bitmap(struct sha1file *f, struct ewah_bitmap *bitmap)
 static const unsigned char *sha1_access(size_t pos, void *table)
 {
 	struct pack_idx_entry **index = table;
-	return index[pos]->sha1;
+	return index[pos]->oid.hash;
 }
 
 static void write_selected_commits_v1(struct sha1file *f,
@@ -508,18 +510,16 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 			  const char *filename,
 			  uint16_t options)
 {
-	static char tmp_file[PATH_MAX];
 	static uint16_t default_version = 1;
 	static uint16_t flags = BITMAP_OPT_FULL_DAG;
+	struct strbuf tmp_file = STRBUF_INIT;
 	struct sha1file *f;
 
 	struct bitmap_disk_header header;
 
-	int fd = odb_mkstemp(tmp_file, sizeof(tmp_file), "pack/tmp_bitmap_XXXXXX");
+	int fd = odb_mkstemp(&tmp_file, "pack/tmp_bitmap_XXXXXX");
 
-	if (fd < 0)
-		die_errno("unable to create '%s'", tmp_file);
-	f = sha1fd(fd, tmp_file);
+	f = sha1fd(fd, tmp_file.buf);
 
 	memcpy(header.magic, BITMAP_IDX_SIGNATURE, sizeof(BITMAP_IDX_SIGNATURE));
 	header.version = htons(default_version);
@@ -539,9 +539,11 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 
 	sha1close(f, NULL, CSUM_FSYNC);
 
-	if (adjust_shared_perm(tmp_file))
+	if (adjust_shared_perm(tmp_file.buf))
 		die_errno("unable to make temporary bitmap file readable");
 
-	if (rename(tmp_file, filename))
+	if (rename(tmp_file.buf, filename))
 		die_errno("unable to rename temporary bitmap file to '%s'", filename);
+
+	strbuf_release(&tmp_file);
 }

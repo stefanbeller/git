@@ -39,8 +39,25 @@ env:
 
 matrix:
   include:
+    - env: GETTEXT_POISON=YesPlease
+      os: linux
+      compiler:
+      addons:
+      before_install:
+    - env: Windows
+      os: linux
+      compiler:
+      addons:
+      before_install:
+      before_script:
+      script:
+        - >
+          test "$TRAVIS_REPO_SLUG" != "git/git" ||
+          ci/run-windows-build.sh $TRAVIS_BRANCH $(git rev-parse HEAD)
+      after_failure:
     - env: Linux32
       os: linux
+      compiler:
       services:
         - docker
       before_install:
@@ -50,6 +67,7 @@ matrix:
         - >
           docker run
           --interactive
+          --env DEVELOPER
           --env DEFAULT_TEST_TARGET
           --env GIT_PROVE_OPTS
           --env GIT_TEST_OPTS
@@ -60,16 +78,28 @@ matrix:
         # Use the following command to debug the docker build locally:
         # $ docker run -itv "${PWD}:/usr/src/git" --entrypoint /bin/bash daald/ubuntu32:xenial
         # root@container:/# /usr/src/git/ci/run-linux32-build.sh
+    - env: Static Analysis
+      os: linux
+      compiler:
+      addons:
+        apt:
+          packages:
+          - coccinelle
+      before_install:
+      script:
+        # "before_script" that builds Git is inherited from base job
+        - make coccicheck
+      after_failure:
     - env: Documentation
       os: linux
-      compiler: clang
+      compiler:
       addons:
         apt:
           packages:
           - asciidoc
           - xmlto
       before_install:
-      before_script:
+      before_script: gem install asciidoctor
       script: ci/test-documentation.sh
       after_failure:
 
@@ -110,12 +140,14 @@ before_install:
     p4 -V | grep Rev.;
     echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)";
     git-lfs version;
-    mkdir -p $HOME/travis-cache;
-    ln -s $HOME/travis-cache/.prove t/.prove;
 
 before_script: make --jobs=2
 
-script: make --quiet test
+script:
+  - >
+    mkdir -p $HOME/travis-cache;
+    ln -s $HOME/travis-cache/.prove t/.prove;
+    make --quiet test;
 
 after_failure:
   - >

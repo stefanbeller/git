@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
@@ -280,8 +281,7 @@ static void check_unreachable_object(struct object *obj)
 				free(filename);
 				return;
 			}
-			if (!(f = fopen(filename, "w")))
-				die_errno("Could not open '%s'", filename);
+			f = xfopen(filename, "w");
 			if (obj->type == OBJ_BLOB) {
 				if (stream_blob_to_fd(fileno(f), &obj->oid, NULL, 1))
 					die_errno("Could not write '%s'", filename);
@@ -377,7 +377,7 @@ static int fsck_obj(struct object *obj)
 	return 0;
 }
 
-static int fsck_obj_buffer(const unsigned char *sha1, enum object_type type,
+static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
 			   unsigned long size, void *buffer, int *eaten)
 {
 	/*
@@ -385,10 +385,10 @@ static int fsck_obj_buffer(const unsigned char *sha1, enum object_type type,
 	 * verify_packfile(), data_valid variable for details.
 	 */
 	struct object *obj;
-	obj = parse_object_buffer(sha1, type, size, buffer, eaten);
+	obj = parse_object_buffer(oid, type, size, buffer, eaten);
 	if (!obj) {
 		errors_found |= ERROR_OBJECT;
-		return error("%s: object corrupt or missing", sha1_to_hex(sha1));
+		return error("%s: object corrupt or missing", oid_to_hex(oid));
 	}
 	obj->flags = HAS_OBJ;
 	return fsck_obj(obj);
@@ -396,39 +396,39 @@ static int fsck_obj_buffer(const unsigned char *sha1, enum object_type type,
 
 static int default_refs;
 
-static void fsck_handle_reflog_sha1(const char *refname, unsigned char *sha1,
-	unsigned long timestamp)
+static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
+	timestamp_t timestamp)
 {
 	struct object *obj;
 
-	if (!is_null_sha1(sha1)) {
-		obj = lookup_object(sha1);
+	if (!is_null_oid(oid)) {
+		obj = lookup_object(oid->hash);
 		if (obj && (obj->flags & HAS_OBJ)) {
 			if (timestamp && name_objects)
 				add_decoration(fsck_walk_options.object_names,
 					obj,
-					xstrfmt("%s@{%ld}", refname, timestamp));
+					xstrfmt("%s@{%"PRItime"}", refname, timestamp));
 			obj->used = 1;
 			mark_object_reachable(obj);
 		} else {
-			error("%s: invalid reflog entry %s", refname, sha1_to_hex(sha1));
+			error("%s: invalid reflog entry %s", refname, oid_to_hex(oid));
 			errors_found |= ERROR_REACHABLE;
 		}
 	}
 }
 
-static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
-		const char *email, unsigned long timestamp, int tz,
+static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid,
+		const char *email, timestamp_t timestamp, int tz,
 		const char *message, void *cb_data)
 {
 	const char *refname = cb_data;
 
 	if (verbose)
 		fprintf(stderr, "Checking reflog %s->%s\n",
-			sha1_to_hex(osha1), sha1_to_hex(nsha1));
+			oid_to_hex(ooid), oid_to_hex(noid));
 
-	fsck_handle_reflog_sha1(refname, osha1, 0);
-	fsck_handle_reflog_sha1(refname, nsha1, timestamp);
+	fsck_handle_reflog_oid(refname, ooid, 0);
+	fsck_handle_reflog_oid(refname, noid, timestamp);
 	return 0;
 }
 
@@ -444,7 +444,7 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 {
 	struct object *obj;
 
-	obj = parse_object(oid->hash);
+	obj = parse_object(oid);
 	if (!obj) {
 		error("%s: invalid sha1 pointer %s", refname, oid_to_hex(oid));
 		errors_found |= ERROR_REACHABLE;
@@ -491,7 +491,7 @@ static void get_default_heads(void)
 	}
 }
 
-static struct object *parse_loose_object(const unsigned char *sha1,
+static struct object *parse_loose_object(const struct object_id *oid,
 					 const char *path)
 {
 	struct object *obj;
@@ -500,27 +500,27 @@ static struct object *parse_loose_object(const unsigned char *sha1,
 	unsigned long size;
 	int eaten;
 
-	if (read_loose_object(path, sha1, &type, &size, &contents) < 0)
+	if (read_loose_object(path, oid->hash, &type, &size, &contents) < 0)
 		return NULL;
 
 	if (!contents && type != OBJ_BLOB)
 		die("BUG: read_loose_object streamed a non-blob");
 
-	obj = parse_object_buffer(sha1, type, size, contents, &eaten);
+	obj = parse_object_buffer(oid, type, size, contents, &eaten);
 
 	if (!eaten)
 		free(contents);
 	return obj;
 }
 
-static int fsck_loose(const unsigned char *sha1, const char *path, void *data)
+static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 {
-	struct object *obj = parse_loose_object(sha1, path);
+	struct object *obj = parse_loose_object(oid, path);
 
 	if (!obj) {
 		errors_found |= ERROR_OBJECT;
 		error("%s: object corrupt or missing: %s",
-		      sha1_to_hex(sha1), path);
+		      oid_to_hex(oid), path);
 		return 0; /* keep checking other objects */
 	}
 
@@ -537,7 +537,7 @@ static int fsck_cruft(const char *basename, const char *path, void *data)
 	return 0;
 }
 
-static int fsck_subdir(int nr, const char *path, void *progress)
+static int fsck_subdir(unsigned int nr, const char *path, void *progress)
 {
 	display_progress(progress, nr + 1);
 	return 0;
@@ -599,10 +599,10 @@ static int fsck_cache_tree(struct cache_tree *it)
 		fprintf(stderr, "Checking cache tree\n");
 
 	if (0 <= it->entry_count) {
-		struct object *obj = parse_object(it->sha1);
+		struct object *obj = parse_object(&it->oid);
 		if (!obj) {
 			error("%s: invalid sha1 pointer in cache-tree",
-			      sha1_to_hex(it->sha1));
+			      oid_to_hex(&it->oid));
 			errors_found |= ERROR_REFS;
 			return 1;
 		}
@@ -619,26 +619,26 @@ static int fsck_cache_tree(struct cache_tree *it)
 	return err;
 }
 
-static void mark_object_for_connectivity(const unsigned char *sha1)
+static void mark_object_for_connectivity(const struct object_id *oid)
 {
-	struct object *obj = lookup_unknown_object(sha1);
+	struct object *obj = lookup_unknown_object(oid->hash);
 	obj->flags |= HAS_OBJ;
 }
 
-static int mark_loose_for_connectivity(const unsigned char *sha1,
+static int mark_loose_for_connectivity(const struct object_id *oid,
 				       const char *path,
 				       void *data)
 {
-	mark_object_for_connectivity(sha1);
+	mark_object_for_connectivity(oid);
 	return 0;
 }
 
-static int mark_packed_for_connectivity(const unsigned char *sha1,
+static int mark_packed_for_connectivity(const struct object_id *oid,
 					struct packed_git *pack,
 					uint32_t pos,
 					void *data)
 {
-	mark_object_for_connectivity(sha1);
+	mark_object_for_connectivity(oid);
 	return 0;
 }
 
@@ -771,6 +771,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	}
 
 	if (keep_cache_objects) {
+		verify_index_checksum = 1;
 		read_cache();
 		for (i = 0; i < active_nr; i++) {
 			unsigned int mode;
@@ -780,7 +781,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			mode = active_cache[i]->ce_mode;
 			if (S_ISGITLINK(mode))
 				continue;
-			blob = lookup_blob(active_cache[i]->oid.hash);
+			blob = lookup_blob(&active_cache[i]->oid);
 			if (!blob)
 				continue;
 			obj = &blob->object;

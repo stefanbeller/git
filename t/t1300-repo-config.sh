@@ -703,6 +703,12 @@ test_expect_success 'invalid unit' '
 	test_i18ngrep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
 '
 
+test_expect_success 'line number is reported correctly' '
+	printf "[bool]\n\tvar\n" >invalid &&
+	test_must_fail git config -f invalid --path bool.var 2>actual &&
+	test_i18ngrep "line 2" actual
+'
+
 test_expect_success 'invalid stdin config' '
 	echo "[broken" | test_must_fail git config --list --file - >output 2>&1 &&
 	test_i18ngrep "bad config line 1 in standard input" output
@@ -1067,6 +1073,13 @@ test_expect_success 'git -c works with aliases of builtins' '
 	echo bar >expect &&
 	git checkconfig >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'aliases can be CamelCased' '
+	test_config alias.CamelCased "rev-parse HEAD" &&
+	git CamelCased >out &&
+	git rev-parse HEAD >expect &&
+	test_cmp expect out
 '
 
 test_expect_success 'git -c does not split values on equals' '
@@ -1537,6 +1550,12 @@ test_expect_success !MINGW '--show-origin blob ref' '
 	git commit -m "new config file" &&
 	git config --blob=master:"$CUSTOM_CONFIG_FILE" --show-origin --list >output &&
 	test_cmp expect output
+'
+
+test_expect_success '--local requires a repo' '
+	# we expect 128 to ensure that we do not simply
+	# fail to find anything and return code "1"
+	test_expect_code 128 nongit git config --local foo.bar
 '
 
 test_done

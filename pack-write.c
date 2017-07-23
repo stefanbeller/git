@@ -13,7 +13,7 @@ static int sha1_compare(const void *_a, const void *_b)
 {
 	struct pack_idx_entry *a = *(struct pack_idx_entry **)_a;
 	struct pack_idx_entry *b = *(struct pack_idx_entry **)_b;
-	return hashcmp(a->sha1, b->sha1);
+	return oidcmp(&a->oid, &b->oid);
 }
 
 static int cmp_uint32(const void *a_, const void *b_)
@@ -71,15 +71,15 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		f = sha1fd_check(index_name);
 	} else {
 		if (!index_name) {
-			static char tmp_file[PATH_MAX];
-			fd = odb_mkstemp(tmp_file, sizeof(tmp_file), "pack/tmp_idx_XXXXXX");
-			index_name = xstrdup(tmp_file);
+			struct strbuf tmp_file = STRBUF_INIT;
+			fd = odb_mkstemp(&tmp_file, "pack/tmp_idx_XXXXXX");
+			index_name = strbuf_detach(&tmp_file, NULL);
 		} else {
 			unlink(index_name);
 			fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+			if (fd < 0)
+				die_errno("unable to create '%s'", index_name);
 		}
-		if (fd < 0)
-			die_errno("unable to create '%s'", index_name);
 		f = sha1fd(fd, index_name);
 	}
 
@@ -103,7 +103,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		struct pack_idx_entry **next = list;
 		while (next < last) {
 			struct pack_idx_entry *obj = *next;
-			if (obj->sha1[0] != i)
+			if (obj->oid.hash[0] != i)
 				break;
 			next++;
 		}
@@ -122,11 +122,11 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			uint32_t offset = htonl(obj->offset);
 			sha1write(f, &offset, 4);
 		}
-		sha1write(f, obj->sha1, 20);
+		sha1write(f, obj->oid.hash, 20);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
-		    (i && !hashcmp(list[-2]->sha1, obj->sha1)))
+		    (i && !oidcmp(&list[-2]->oid, &obj->oid)))
 			die("The same object %s appears twice in the pack",
-			    sha1_to_hex(obj->sha1));
+			    oid_to_hex(&obj->oid));
 	}
 
 	if (index_version >= 2) {
@@ -304,7 +304,8 @@ char *index_pack_lockfile(int ip_out)
  *  - each byte afterwards: low seven bits are size continuation,
  *    with the high bit being "size continues"
  */
-int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned char *hdr)
+int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
+				 enum object_type type, uintmax_t size)
 {
 	int n = 1;
 	unsigned char c;
@@ -315,6 +316,8 @@ int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned
 	c = (type << 4) | (size & 15);
 	size >>= 4;
 	while (size) {
+		if (n == hdr_len)
+			die("object size is too enormous to format");
 		*hdr++ = c | 0x80;
 		c = size & 0x7f;
 		size >>= 7;
@@ -326,11 +329,11 @@ int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned
 
 struct sha1file *create_tmp_packfile(char **pack_tmp_name)
 {
-	char tmpname[PATH_MAX];
+	struct strbuf tmpname = STRBUF_INIT;
 	int fd;
 
-	fd = odb_mkstemp(tmpname, sizeof(tmpname), "pack/tmp_pack_XXXXXX");
-	*pack_tmp_name = xstrdup(tmpname);
+	fd = odb_mkstemp(&tmpname, "pack/tmp_pack_XXXXXX");
+	*pack_tmp_name = strbuf_detach(&tmpname, NULL);
 	return sha1fd(fd, *pack_tmp_name);
 }
 

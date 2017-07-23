@@ -136,17 +136,12 @@ test_tick () {
 	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
-# Stop execution and start a shell. This is useful for debugging tests and
-# only makes sense together with "-v".
+# Stop execution and start a shell. This is useful for debugging tests.
 #
 # Be sure to remove all invocations of this command before submitting.
 
 test_pause () {
-	if test "$verbose" = t; then
-		"$SHELL_PATH" <&6 >&3 2>&4
-	else
-		error >&5 "test_pause requires --verbose"
-	fi
+	"$SHELL_PATH" <&6 >&5 2>&7
 }
 
 # Wrap git in gdb. Adding this to a command can make it easier to
@@ -154,7 +149,7 @@ test_pause () {
 #
 # Example: "debug git checkout master".
 debug () {
-	 GIT_TEST_GDB=1 "$@"
+	 GIT_TEST_GDB=1 "$@" <&6 >&5 2>&7
 }
 
 # Call test_commit with the arguments
@@ -219,6 +214,11 @@ test_merge () {
 test_chmod () {
 	chmod "$@" &&
 	git update-index --add "--chmod=$@"
+}
+
+# Get the modebits from a file.
+test_modebits () {
+	ls -l "$1" | sed -e 's|^\(..........\).*|\1|'
 }
 
 # Unset a configuration variable, but don't fail if it doesn't exist.
@@ -999,6 +999,7 @@ test_copy_bytes () {
 			my $s;
 			my $nread = sysread(STDIN, $s, $len);
 			die "cannot read: $!" unless defined($nread);
+			last unless $nread;
 			print $s;
 			$len -= $nread;
 		}

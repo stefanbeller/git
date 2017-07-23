@@ -627,7 +627,7 @@ static void show_objects_for_type(
 			sha1 = nth_packed_object_sha1(bitmap_git.pack, entry->nr);
 
 			if (bitmap_git.hashes)
-				hash = ntohl(bitmap_git.hashes[entry->nr]);
+				hash = get_be32(bitmap_git.hashes + entry->nr);
 
 			show_reach(sha1, object_type, 0, hash, bitmap_git.pack, entry->offset);
 		}
@@ -673,7 +673,7 @@ int prepare_bitmap_walk(struct rev_info *revs)
 		struct object *object = pending_e[i].item;
 
 		if (object->type == OBJ_NONE)
-			parse_object_or_die(object->oid.hash, NULL);
+			parse_object_or_die(&object->oid, NULL);
 
 		while (object->type == OBJ_TAG) {
 			struct tag *tag = (struct tag *) object;
@@ -685,7 +685,7 @@ int prepare_bitmap_walk(struct rev_info *revs)
 
 			if (!tag->tagged)
 				die("bad tag");
-			object = parse_object_or_die(tag->tagged->oid.hash, NULL);
+			object = parse_object_or_die(&tag->tagged->oid, NULL);
 		}
 
 		if (object->flags & UNINTERESTING)

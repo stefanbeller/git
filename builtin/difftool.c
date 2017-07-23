@@ -12,6 +12,7 @@
  * Copyright (C) 2016 Johannes Schindelin
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "run-command.h"
 #include "exec_cmd.h"
@@ -129,8 +130,10 @@ struct working_tree_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int working_tree_entry_cmp(struct working_tree_entry *a,
-				  struct working_tree_entry *b, void *keydata)
+static int working_tree_entry_cmp(const void *unused_cmp_data,
+				  struct working_tree_entry *a,
+				  struct working_tree_entry *b,
+				  void *unused_keydata)
 {
 	return strcmp(a->path, b->path);
 }
@@ -145,7 +148,9 @@ struct pair_entry {
 	const char path[FLEX_ARRAY];
 };
 
-static int pair_cmp(struct pair_entry *a, struct pair_entry *b, void *keydata)
+static int pair_cmp(const void *unused_cmp_data,
+		    struct pair_entry *a, struct pair_entry *b,
+		    void *unused_keydata)
 {
 	return strcmp(a->path, b->path);
 }
@@ -173,7 +178,9 @@ struct path_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int path_entry_cmp(struct path_entry *a, struct path_entry *b, void *key)
+static int path_entry_cmp(const void *unused_cmp_data,
+			  struct path_entry *a, struct path_entry *b,
+			  void *key)
 {
 	return strcmp(a->path, key ? key : b->path);
 }
@@ -226,6 +233,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 		hashmap_entry_init(entry, strhash(buf.buf));
 		hashmap_add(result, entry);
 	}
+	fclose(fp);
 	if (finish_command(&diff_files))
 		die("diff-files did not exit properly");
 	strbuf_release(&index_env);
@@ -254,6 +262,62 @@ static int ensure_leading_directories(char *path)
 	}
 }
 
+/*
+ * Unconditional writing of a plain regular file is what
+ * "git difftool --dir-diff" wants to do for symlinks.  We are preparing two
+ * temporary directories to be fed to a Git-unaware tool that knows how to
+ * show a diff of two directories (e.g. "diff -r A B").
+ *
+ * Because the tool is Git-unaware, if a symbolic link appears in either of
+ * these temporary directories, it will try to dereference and show the
+ * difference of the target of the symbolic link, which is not what we want,
+ * as the goal of the dir-diff mode is to produce an output that is logically
+ * equivalent to what "git diff" produces.
+ *
+ * Most importantly, we want to get textual comparison of the result of the
+ * readlink(2).  get_symlink() provides that---it returns the contents of
+ * the symlink that gets written to a regular file to force the external tool
+ * to compare the readlink(2) result as text, even on a filesystem that is
+ * capable of doing a symbolic link.
+ */
+static char *get_symlink(const struct object_id *oid, const char *path)
+{
+	char *data;
+	if (is_null_oid(oid)) {
+		/* The symlink is unknown to Git so read from the filesystem */
+		struct strbuf link = STRBUF_INIT;
+		if (has_symlinks) {
+			if (strbuf_readlink(&link, path, strlen(path)))
+				die(_("could not read symlink %s"), path);
+		} else if (strbuf_read_file(&link, path, 128))
+			die(_("could not read symlink file %s"), path);
+
+		data = strbuf_detach(&link, NULL);
+	} else {
+		enum object_type type;
+		unsigned long size;
+		data = read_sha1_file(oid->hash, &type, &size);
+		if (!data)
+			die(_("could not read object %s for symlink %s"),
+				oid_to_hex(oid), path);
+	}
+
+	return data;
+}
+
+static int checkout_path(unsigned mode, struct object_id *oid,
+			 const char *path, const struct checkout *state)
+{
+	struct cache_entry *ce;
+	int ret;
+
+	ce = make_cache_entry(mode, oid->hash, path, 0, 0);
+	ret = checkout_entry(ce, state, NULL);
+
+	free(ce);
+	return ret;
+}
+
 static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			int argc, const char **argv)
 {
@@ -262,16 +326,14 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	struct strbuf rpath = STRBUF_INIT, buf = STRBUF_INIT;
 	struct strbuf ldir = STRBUF_INIT, rdir = STRBUF_INIT;
 	struct strbuf wtdir = STRBUF_INIT;
+	char *lbase_dir, *rbase_dir;
 	size_t ldir_len, rdir_len, wtdir_len;
-	struct cache_entry *ce = xcalloc(1, sizeof(ce) + PATH_MAX + 1);
 	const char *workdir, *tmp;
 	int ret = 0, i;
 	FILE *fp;
 	struct hashmap working_tree_dups, submodules, symlinks2;
 	struct hashmap_iter iter;
 	struct pair_entry *entry;
-	enum object_type type;
-	unsigned long size;
 	struct index_state wtindex;
 	struct checkout lstate, rstate;
 	int rc, flags = RUN_GIT_CMD, err = 0;
@@ -298,11 +360,11 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	memset(&wtindex, 0, sizeof(wtindex));
 
 	memset(&lstate, 0, sizeof(lstate));
-	lstate.base_dir = ldir.buf;
+	lstate.base_dir = lbase_dir = xstrdup(ldir.buf);
 	lstate.base_dir_len = ldir.len;
 	lstate.force = 1;
 	memset(&rstate, 0, sizeof(rstate));
-	rstate.base_dir = rdir.buf;
+	rstate.base_dir = rbase_dir = xstrdup(rdir.buf);
 	rstate.base_dir_len = rdir.len;
 	rstate.force = 1;
 
@@ -311,9 +373,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	wtdir_len = wtdir.len;
 
 	hashmap_init(&working_tree_dups,
-		     (hashmap_cmp_fn)working_tree_entry_cmp, 0);
-	hashmap_init(&submodules, (hashmap_cmp_fn)pair_cmp, 0);
-	hashmap_init(&symlinks2, (hashmap_cmp_fn)pair_cmp, 0);
+		     (hashmap_cmp_fn)working_tree_entry_cmp, NULL, 0);
+	hashmap_init(&submodules, (hashmap_cmp_fn)pair_cmp, NULL, 0);
+	hashmap_init(&symlinks2, (hashmap_cmp_fn)pair_cmp, NULL, 0);
 
 	child.no_stdin = 1;
 	child.git_cmd = 1;
@@ -336,7 +398,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		struct object_id loid, roid;
 		char status;
 		const char *src_path, *dst_path;
-		size_t src_path_len, dst_path_len;
 
 		if (starts_with(info.buf, "::"))
 			die(N_("combined diff formats('-c' and '--cc') are "
@@ -349,17 +410,14 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		if (strbuf_getline_nul(&lpath, fp))
 			break;
 		src_path = lpath.buf;
-		src_path_len = lpath.len;
 
 		i++;
 		if (status != 'C' && status != 'R') {
 			dst_path = src_path;
-			dst_path_len = src_path_len;
 		} else {
 			if (strbuf_getline_nul(&rpath, fp))
 				break;
 			dst_path = rpath.buf;
-			dst_path_len = rpath.len;
 		}
 
 		if (S_ISGITLINK(lmode) || S_ISGITLINK(rmode)) {
@@ -377,27 +435,25 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		}
 
 		if (S_ISLNK(lmode)) {
-			char *content = read_sha1_file(loid.hash, &type, &size);
+			char *content = get_symlink(&loid, src_path);
 			add_left_or_right(&symlinks2, src_path, content, 0);
 			free(content);
 		}
 
 		if (S_ISLNK(rmode)) {
-			char *content = read_sha1_file(roid.hash, &type, &size);
+			char *content = get_symlink(&roid, dst_path);
 			add_left_or_right(&symlinks2, dst_path, content, 1);
 			free(content);
 		}
 
 		if (lmode && status != 'C') {
-			ce->ce_mode = lmode;
-			oidcpy(&ce->oid, &loid);
-			strcpy(ce->name, src_path);
-			ce->ce_namelen = src_path_len;
-			if (checkout_entry(ce, &lstate, NULL))
-				return error("could not write '%s'", src_path);
+			if (checkout_path(lmode, &loid, src_path, &lstate)) {
+				ret = error("could not write '%s'", src_path);
+				goto finish;
+			}
 		}
 
-		if (rmode) {
+		if (rmode && !S_ISLNK(rmode)) {
 			struct working_tree_entry *entry;
 
 			/* Avoid duplicate working_tree entries */
@@ -410,13 +466,12 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			hashmap_add(&working_tree_dups, entry);
 
 			if (!use_wt_file(workdir, dst_path, &roid)) {
-				ce->ce_mode = rmode;
-				oidcpy(&ce->oid, &roid);
-				strcpy(ce->name, dst_path);
-				ce->ce_namelen = dst_path_len;
-				if (checkout_entry(ce, &rstate, NULL))
-					return error("could not write '%s'",
-						     dst_path);
+				if (checkout_path(rmode, &roid, dst_path,
+						  &rstate)) {
+					ret = error("could not write '%s'",
+						    dst_path);
+					goto finish;
+				}
 			} else if (!is_null_oid(&roid)) {
 				/*
 				 * Changes in the working tree need special
@@ -431,10 +486,12 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 						ADD_CACHE_JUST_APPEND);
 
 				add_path(&rdir, rdir_len, dst_path);
-				if (ensure_leading_directories(rdir.buf))
-					return error("could not create "
-						     "directory for '%s'",
-						     dst_path);
+				if (ensure_leading_directories(rdir.buf)) {
+					ret = error("could not create "
+						    "directory for '%s'",
+						    dst_path);
+					goto finish;
+				}
 				add_path(&wtdir, wtdir_len, dst_path);
 				if (symlinks) {
 					if (symlink(wtdir.buf, rdir.buf)) {
@@ -455,13 +512,15 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		}
 	}
 
+	fclose(fp);
+	fp = NULL;
 	if (finish_command(&child)) {
 		ret = error("error occurred running diff --raw");
 		goto finish;
 	}
 
 	if (!i)
-		return 0;
+		goto finish;
 
 	/*
 	 * Changes to submodules require special treatment.This loop writes a
@@ -527,9 +586,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * files through the symlink.
 	 */
 	hashmap_init(&wt_modified, (hashmap_cmp_fn)path_entry_cmp,
-		     wtindex.cache_nr);
+		     NULL, wtindex.cache_nr);
 	hashmap_init(&tmp_modified, (hashmap_cmp_fn)path_entry_cmp,
-		     wtindex.cache_nr);
+		     NULL, wtindex.cache_nr);
 
 	for (i = 0; i < wtindex.cache_nr; i++) {
 		struct hashmap_entry dummy;
@@ -584,7 +643,11 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		exit_cleanup(tmpdir, rc);
 
 finish:
-	free(ce);
+	if (fp)
+		fclose(fp);
+
+	free(lbase_dir);
+	free(rbase_dir);
 	strbuf_release(&ldir);
 	strbuf_release(&rdir);
 	strbuf_release(&wtdir);

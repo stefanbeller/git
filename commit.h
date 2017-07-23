@@ -17,7 +17,7 @@ struct commit {
 	struct object object;
 	void *util;
 	unsigned int index;
-	unsigned long date;
+	timestamp_t date;
 	struct commit_list *parents;
 	struct tree *tree;
 };
@@ -45,18 +45,18 @@ enum decoration_type {
 void add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
 const struct name_decoration *get_name_decoration(const struct object *obj);
 
-struct commit *lookup_commit(const unsigned char *sha1);
-struct commit *lookup_commit_reference(const unsigned char *sha1);
-struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
+struct commit *lookup_commit(const struct object_id *oid);
+struct commit *lookup_commit_reference(const struct object_id *oid);
+struct commit *lookup_commit_reference_gently(const struct object_id *oid,
 					      int quiet);
 struct commit *lookup_commit_reference_by_name(const char *name);
 
 /*
- * Look up object named by "sha1", dereference tag as necessary,
- * get a commit and return it. If "sha1" does not dereference to
+ * Look up object named by "oid", dereference tag as necessary,
+ * get a commit and return it. If "oid" does not dereference to
  * a commit, use ref_name to report an error and die.
  */
-struct commit *lookup_commit_or_die(const unsigned char *sha1, const char *ref_name);
+struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref_name);
 
 int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long size);
 int parse_commit_gently(struct commit *item, int quiet_on_missing);
@@ -261,10 +261,10 @@ extern struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n,
 /* largest positive number a signed 32-bit integer can contain */
 #define INFINITE_DEPTH 0x7fffffff
 
-struct sha1_array;
+struct oid_array;
 struct ref;
-extern int register_shallow(const unsigned char *sha1);
-extern int unregister_shallow(const unsigned char *sha1);
+extern int register_shallow(const struct object_id *oid);
+extern int unregister_shallow(const struct object_id *oid);
 extern int for_each_commit_graft(each_commit_graft_fn, void *);
 extern int is_repository_shallow(void);
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
@@ -273,18 +273,18 @@ extern struct commit_list *get_shallow_commits_by_rev_list(
 		int ac, const char **av, int shallow_flag, int not_shallow_flag);
 extern void set_alternate_shallow_file(const char *path, int override);
 extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
-				 const struct sha1_array *extra);
+				 const struct oid_array *extra);
 extern void setup_alternate_shallow(struct lock_file *shallow_lock,
 				    const char **alternate_shallow_file,
-				    const struct sha1_array *extra);
-extern const char *setup_temporary_shallow(const struct sha1_array *extra);
+				    const struct oid_array *extra);
+extern const char *setup_temporary_shallow(const struct oid_array *extra);
 extern void advertise_shallow_grafts(int);
 
 struct shallow_info {
-	struct sha1_array *shallow;
+	struct oid_array *shallow;
 	int *ours, nr_ours;
 	int *theirs, nr_theirs;
-	struct sha1_array *ref;
+	struct oid_array *ref;
 
 	/* for receive-pack */
 	uint32_t **used_shallow;
@@ -295,7 +295,7 @@ struct shallow_info {
 	int nr_commits;
 };
 
-extern void prepare_shallow_info(struct shallow_info *, struct sha1_array *);
+extern void prepare_shallow_info(struct shallow_info *, struct oid_array *);
 extern void clear_shallow_info(struct shallow_info *);
 extern void remove_nonexistent_theirs_shallow(struct shallow_info *);
 extern void assign_shallow_commits_to_refs(struct shallow_info *info,

@@ -370,6 +370,11 @@ default is `--no-fork-point`, otherwise the default is `--fork-point`.
 	of the rebased commits (see linkgit:git-am[1]).
 	Incompatible with the --interactive option.
 
+--signoff::
+	This flag is passed to 'git am' to sign off all the rebased
+	commits (see linkgit:git-am[1]). Incompatible with the
+	--interactive option.
+
 -i::
 --interactive::
 	Make a list of the commits which are about to be rebased.  Let the
@@ -441,7 +446,7 @@ used to override and disable this setting.
 
 --autostash::
 --no-autostash::
-	Automatically create a temporary stash before the operation
+	Automatically create a temporary stash entry before the operation
 	begins, and apply it after the operation ends.  This means
 	that you can run rebase on a dirty worktree.  However, use
 	with care: the final stash application after a successful
@@ -670,7 +675,7 @@ on this 'subsystem'.  You might end up with a history like the
 following:
 
 ------------
-    o---o---o---o---o---o---o---o---o  master
+    o---o---o---o---o---o---o---o  master
 	 \
 	  o---o---o---o---o  subsystem
 			   \

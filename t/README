@@ -471,13 +471,13 @@ Don't:
    their output.
 
    You can glean some further possible issues from the TAP grammar
-   (see http://search.cpan.org/perldoc?TAP::Parser::Grammar#TAP_Grammar)
+   (see https://metacpan.org/pod/TAP::Parser::Grammar#TAP-GRAMMAR)
    but the best indication is to just run the tests with prove(1),
    it'll complain if anything is amiss.
 
 Keep in mind:
 
- - Inside <script> part, the standard output and standard error
+ - Inside the <script> part, the standard output and standard error
    streams are discarded, and the test harness only reports "ok" or
    "not ok" to the end user running the tests. Under --verbose, they
    are shown to help debugging the tests.
@@ -611,9 +611,11 @@ library for your script to use.
 
  - test_have_prereq <prereq>
 
-   Check if we have a prerequisite previously set with
-   test_set_prereq. The most common use of this directly is to skip
-   all the tests if we don't have some essential prerequisite:
+   Check if we have a prerequisite previously set with test_set_prereq.
+   The most common way to use this explicitly (as opposed to the
+   implicit use when an argument is passed to test_expect_*) is to skip
+   all the tests at the start of the test script if we don't have some
+   essential prerequisite:
 
 	if ! test_have_prereq PERL
 	then
@@ -801,9 +803,9 @@ use these, and "test_set_prereq" for how to define your own.
    Test is not run by root user, and an attempt to write to an
    unwritable file is expected to fail correctly.
 
- - LIBPCRE
+ - PCRE
 
-   Git was compiled with USE_LIBPCRE=YesPlease. Wrap any tests
+   Git was compiled with support for PCRE. Wrap any tests
    that use git-grep --perl-regexp or git-grep -P in these.
 
  - CASE_INSENSITIVE_FS
@@ -814,6 +816,10 @@ use these, and "test_set_prereq" for how to define your own.
 
    Test is run on a filesystem which converts decomposed utf-8 (nfd)
    to precomposed utf-8 (nfc).
+
+ - PTHREADS
+
+   Git wasn't compiled with NO_PTHREADS=YesPlease.
 
 Tips for Writing Tests
 ----------------------

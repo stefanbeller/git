@@ -2,6 +2,7 @@
  * "git push"
  */
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "run-command.h"
 #include "builtin.h"
@@ -498,6 +499,10 @@ static int git_push_config(const char *k, const char *v, void *cb)
 		const char *value;
 		if (!git_config_get_value("push.recursesubmodules", &value))
 			recurse_submodules = parse_push_recurse_submodules_arg(k, value);
+	} else if (!strcmp(k, "submodule.recurse")) {
+		int val = git_config_bool(k, v) ?
+			RECURSE_SUBMODULES_ON_DEMAND : RECURSE_SUBMODULES_OFF;
+		recurse_submodules = val;
 	}
 
 	return git_default_config(k, v, NULL);
@@ -510,8 +515,8 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	int push_cert = -1;
 	int rc;
 	const char *repo = NULL;	/* default repository */
-	static struct string_list push_options = STRING_LIST_INIT_DUP;
-	static struct string_list_item *item;
+	struct string_list push_options = STRING_LIST_INIT_DUP;
+	const struct string_list_item *item;
 
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
@@ -584,6 +589,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 			die(_("push options must not have new line characters"));
 
 	rc = do_push(repo, flags, &push_options);
+	string_list_clear(&push_options, 0);
 	if (rc == -1)
 		usage_with_options(push_usage, options);
 	else

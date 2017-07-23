@@ -19,6 +19,7 @@ OPTIONS_SPEC=
 START_DIR=$(pwd)
 . git-sh-setup
 require_work_tree
+prefix=$(git rev-parse --show-prefix) || exit 1
 cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
@@ -273,6 +274,8 @@ push_stash () {
 		shift
 	done
 
+	eval "set $(git rev-parse --sq --prefix "$prefix" -- "$@")"
+
 	if test -n "$patch_mode" && test -n "$untracked"
 	then
 		die "$(gettext "Can't use --patch and --include-untracked or --all at the same time")"
@@ -299,12 +302,12 @@ push_stash () {
 	then
 		if test $# != 0
 		then
-			git reset ${GIT_QUIET:+-q} -- "$@"
+			git reset -q -- "$@"
 			git ls-files -z --modified -- "$@" |
 			git checkout-index -z --force --stdin
-			git clean --force ${GIT_QUIET:+-q} -d -- "$@"
+			git clean --force -q -d -- "$@"
 		else
-			git reset --hard ${GIT_QUIET:+-q}
+			git reset --hard -q
 		fi
 		test "$untracked" = "all" && CLEAN_X_OPTION=-x || CLEAN_X_OPTION=
 		if test -n "$untracked"
@@ -314,7 +317,9 @@ push_stash () {
 
 		if test "$keep_index" = "t" && test -n "$i_tree"
 		then
-			git read-tree --reset -u $i_tree
+			git read-tree --reset $i_tree
+			git ls-files -z --modified -- "$@" |
+			git checkout-index -z --force --stdin
 		fi
 	else
 		git apply -R < "$TMP-patch" ||
@@ -322,7 +327,7 @@ push_stash () {
 
 		if test "$keep_index" != "t"
 		then
-			git reset
+			git reset -q -- "$@"
 		fi
 	fi
 }
@@ -479,7 +484,7 @@ parse_flags_and_rev()
 
 	case $# in
 		0)
-			have_stash || die "$(gettext "No stash found.")"
+			have_stash || die "$(gettext "No stash entries found.")"
 			set -- ${ref_stash}@{0}
 		;;
 		1)
@@ -571,7 +576,7 @@ apply_stash () {
 		GIT_INDEX_FILE="$TMPindex" git-read-tree "$u_tree" &&
 		GIT_INDEX_FILE="$TMPindex" git checkout-index --all &&
 		rm -f "$TMPindex" ||
-		die "$(gettext "Could not restore untracked files from stash")"
+		die "$(gettext "Could not restore untracked files from stash entry")"
 	fi
 
 	eval "
@@ -625,7 +630,7 @@ pop_stash() {
 		drop_stash "$@"
 	else
 		status=$?
-		say "$(gettext "The stash is kept in case you need it again.")"
+		say "$(gettext "The stash entry is kept in case you need it again.")"
 		exit $status
 	fi
 }

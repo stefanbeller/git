@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "color.h"
 #include "utf8.h"
@@ -40,7 +41,7 @@ static void fix_filename(const char *prefix, const char **file)
 	if (!file || !*file || !prefix || is_absolute_path(*file)
 	    || !strcmp("-", *file))
 		return;
-	*file = xstrdup(prefix_filename(prefix, strlen(prefix), *file));
+	*file = prefix_filename(prefix, *file);
 }
 
 static int opt_command_mode_error(const struct option *opt,
@@ -589,8 +590,10 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 
 	fprintf_ln(outfile, _("usage: %s"), _(*usagestr++));
 	while (*usagestr && **usagestr)
-		/* TRANSLATORS: the colon here should align with the
-		   one in "usage: %s" translation */
+		/*
+		 * TRANSLATORS: the colon here should align with the
+		 * one in "usage: %s" translation.
+		 */
 		fprintf_ln(outfile, _("   or: %s"), _(*usagestr++));
 	while (*usagestr) {
 		if (**usagestr)

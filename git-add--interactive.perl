@@ -3,7 +3,7 @@
 use 5.008;
 use strict;
 use warnings;
-use Git;
+use Git qw(unquote_path);
 use Git::I18N;
 
 binmode(STDOUT, ":raw");
@@ -46,7 +46,6 @@ my ($diff_new_color) =
 my $normal_color = $repo->get_color("", "reset");
 
 my $diff_algorithm = $repo->config('diff.algorithm');
-my $diff_indent_heuristic = $repo->config_bool('diff.indentheuristic');
 my $diff_filter = $repo->config('interactive.difffilter');
 
 my $use_readkey = 0;
@@ -175,47 +174,6 @@ if (!defined $GIT_DIR) {
 }
 chomp($GIT_DIR);
 
-my %cquote_map = (
- "b" => chr(8),
- "t" => chr(9),
- "n" => chr(10),
- "v" => chr(11),
- "f" => chr(12),
- "r" => chr(13),
- "\\" => "\\",
- "\042" => "\042",
-);
-
-sub unquote_path {
-	local ($_) = @_;
-	my ($retval, $remainder);
-	if (!/^\042(.*)\042$/) {
-		return $_;
-	}
-	($_, $retval) = ($1, "");
-	while (/^([^\\]*)\\(.*)$/) {
-		$remainder = $2;
-		$retval .= $1;
-		for ($remainder) {
-			if (/^([0-3][0-7][0-7])(.*)$/) {
-				$retval .= chr(oct($1));
-				$_ = $2;
-				last;
-			}
-			if (/^([\\\042btnvfr])(.*)$/) {
-				$retval .= $cquote_map{$1};
-				$_ = $2;
-				last;
-			}
-			# This is malformed -- just return it as-is for now.
-			return $_[0];
-		}
-		$_ = $remainder;
-	}
-	$retval .= $_;
-	return $retval;
-}
-
 sub refresh {
 	my $fh;
 	open $fh, 'git update-index --refresh |'
@@ -275,20 +233,11 @@ sub list_modified {
 	my ($only) = @_;
 	my (%data, @return);
 	my ($add, $del, $adddel, $file);
-	my @tracked = ();
-
-	if (@ARGV) {
-		@tracked = map {
-			chomp $_;
-			unquote_path($_);
-		} run_cmd_pipe(qw(git ls-files --), @ARGV);
-		return if (!@tracked);
-	}
 
 	my $reference = get_diff_reference($patch_mode_revision);
 	for (run_cmd_pipe(qw(git diff-index --cached
 			     --numstat --summary), $reference,
-			     '--', @tracked)) {
+			     '--', @ARGV)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			my ($change, $bin);
@@ -313,7 +262,7 @@ sub list_modified {
 		}
 	}
 
-	for (run_cmd_pipe(qw(git diff-files --numstat --summary --raw --), @tracked)) {
+	for (run_cmd_pipe(qw(git diff-files --numstat --summary --raw --), @ARGV)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			$file = unquote_path($file);
@@ -739,9 +688,6 @@ sub parse_diff {
 	if (defined $diff_algorithm) {
 		splice @diff_cmd, 1, 0, "--diff-algorithm=${diff_algorithm}";
 	}
-	if ($diff_indent_heuristic) {
-		splice @diff_cmd, 1, 0, "--indent-heuristic";
-	}
 	if (defined $patch_mode_revision) {
 		push @diff_cmd, get_diff_reference($patch_mode_revision);
 	}
@@ -1049,7 +995,7 @@ marked for unstaging."),
 marked for applying."),
 	checkout_index => N__(
 "If the patch applies cleanly, the edited hunk will immediately be
-marked for discarding"),
+marked for discarding."),
 	checkout_head => N__(
 "If the patch applies cleanly, the edited hunk will immediately be
 marked for discarding."),
@@ -1094,7 +1040,7 @@ EOF2
 
 	open $fh, '<', $hunkfile
 		or die sprintf(__("failed to open hunk edit file for reading: %s"), $!);
-	my @newtext = grep { !/^$comment_line_char/ } <$fh>;
+	my @newtext = grep { !/^\Q$comment_line_char\E/ } <$fh>;
 	close $fh;
 	unlink $hunkfile;
 
@@ -1149,6 +1095,7 @@ sub prompt_yesno {
 	while (1) {
 		print colored $prompt_color, $prompt;
 		my $line = prompt_single_character;
+		return undef unless defined $line;
 		return 0 if $line =~ /^n/i;
 		return 1 if $line =~ /^y/i;
 	}

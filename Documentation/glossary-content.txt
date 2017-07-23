@@ -384,6 +384,27 @@ full pathname may have special meaning:
 +
 Glob magic is incompatible with literal magic.
 
+attr;;
+After `attr:` comes a space separated list of "attribute
+requirements", all of which must be met in order for the
+path to be considered a match; this is in addition to the
+usual non-magic pathspec pattern matching.
+See linkgit:gitattributes[5].
++
+Each of the attribute requirements for the path takes one of
+these forms:
+
+- "`ATTR`" requires that the attribute `ATTR` be set.
+
+- "`-ATTR`" requires that the attribute `ATTR` be unset.
+
+- "`ATTR=VALUE`" requires that the attribute `ATTR` be
+  set to the string `VALUE`.
+
+- "`!ATTR`" requires that the attribute `ATTR` be
+  unspecified.
++
+
 exclude;;
 	After a path matches any non-exclude pathspec, it will be run
 	through all exclude pathspec (magic signature: `!` or its
@@ -548,6 +569,10 @@ The most notable example is `HEAD`.
 	upstream is much larger. A shallow repository
 	is created by giving the `--depth` option to linkgit:git-clone[1], and
 	its history can be later deepened with linkgit:git-fetch[1].
+
+[[def_stash]]stash entry::
+	An <<def_object,object>> used to temporarily store the contents of a
+	<<def_dirty,dirty>> working directory and the index for future reuse.
 
 [[def_submodule]]submodule::
 	A <<def_repository,repository>> that holds the history of a

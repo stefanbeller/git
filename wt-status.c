@@ -121,7 +121,7 @@ static void status_printf_more(struct wt_status *s, const char *color,
 
 void wt_status_prepare(struct wt_status *s)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	memset(s, 0, sizeof(*s));
 	memcpy(s->color_palette, default_wt_status_colors,
@@ -129,7 +129,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 	s->use_color = -1;
 	s->relative_paths = 1;
-	s->branch = resolve_refdup("HEAD", 0, sha1, NULL);
+	s->branch = resolve_refdup("HEAD", 0, oid.hash, NULL);
 	s->reference = "HEAD";
 	s->fp = stdout;
 	s->index_file = get_index_file();
@@ -137,6 +137,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->untracked.strdup_strings = 1;
 	s->ignored.strdup_strings = 1;
 	s->show_branch = -1;  /* unspecified */
+	s->show_stash = 0;
 	s->display_comment_prefix = 0;
 }
 
@@ -407,6 +408,16 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 	strbuf_release(&twobuf);
 }
 
+static char short_submodule_status(struct wt_status_change_data *d) {
+	if (d->new_submodule_commits)
+		return 'M';
+	if (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
+		return 'm';
+	if (d->dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
+		return '?';
+	return d->worktree_status;
+}
+
 static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 					 struct diff_options *options,
 					 void *data)
@@ -431,10 +442,13 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		}
 		if (!d->worktree_status)
 			d->worktree_status = p->status;
-		d->dirty_submodule = p->two->dirty_submodule;
-		if (S_ISGITLINK(p->two->mode))
+		if (S_ISGITLINK(p->two->mode)) {
+			d->dirty_submodule = p->two->dirty_submodule;
 			d->new_submodule_commits = !!oidcmp(&p->one->oid,
 							    &p->two->oid);
+			if (s->status_format == STATUS_FORMAT_SHORT)
+				d->worktree_status = short_submodule_status(d);
+		}
 
 		switch (p->status) {
 		case DIFF_STATUS_ADDED:
@@ -652,7 +666,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 		dir.untracked = the_index.untracked;
 	setup_standard_excludes(&dir);
 
-	fill_directory(&dir, &s->pathspec);
+	fill_directory(&dir, &the_index, &s->pathspec);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
@@ -788,6 +802,27 @@ static void wt_longstatus_print_changed(struct wt_status *s)
 	wt_longstatus_print_trailer(s);
 }
 
+static int stash_count_refs(struct object_id *ooid, struct object_id *noid,
+			    const char *email, timestamp_t timestamp, int tz,
+			    const char *message, void *cb_data)
+{
+	int *c = cb_data;
+	(*c)++;
+	return 0;
+}
+
+static void wt_longstatus_print_stash_summary(struct wt_status *s)
+{
+	int stash_count = 0;
+
+	for_each_reflog_ent("refs/stash", stash_count_refs, &stash_count);
+	if (stash_count > 0)
+		status_printf_ln(s, GIT_COLOR_NORMAL,
+				 Q_("Your stash currently has %d entry",
+				    "Your stash currently has %d entries", stash_count),
+				 stash_count);
+}
+
 static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncommitted)
 {
 	struct child_process sm_summary = CHILD_PROCESS_INIT;
@@ -883,17 +918,18 @@ conclude:
 	status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
 }
 
-void wt_status_truncate_message_at_cut_line(struct strbuf *buf)
+size_t wt_status_locate_end(const char *s, size_t len)
 {
 	const char *p;
 	struct strbuf pattern = STRBUF_INIT;
 
 	strbuf_addf(&pattern, "\n%c %s", comment_line_char, cut_line);
-	if (starts_with(buf->buf, pattern.buf + 1))
-		strbuf_setlen(buf, 0);
-	else if ((p = strstr(buf->buf, pattern.buf)))
-		strbuf_setlen(buf, p - buf->buf + 1);
+	if (starts_with(s, pattern.buf + 1))
+		len = 0;
+	else if ((p = strstr(s, pattern.buf)))
+		len = p - s + 1;
 	strbuf_release(&pattern);
+	return len;
 }
 
 void wt_status_add_cut_line(FILE *fp)
@@ -989,7 +1025,7 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "%c",
 				 comment_line_char);
 	else
-		fputs("", s->fp);
+		fputs("\n", s->fp);
 }
 
 static int has_unmerged(struct wt_status *s)
@@ -1052,7 +1088,8 @@ static void show_am_in_progress(struct wt_status *s,
 static char *read_line_from_git_path(const char *filename)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *fp = fopen(git_path("%s", filename), "r");
+	FILE *fp = fopen_or_warn(git_path("%s", filename), "r");
+
 	if (!fp) {
 		strbuf_release(&buf);
 		return NULL;
@@ -1069,29 +1106,29 @@ static char *read_line_from_git_path(const char *filename)
 static int split_commit_in_progress(struct wt_status *s)
 {
 	int split_in_progress = 0;
-	char *head = read_line_from_git_path("HEAD");
-	char *orig_head = read_line_from_git_path("ORIG_HEAD");
-	char *rebase_amend = read_line_from_git_path("rebase-merge/amend");
-	char *rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
+	char *head, *orig_head, *rebase_amend, *rebase_orig_head;
 
-	if (!head || !orig_head || !rebase_amend || !rebase_orig_head ||
+	if ((!s->amend && !s->nowarn && !s->workdir_dirty) ||
 	    !s->branch || strcmp(s->branch, "HEAD"))
-		return split_in_progress;
+		return 0;
 
-	if (!strcmp(rebase_amend, rebase_orig_head)) {
-		if (strcmp(head, rebase_amend))
-			split_in_progress = 1;
-	} else if (strcmp(orig_head, rebase_orig_head)) {
+	head = read_line_from_git_path("HEAD");
+	orig_head = read_line_from_git_path("ORIG_HEAD");
+	rebase_amend = read_line_from_git_path("rebase-merge/amend");
+	rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
+
+	if (!head || !orig_head || !rebase_amend || !rebase_orig_head)
+		; /* fall through, no split in progress */
+	else if (!strcmp(rebase_amend, rebase_orig_head))
+		split_in_progress = !!strcmp(head, rebase_amend);
+	else if (strcmp(orig_head, rebase_orig_head))
 		split_in_progress = 1;
-	}
-
-	if (!s->amend && !s->nowarn && !s->workdir_dirty)
-		split_in_progress = 0;
 
 	free(head);
 	free(orig_head);
 	free(rebase_amend);
 	free(rebase_orig_head);
+
 	return split_in_progress;
 }
 
@@ -1115,16 +1152,16 @@ static void abbrev_sha1_in_line(struct strbuf *line)
 
 	split = strbuf_split_max(line, ' ', 3);
 	if (split[0] && split[1]) {
-		unsigned char sha1[20];
+		struct object_id oid;
 
 		/*
 		 * strbuf_split_max left a space. Trim it and re-add
 		 * it after abbreviation.
 		 */
 		strbuf_trim(split[1]);
-		if (!get_sha1(split[1]->buf, sha1)) {
+		if (!get_oid(split[1]->buf, &oid)) {
 			strbuf_reset(split[1]);
-			strbuf_add_unique_abbrev(split[1], sha1,
+			strbuf_add_unique_abbrev(split[1], oid.hash,
 						 DEFAULT_ABBREV);
 			strbuf_addch(split[1], ' ');
 			strbuf_reset(line);
@@ -1155,6 +1192,7 @@ static int read_rebase_todolist(const char *fname, struct string_list *lines)
 		abbrev_sha1_in_line(&line);
 		string_list_append(lines, line.buf);
 	}
+	fclose(f);
 	return 0;
 }
 
@@ -1340,7 +1378,7 @@ static void show_bisect_in_progress(struct wt_status *s,
 static char *get_branch(const struct worktree *wt, const char *path)
 {
 	struct strbuf sb = STRBUF_INIT;
-	unsigned char sha1[20];
+	struct object_id oid;
 	const char *branch_name;
 
 	if (strbuf_read_file(&sb, worktree_git_path(wt, "%s", path), 0) <= 0)
@@ -1354,9 +1392,9 @@ static char *get_branch(const struct worktree *wt, const char *path)
 		strbuf_remove(&sb, 0, branch_name - sb.buf);
 	else if (starts_with(sb.buf, "refs/"))
 		;
-	else if (!get_sha1_hex(sb.buf, sha1)) {
+	else if (!get_oid_hex(sb.buf, &oid)) {
 		strbuf_reset(&sb);
-		strbuf_add_unique_abbrev(&sb, sha1, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(&sb, oid.hash, DEFAULT_ABBREV);
 	} else if (!strcmp(sb.buf, "detached HEAD")) /* rebase */
 		goto got_nothing;
 	else			/* bisect */
@@ -1370,11 +1408,11 @@ got_nothing:
 
 struct grab_1st_switch_cbdata {
 	struct strbuf buf;
-	unsigned char nsha1[20];
+	struct object_id noid;
 };
 
-static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
-			   const char *email, unsigned long timestamp, int tz,
+static int grab_1st_switch(struct object_id *ooid, struct object_id *noid,
+			   const char *email, timestamp_t timestamp, int tz,
 			   const char *message, void *cb_data)
 {
 	struct grab_1st_switch_cbdata *cb = cb_data;
@@ -1387,13 +1425,13 @@ static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
 		return 0;
 	target += strlen(" to ");
 	strbuf_reset(&cb->buf);
-	hashcpy(cb->nsha1, nsha1);
+	oidcpy(&cb->noid, noid);
 	end = strchrnul(target, '\n');
 	strbuf_add(&cb->buf, target, end - target);
 	if (!strcmp(cb->buf.buf, "HEAD")) {
 		/* HEAD is relative. Resolve it to the right reflog entry. */
 		strbuf_reset(&cb->buf);
-		strbuf_add_unique_abbrev(&cb->buf, nsha1, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(&cb->buf, noid->hash, DEFAULT_ABBREV);
 	}
 	return 1;
 }
@@ -1402,7 +1440,7 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 {
 	struct grab_1st_switch_cbdata cb;
 	struct commit *commit;
-	unsigned char sha1[20];
+	struct object_id oid;
 	char *ref = NULL;
 
 	strbuf_init(&cb.buf, 0);
@@ -1411,22 +1449,22 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 		return;
 	}
 
-	if (dwim_ref(cb.buf.buf, cb.buf.len, sha1, &ref) == 1 &&
+	if (dwim_ref(cb.buf.buf, cb.buf.len, oid.hash, &ref) == 1 &&
 	    /* sha1 is a commit? match without further lookup */
-	    (!hashcmp(cb.nsha1, sha1) ||
+	    (!oidcmp(&cb.noid, &oid) ||
 	     /* perhaps sha1 is a tag, try to dereference to a commit */
-	     ((commit = lookup_commit_reference_gently(sha1, 1)) != NULL &&
-	      !hashcmp(cb.nsha1, commit->object.oid.hash)))) {
+	     ((commit = lookup_commit_reference_gently(&oid, 1)) != NULL &&
+	      !oidcmp(&cb.noid, &commit->object.oid)))) {
 		const char *from = ref;
 		if (!skip_prefix(from, "refs/tags/", &from))
 			skip_prefix(from, "refs/remotes/", &from);
 		state->detached_from = xstrdup(from);
 	} else
 		state->detached_from =
-			xstrdup(find_unique_abbrev(cb.nsha1, DEFAULT_ABBREV));
-	hashcpy(state->detached_sha1, cb.nsha1);
-	state->detached_at = !get_sha1("HEAD", sha1) &&
-			     !hashcmp(sha1, state->detached_sha1);
+			xstrdup(find_unique_abbrev(cb.noid.hash, DEFAULT_ABBREV));
+	hashcpy(state->detached_sha1, cb.noid.hash);
+	state->detached_at = !get_oid("HEAD", &oid) &&
+			     !hashcmp(oid.hash, state->detached_sha1);
 
 	free(ref);
 	strbuf_release(&cb.buf);
@@ -1476,22 +1514,22 @@ void wt_status_get_state(struct wt_status_state *state,
 			 int get_detached_from)
 {
 	struct stat st;
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	if (!stat(git_path_merge_head(), &st)) {
 		state->merge_in_progress = 1;
 	} else if (wt_status_check_rebase(NULL, state)) {
 		;		/* all set */
 	} else if (!stat(git_path_cherry_pick_head(), &st) &&
-			!get_sha1("CHERRY_PICK_HEAD", sha1)) {
+			!get_oid("CHERRY_PICK_HEAD", &oid)) {
 		state->cherry_pick_in_progress = 1;
-		hashcpy(state->cherry_pick_head_sha1, sha1);
+		hashcpy(state->cherry_pick_head_sha1, oid.hash);
 	}
 	wt_status_check_bisect(NULL, state);
 	if (!stat(git_path_revert_head(), &st) &&
-	    !get_sha1("REVERT_HEAD", sha1)) {
+	    !get_oid("REVERT_HEAD", &oid)) {
 		state->revert_in_progress = 1;
-		hashcpy(state->revert_head_sha1, sha1);
+		hashcpy(state->revert_head_sha1, oid.hash);
 	}
 
 	if (get_detached_from)
@@ -1563,7 +1601,10 @@ static void wt_longstatus_print(struct wt_status *s)
 
 	if (s->is_initial) {
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "%s", "");
-		status_printf_ln(s, color(WT_STATUS_HEADER, s), _("Initial commit"));
+		status_printf_ln(s, color(WT_STATUS_HEADER, s),
+				 s->commit_template
+				 ? _("Initial commit")
+				 : _("No commits yet"));
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "%s", "");
 	}
 
@@ -1626,6 +1667,8 @@ static void wt_longstatus_print(struct wt_status *s)
 		} else
 			printf(_("nothing to commit, working tree clean\n"));
 	}
+	if(s->show_stash)
+		wt_longstatus_print_stash_summary(s);
 }
 
 static void wt_shortstatus_unmerged(struct string_list_item *it,
@@ -1720,6 +1763,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	const char *branch_color_remote = color(WT_STATUS_REMOTE_BRANCH, s);
 
 	const char *base;
+	char *short_base;
 	const char *branch_name;
 	int num_ours, num_theirs;
 	int upstream_is_gone = 0;
@@ -1730,12 +1774,14 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		return;
 	branch_name = s->branch;
 
+#define LABEL(string) (s->no_gettext ? (string) : _(string))
+
 	if (s->is_initial)
-		color_fprintf(s->fp, header_color, _("Initial commit on "));
+		color_fprintf(s->fp, header_color, LABEL(N_("No commits yet on ")));
 
 	if (!strcmp(s->branch, "HEAD")) {
 		color_fprintf(s->fp, color(WT_STATUS_NOBRANCH, s), "%s",
-			      _("HEAD (no branch)"));
+			      LABEL(N_("HEAD (no branch)")));
 		goto conclude;
 	}
 
@@ -1752,15 +1798,13 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		upstream_is_gone = 1;
 	}
 
-	base = shorten_unambiguous_ref(base, 0);
+	short_base = shorten_unambiguous_ref(base, 0);
 	color_fprintf(s->fp, header_color, "...");
-	color_fprintf(s->fp, branch_color_remote, "%s", base);
-	free((char *)base);
+	color_fprintf(s->fp, branch_color_remote, "%s", short_base);
+	free(short_base);
 
 	if (!upstream_is_gone && !num_ours && !num_theirs)
 		goto conclude;
-
-#define LABEL(string) (s->no_gettext ? (string) : _(string))
 
 	color_fprintf(s->fp, header_color, " [");
 	if (upstream_is_gone) {
@@ -1785,34 +1829,24 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 static void wt_shortstatus_print(struct wt_status *s)
 {
-	int i;
+	struct string_list_item *it;
 
 	if (s->show_branch)
 		wt_shortstatus_print_tracking(s);
 
-	for (i = 0; i < s->change.nr; i++) {
-		struct wt_status_change_data *d;
-		struct string_list_item *it;
+	for_each_string_list_item(it, &s->change) {
+		struct wt_status_change_data *d = it->util;
 
-		it = &(s->change.items[i]);
-		d = it->util;
 		if (d->stagemask)
 			wt_shortstatus_unmerged(it, s);
 		else
 			wt_shortstatus_status(it, s);
 	}
-	for (i = 0; i < s->untracked.nr; i++) {
-		struct string_list_item *it;
-
-		it = &(s->untracked.items[i]);
+	for_each_string_list_item(it, &s->untracked)
 		wt_shortstatus_other(it, s, "??");
-	}
-	for (i = 0; i < s->ignored.nr; i++) {
-		struct string_list_item *it;
 
-		it = &(s->ignored.items[i]);
+	for_each_string_list_item(it, &s->ignored)
 		wt_shortstatus_other(it, s, "!!");
-	}
 }
 
 static void wt_porcelain_print(struct wt_status *s)

@@ -663,7 +663,7 @@ test_expect_success 'stash apply shows status same as git status (relative to cu
 		sane_unset GIT_MERGE_VERBOSITY &&
 		git stash apply
 	) |
-	sed -e 1,2d >actual && # drop "Saved..." and "HEAD is now..."
+	sed -e 1d >actual && # drop "Saved..."
 	test_i18ncmp expect actual
 '
 
@@ -812,6 +812,22 @@ test_expect_success 'stash -- <pathspec> stashes and restores the file' '
 	test_path_is_file bar
 '
 
+test_expect_success 'stash -- <pathspec> stashes in subdirectory' '
+	mkdir sub &&
+	>foo &&
+	>bar &&
+	git add foo bar &&
+	(
+		cd sub &&
+		git stash push -- ../foo
+	) &&
+	test_path_is_file bar &&
+	test_path_is_missing foo &&
+	git stash pop &&
+	test_path_is_file foo &&
+	test_path_is_file bar
+'
+
 test_expect_success 'stash with multiple pathspec arguments' '
 	>foo &&
 	>bar &&
@@ -865,7 +881,7 @@ test_expect_success 'stash push -p with pathspec shows no changes only once' '
 	git stash push -p foo >actual &&
 	echo "No local changes to save" >expect &&
 	git reset --hard HEAD~ &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'stash push with pathspec shows no changes when there are none' '
@@ -875,7 +891,7 @@ test_expect_success 'stash push with pathspec shows no changes when there are no
 	git stash push foo >actual &&
 	echo "No local changes to save" >expect &&
 	git reset --hard HEAD~ &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'stash push with pathspec not in the repository errors out' '
@@ -905,6 +921,20 @@ test_expect_success 'stash without verb with pathspec' '
 	test_path_is_file "foo bar" &&
 	test_path_is_file foo &&
 	test_path_is_file bar
+'
+
+test_expect_success 'stash -k -- <pathspec> leaves unstaged files intact' '
+	git reset &&
+	>foo &&
+	>bar &&
+	git add foo bar &&
+	git commit -m "test" &&
+	echo "foo" >foo &&
+	echo "bar" >bar &&
+	git stash -k -- foo &&
+	test "",bar = $(cat foo),$(cat bar) &&
+	git stash pop &&
+	test foo,bar = $(cat foo),$(cat bar)
 '
 
 test_done

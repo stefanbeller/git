@@ -112,28 +112,6 @@ enum peel_status {
 enum peel_status peel_object(const unsigned char *name, unsigned char *sha1);
 
 /*
- * Return 0 if a reference named refname could be created without
- * conflicting with the name of an existing reference. Otherwise,
- * return a negative value and write an explanation to err. If extras
- * is non-NULL, it is a list of additional refnames with which refname
- * is not allowed to conflict. If skip is non-NULL, ignore potential
- * conflicts with refs in skip (e.g., because they are scheduled for
- * deletion in the same operation). Behavior is undefined if the same
- * name is listed in both extras and skip.
- *
- * Two reference names conflict if one of them exactly matches the
- * leading components of the other; e.g., "foo/bar" conflicts with
- * both "foo" and with "foo/bar/baz" but not with "foo/bar" or
- * "foo/barbados".
- *
- * extras and skip must be sorted.
- */
-int verify_refname_available(const char *newname,
-			     const struct string_list *extras,
-			     const struct string_list *skip,
-			     struct strbuf *err);
-
-/*
  * Copy the reflog message msg to buf, which has been allocated sufficiently
  * large, while cleaning up the whitespaces.  Especially, convert LF to space,
  * because reflog file is one line per entry.
@@ -152,13 +130,13 @@ struct ref_update {
 	/*
 	 * If (flags & REF_HAVE_NEW), set the reference to this value:
 	 */
-	unsigned char new_sha1[20];
+	struct object_id new_oid;
 
 	/*
 	 * If (flags & REF_HAVE_OLD), check that the reference
 	 * previously had this value:
 	 */
-	unsigned char old_sha1[20];
+	struct object_id old_oid;
 
 	/*
 	 * One or more of REF_HAVE_NEW, REF_HAVE_OLD, REF_NODEREF,
@@ -187,6 +165,18 @@ struct ref_update {
 	const char refname[FLEX_ARRAY];
 };
 
+int refs_read_raw_ref(struct ref_store *ref_store,
+		      const char *refname, unsigned char *sha1,
+		      struct strbuf *referent, unsigned int *type);
+
+/*
+ * Write an error to `err` and return a nonzero value iff the same
+ * refname appears multiple times in `refnames`. `refnames` must be
+ * sorted on entry to this function.
+ */
+int ref_update_reject_duplicates(struct string_list *refnames,
+				 struct strbuf *err);
+
 /*
  * Add a ref_update with the specified properties to transaction, and
  * return a pointer to the new object. This function does not verify
@@ -203,17 +193,27 @@ struct ref_update *ref_transaction_add_update(
 
 /*
  * Transaction states.
- * OPEN:   The transaction is in a valid state and can accept new updates.
- *         An OPEN transaction can be committed.
- * CLOSED: A closed transaction is no longer active and no other operations
- *         than free can be used on it in this state.
- *         A transaction can either become closed by successfully committing
- *         an active transaction or if there is a failure while building
- *         the transaction thus rendering it failed/inactive.
+ *
+ * OPEN:   The transaction is initialized and new updates can still be
+ *         added to it. An OPEN transaction can be prepared,
+ *         committed, freed, or aborted (freeing and aborting an open
+ *         transaction are equivalent).
+ *
+ * PREPARED: ref_transaction_prepare(), which locks all of the
+ *         references involved in the update and checks that the
+ *         update has no errors, has been called successfully for the
+ *         transaction. A PREPARED transaction can be committed or
+ *         aborted.
+ *
+ * CLOSED: The transaction is no longer active. A transaction becomes
+ *         CLOSED if there is a failure while building the transaction
+ *         or if a transaction is committed or aborted. A CLOSED
+ *         transaction can only be freed.
  */
 enum ref_transaction_state {
-	REF_TRANSACTION_OPEN   = 0,
-	REF_TRANSACTION_CLOSED = 1
+	REF_TRANSACTION_OPEN     = 0,
+	REF_TRANSACTION_PREPARED = 1,
+	REF_TRANSACTION_CLOSED   = 2
 };
 
 /*
@@ -222,15 +222,12 @@ enum ref_transaction_state {
  * as atomically as possible.  This structure is opaque to callers.
  */
 struct ref_transaction {
+	struct ref_store *ref_store;
 	struct ref_update **updates;
 	size_t alloc;
 	size_t nr;
 	enum ref_transaction_state state;
 };
-
-int files_log_ref_write(const char *refname, const unsigned char *old_sha1,
-			const unsigned char *new_sha1, const char *msg,
-			int flags, struct strbuf *err);
 
 /*
  * Check for entries in extras that are within the specified
@@ -256,7 +253,9 @@ const char *find_descendant_ref(const char *dirname,
  * processes (though rename_ref() catches some races that might get by
  * this check).
  */
-int rename_ref_available(const char *old_refname, const char *new_refname);
+int refs_rename_ref_available(struct ref_store *refs,
+			      const char *old_refname,
+			      const char *new_refname);
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define SYMREF_MAXDEPTH 5
@@ -353,6 +352,17 @@ struct ref_iterator *empty_ref_iterator_begin(void);
  * Return true iff ref_iterator is an empty_ref_iterator.
  */
 int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
+
+/*
+ * Return an iterator that goes over each reference in `refs` for
+ * which the refname begins with prefix. If trim is non-zero, then
+ * trim that many characters off the beginning of each refname. flags
+ * can be DO_FOR_EACH_INCLUDE_BROKEN to include broken references in
+ * the iteration.
+ */
+struct ref_iterator *refs_ref_iterator_begin(
+		struct ref_store *refs,
+		const char *prefix, int trim, int flags);
 
 /*
  * A callback function used to instruct merge_ref_iterator how to
@@ -485,15 +495,37 @@ struct ref_store;
 
 /* refs backends */
 
+/* ref_store_init flags */
+#define REF_STORE_READ		(1 << 0)
+#define REF_STORE_WRITE		(1 << 1) /* can perform update operations */
+#define REF_STORE_ODB		(1 << 2) /* has access to object database */
+#define REF_STORE_MAIN		(1 << 3)
+#define REF_STORE_ALL_CAPS	(REF_STORE_READ | \
+				 REF_STORE_WRITE | \
+				 REF_STORE_ODB | \
+				 REF_STORE_MAIN)
+
 /*
- * Initialize the ref_store for the specified submodule, or for the
- * main repository if submodule == NULL. These functions should call
- * base_ref_store_init() to initialize the shared part of the
- * ref_store and to record the ref_store for later lookup.
+ * Initialize the ref_store for the specified gitdir. These functions
+ * should call base_ref_store_init() to initialize the shared part of
+ * the ref_store and to record the ref_store for later lookup.
  */
-typedef struct ref_store *ref_store_init_fn(const char *submodule);
+typedef struct ref_store *ref_store_init_fn(const char *gitdir,
+					    unsigned int flags);
 
 typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
+
+typedef int ref_transaction_prepare_fn(struct ref_store *refs,
+				       struct ref_transaction *transaction,
+				       struct strbuf *err);
+
+typedef int ref_transaction_finish_fn(struct ref_store *refs,
+				      struct ref_transaction *transaction,
+				      struct strbuf *err);
+
+typedef int ref_transaction_abort_fn(struct ref_store *refs,
+				     struct ref_transaction *transaction,
+				     struct strbuf *err);
 
 typedef int ref_transaction_commit_fn(struct ref_store *refs,
 				      struct ref_transaction *transaction,
@@ -506,16 +538,17 @@ typedef int create_symref_fn(struct ref_store *ref_store,
 			     const char *ref_target,
 			     const char *refs_heads_master,
 			     const char *logmsg);
-typedef int delete_refs_fn(struct ref_store *ref_store,
+typedef int delete_refs_fn(struct ref_store *ref_store, const char *msg,
 			   struct string_list *refnames, unsigned int flags);
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
 
 /*
- * Iterate over the references in the specified ref_store that are
- * within find_containing_dir(prefix). If prefix is NULL or the empty
- * string, iterate over all references in the submodule.
+ * Iterate over the references in `ref_store` whose names start with
+ * `prefix`. `prefix` is matched as a literal string, without regard
+ * for path separators. If prefix is NULL or the empty string, iterate
+ * over all references in `ref_store`.
  */
 typedef struct ref_iterator *ref_iterator_begin_fn(
 		struct ref_store *ref_store,
@@ -592,18 +625,15 @@ typedef int read_raw_ref_fn(struct ref_store *ref_store,
 			    const char *refname, unsigned char *sha1,
 			    struct strbuf *referent, unsigned int *type);
 
-typedef int verify_refname_available_fn(struct ref_store *ref_store,
-					const char *newname,
-					const struct string_list *extras,
-					const struct string_list *skip,
-					struct strbuf *err);
-
 struct ref_storage_be {
 	struct ref_storage_be *next;
 	const char *name;
 	ref_store_init_fn *init;
 	ref_init_db_fn *init_db;
-	ref_transaction_commit_fn *transaction_commit;
+
+	ref_transaction_prepare_fn *transaction_prepare;
+	ref_transaction_finish_fn *transaction_finish;
+	ref_transaction_abort_fn *transaction_abort;
 	ref_transaction_commit_fn *initial_transaction_commit;
 
 	pack_refs_fn *pack_refs;
@@ -614,7 +644,6 @@ struct ref_storage_be {
 
 	ref_iterator_begin_fn *iterator_begin;
 	read_raw_ref_fn *read_raw_ref;
-	verify_refname_available_fn *verify_refname_available;
 
 	reflog_iterator_begin_fn *reflog_iterator_begin;
 	for_each_reflog_ent_fn *for_each_reflog_ent;
@@ -643,22 +672,5 @@ struct ref_store {
  */
 void base_ref_store_init(struct ref_store *refs,
 			 const struct ref_storage_be *be);
-
-/*
- * Return the ref_store instance for the specified submodule. For the
- * main repository, use submodule==NULL; such a call cannot fail. For
- * a submodule, the submodule must exist and be a nonbare repository,
- * otherwise return NULL. If the requested reference store has not yet
- * been initialized, initialize it first.
- *
- * For backwards compatibility, submodule=="" is treated the same as
- * submodule==NULL.
- */
-struct ref_store *get_ref_store(const char *submodule);
-
-const char *resolve_ref_recursively(struct ref_store *refs,
-				    const char *refname,
-				    int resolve_flags,
-				    unsigned char *sha1, int *flags);
 
 #endif /* REFS_REFS_INTERNAL_H */

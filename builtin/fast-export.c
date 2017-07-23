@@ -5,6 +5,7 @@
  */
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "commit.h"
 #include "object.h"
@@ -92,8 +93,9 @@ struct anonymized_entry {
 	size_t anon_len;
 };
 
-static int anonymized_entry_cmp(const void *va, const void *vb,
-				const void *data)
+static int anonymized_entry_cmp(const void *unused_cmp_data,
+				const void *va, const void *vb,
+				const void *unused_keydata)
 {
 	const struct anonymized_entry *a = va, *b = vb;
 	return a->orig_len != b->orig_len ||
@@ -112,7 +114,7 @@ static const void *anonymize_mem(struct hashmap *map,
 	struct anonymized_entry key, *ret;
 
 	if (!map->cmpfn)
-		hashmap_init(map, anonymized_entry_cmp, 0);
+		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
 
 	hashmap_entry_init(&key, memhash(orig, *len));
 	key.orig = orig;
@@ -212,7 +214,7 @@ static char *anonymize_blob(unsigned long *size)
 	return strbuf_detach(&out, NULL);
 }
 
-static void export_blob(const unsigned char *sha1)
+static void export_blob(const struct object_id *oid)
 {
 	unsigned long size;
 	enum object_type type;
@@ -223,34 +225,34 @@ static void export_blob(const unsigned char *sha1)
 	if (no_data)
 		return;
 
-	if (is_null_sha1(sha1))
+	if (is_null_oid(oid))
 		return;
 
-	object = lookup_object(sha1);
+	object = lookup_object(oid->hash);
 	if (object && object->flags & SHOWN)
 		return;
 
 	if (anonymize) {
 		buf = anonymize_blob(&size);
-		object = (struct object *)lookup_blob(sha1);
+		object = (struct object *)lookup_blob(oid);
 		eaten = 0;
 	} else {
-		buf = read_sha1_file(sha1, &type, &size);
+		buf = read_sha1_file(oid->hash, &type, &size);
 		if (!buf)
-			die ("Could not read blob %s", sha1_to_hex(sha1));
-		if (check_sha1_signature(sha1, buf, size, typename(type)) < 0)
-			die("sha1 mismatch in blob %s", sha1_to_hex(sha1));
-		object = parse_object_buffer(sha1, type, size, buf, &eaten);
+			die ("Could not read blob %s", oid_to_hex(oid));
+		if (check_sha1_signature(oid->hash, buf, size, typename(type)) < 0)
+			die("sha1 mismatch in blob %s", oid_to_hex(oid));
+		object = parse_object_buffer(oid, type, size, buf, &eaten);
 	}
 
 	if (!object)
-		die("Could not read blob %s", sha1_to_hex(sha1));
+		die("Could not read blob %s", oid_to_hex(oid));
 
 	mark_next_object(object);
 
 	printf("blob\nmark :%"PRIu32"\ndata %lu\n", last_idnum, size);
 	if (size && fwrite(buf, size, 1, stdout) != 1)
-		die_errno ("Could not write blob '%s'", sha1_to_hex(sha1));
+		die_errno ("Could not write blob '%s'", oid_to_hex(oid));
 	printf("\n");
 
 	show_progress();
@@ -323,19 +325,19 @@ static void print_path(const char *path)
 	}
 }
 
-static void *generate_fake_sha1(const void *old, size_t *len)
+static void *generate_fake_oid(const void *old, size_t *len)
 {
 	static uint32_t counter = 1; /* avoid null sha1 */
-	unsigned char *out = xcalloc(20, 1);
-	put_be32(out + 16, counter++);
+	unsigned char *out = xcalloc(GIT_SHA1_RAWSZ, 1);
+	put_be32(out + GIT_SHA1_RAWSZ - 4, counter++);
 	return out;
 }
 
-static const unsigned char *anonymize_sha1(const unsigned char *sha1)
+static const unsigned char *anonymize_sha1(const struct object_id *oid)
 {
 	static struct hashmap sha1s;
-	size_t len = 20;
-	return anonymize_mem(&sha1s, generate_fake_sha1, sha1, &len);
+	size_t len = GIT_SHA1_RAWSZ;
+	return anonymize_mem(&sha1s, generate_fake_oid, oid, &len);
 }
 
 static void show_filemodify(struct diff_queue_struct *q,
@@ -383,7 +385,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 			if (no_data || S_ISGITLINK(spec->mode))
 				printf("M %06o %s ", spec->mode,
 				       sha1_to_hex(anonymize ?
-						   anonymize_sha1(spec->oid.hash) :
+						   anonymize_sha1(&spec->oid) :
 						   spec->oid.hash));
 			else {
 				struct object *object = lookup_object(spec->oid.hash);
@@ -562,17 +564,17 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	    get_object_mark(&commit->parents->item->object) != 0 &&
 	    !full_tree) {
 		parse_commit_or_die(commit->parents->item);
-		diff_tree_sha1(commit->parents->item->tree->object.oid.hash,
-			       commit->tree->object.oid.hash, "", &rev->diffopt);
+		diff_tree_oid(&commit->parents->item->tree->object.oid,
+			      &commit->tree->object.oid, "", &rev->diffopt);
 	}
 	else
-		diff_root_tree_sha1(commit->tree->object.oid.hash,
-				    "", &rev->diffopt);
+		diff_root_tree_oid(&commit->tree->object.oid,
+				   "", &rev->diffopt);
 
 	/* Export the referenced blobs, and remember the marks. */
 	for (i = 0; i < diff_queued_diff.nr; i++)
 		if (!S_ISGITLINK(diff_queued_diff.queue[i]->two->mode))
-			export_blob(diff_queued_diff.queue[i]->two->oid.hash);
+			export_blob(&diff_queued_diff.queue[i]->two->oid);
 
 	refname = commit->util;
 	if (anonymize) {
@@ -734,6 +736,7 @@ static void handle_tag(const char *name, struct tag *tag)
 			     oid_to_hex(&tag->object.oid));
 		case DROP:
 			/* Ignore this tag altogether */
+			free(buf);
 			return;
 		case REWRITE:
 			if (tagged->type != OBJ_COMMIT) {
@@ -765,6 +768,7 @@ static void handle_tag(const char *name, struct tag *tag)
 	       (int)(tagger_end - tagger), tagger,
 	       tagger == tagger_end ? "" : "\n",
 	       (int)message_size, (int)message_size, message ? message : "");
+	free(buf);
 }
 
 static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
@@ -777,7 +781,7 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 
 		/* handle nested tags */
 		while (tag && tag->object.type == OBJ_TAG) {
-			parse_object(tag->object.oid.hash);
+			parse_object(&tag->object.oid);
 			string_list_append(&extra_refs, full_name)->util = tag;
 			tag = (struct tag *)tag->tagged;
 		}
@@ -797,14 +801,14 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 
 	for (i = 0; i < info->nr; i++) {
 		struct rev_cmdline_entry *e = info->rev + i;
-		unsigned char sha1[20];
+		struct object_id oid;
 		struct commit *commit;
 		char *full_name;
 
 		if (e->flags & UNINTERESTING)
 			continue;
 
-		if (dwim_ref(e->name, strlen(e->name), sha1, &full_name) != 1)
+		if (dwim_ref(e->name, strlen(e->name), oid.hash, &full_name) != 1)
 			continue;
 
 		if (refspecs) {
@@ -828,7 +832,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		case OBJ_COMMIT:
 			break;
 		case OBJ_BLOB:
-			export_blob(commit->object.oid.hash);
+			export_blob(&commit->object.oid);
 			continue;
 		default: /* OBJ_TAG (nested tags) is already handled */
 			warning("Tag points to object of unexpected type %s, skipping.",
@@ -905,14 +909,12 @@ static void export_marks(char *file)
 static void import_marks(char *input_file)
 {
 	char line[512];
-	FILE *f = fopen(input_file, "r");
-	if (!f)
-		die_errno("cannot read '%s'", input_file);
+	FILE *f = xfopen(input_file, "r");
 
 	while (fgets(line, sizeof(line), f)) {
 		uint32_t mark;
 		char *line_end, *mark_end;
-		unsigned char sha1[20];
+		struct object_id oid;
 		struct object *object;
 		struct commit *commit;
 		enum object_type type;
@@ -924,28 +926,28 @@ static void import_marks(char *input_file)
 
 		mark = strtoumax(line + 1, &mark_end, 10);
 		if (!mark || mark_end == line + 1
-			|| *mark_end != ' ' || get_sha1_hex(mark_end + 1, sha1))
+			|| *mark_end != ' ' || get_oid_hex(mark_end + 1, &oid))
 			die("corrupt mark line: %s", line);
 
 		if (last_idnum < mark)
 			last_idnum = mark;
 
-		type = sha1_object_info(sha1, NULL);
+		type = sha1_object_info(oid.hash, NULL);
 		if (type < 0)
-			die("object not found: %s", sha1_to_hex(sha1));
+			die("object not found: %s", oid_to_hex(&oid));
 
 		if (type != OBJ_COMMIT)
 			/* only commits */
 			continue;
 
-		commit = lookup_commit(sha1);
+		commit = lookup_commit(&oid);
 		if (!commit)
-			die("not a commit? can't happen: %s", sha1_to_hex(sha1));
+			die("not a commit? can't happen: %s", oid_to_hex(&oid));
 
 		object = &commit->object;
 
 		if (object->flags & SHOWN)
-			error("Object %s already has a mark", sha1_to_hex(sha1));
+			error("Object %s already has a mark", oid_to_hex(&oid));
 
 		mark_object(object, mark);
 

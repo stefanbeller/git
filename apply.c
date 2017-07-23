@@ -8,6 +8,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "blob.h"
 #include "delta.h"
 #include "diff.h"
@@ -210,6 +211,7 @@ struct patch {
 	unsigned ws_rule;
 	int lines_added, lines_deleted;
 	int score;
+	int extension_linenr; /* first line specifying delete/new/rename/copy */
 	unsigned int is_toplevel_relative:1;
 	unsigned int inaccurate_eof:1;
 	unsigned int is_binary:1;
@@ -762,17 +764,6 @@ static char *find_name_traditional(struct apply_state *state,
 	return find_name_common(state, line, def, p_value, line + len, 0);
 }
 
-static int count_slashes(const char *cp)
-{
-	int cnt = 0;
-	char ch;
-
-	while ((ch = *cp++))
-		if (ch == '/')
-			cnt++;
-	return cnt;
-}
-
 /*
  * Given the string after "--- " or "+++ ", guess the appropriate
  * p_value for the given patch.
@@ -971,13 +962,12 @@ static int gitdiff_verify_name(struct apply_state *state,
 	}
 
 	if (*name) {
-		int len = strlen(*name);
 		char *another;
 		if (isnull)
 			return error(_("git apply: bad git-diff - expected /dev/null, got %s on line %d"),
 				     *name, state->linenr);
 		another = find_name(state, line, NULL, state->p_value, TERM_TAB);
-		if (!another || memcmp(another, *name, len + 1)) {
+		if (!another || strcmp(another, *name)) {
 			free(another);
 			return error((side == DIFF_NEW_NAME) ?
 			    _("git apply: bad git-diff - inconsistent new filename on line %d") :
@@ -985,8 +975,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 		}
 		free(another);
 	} else {
-		/* expect "/dev/null" */
-		if (memcmp("/dev/null", line, 9) || line[9] != '\n')
+		if (!starts_with(line, "/dev/null\n"))
 			return error(_("git apply: bad git-diff - expected /dev/null on line %d"), state->linenr);
 	}
 
@@ -1011,20 +1000,27 @@ static int gitdiff_newname(struct apply_state *state,
 				   DIFF_NEW_NAME);
 }
 
+static int parse_mode_line(const char *line, int linenr, unsigned int *mode)
+{
+	char *end;
+	*mode = strtoul(line, &end, 8);
+	if (end == line || !isspace(*end))
+		return error(_("invalid mode on line %d: %s"), linenr, line);
+	return 0;
+}
+
 static int gitdiff_oldmode(struct apply_state *state,
 			   const char *line,
 			   struct patch *patch)
 {
-	patch->old_mode = strtoul(line, NULL, 8);
-	return 0;
+	return parse_mode_line(line, state->linenr, &patch->old_mode);
 }
 
 static int gitdiff_newmode(struct apply_state *state,
 			   const char *line,
 			   struct patch *patch)
 {
-	patch->new_mode = strtoul(line, NULL, 8);
-	return 0;
+	return parse_mode_line(line, state->linenr, &patch->new_mode);
 }
 
 static int gitdiff_delete(struct apply_state *state,
@@ -1138,7 +1134,7 @@ static int gitdiff_index(struct apply_state *state,
 	memcpy(patch->new_sha1_prefix, line, len);
 	patch->new_sha1_prefix[len] = 0;
 	if (*ptr == ' ')
-		patch->old_mode = strtoul(ptr+1, NULL, 8);
+		return gitdiff_oldmode(state, ptr + 1, patch);
 	return 0;
 }
 
@@ -1322,6 +1318,18 @@ static char *git_header_name(struct apply_state *state,
 	}
 }
 
+static int check_header_line(struct apply_state *state, struct patch *patch)
+{
+	int extensions = (patch->is_delete == 1) + (patch->is_new == 1) +
+			 (patch->is_rename == 1) + (patch->is_copy == 1);
+	if (extensions > 1)
+		return error(_("inconsistent header lines %d and %d"),
+			     patch->extension_linenr, state->linenr);
+	if (extensions && !patch->extension_linenr)
+		patch->extension_linenr = state->linenr;
+	return 0;
+}
+
 /* Verify that we recognize the lines following a git header */
 static int parse_git_header(struct apply_state *state,
 			    const char *line,
@@ -1387,6 +1395,8 @@ static int parse_git_header(struct apply_state *state,
 				continue;
 			res = p->fn(state, line + oplen, patch);
 			if (res < 0)
+				return -1;
+			if (check_header_line(state, patch))
 				return -1;
 			if (res > 0)
 				return offset;
@@ -1585,7 +1595,8 @@ static int find_header(struct apply_state *state,
 				patch->old_name = xstrdup(patch->def_name);
 				patch->new_name = xstrdup(patch->def_name);
 			}
-			if (!patch->is_delete && !patch->new_name) {
+			if ((!patch->new_name && !patch->is_delete) ||
+			    (!patch->old_name && !patch->is_new)) {
 				error(_("git diff header lacks filename information "
 					     "(line %d)"), state->linenr);
 				return -128;
@@ -2046,7 +2057,7 @@ static void prefix_one(struct apply_state *state, char **name)
 	char *old_name = *name;
 	if (!old_name)
 		return;
-	*name = xstrdup(prefix_filename(state->prefix, state->prefix_length, *name));
+	*name = prefix_filename(state->prefix, *name);
 	free(old_name);
 }
 
@@ -2088,7 +2099,7 @@ static int use_patch(struct apply_state *state, struct patch *p)
 	/* See if it matches any of exclude/include rule */
 	for (i = 0; i < state->limit_by_name.nr; i++) {
 		struct string_list_item *it = &state->limit_by_name.items[i];
-		if (!wildmatch(it->string, pathname, 0, NULL))
+		if (!wildmatch(it->string, pathname, 0))
 			return (it->util != NULL);
 	}
 
@@ -2267,7 +2278,7 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 	case S_IFREG:
 		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
 			return error(_("unable to open or read %s"), path);
-		convert_to_git(path, buf->buf, buf->len, buf, 0);
+		convert_to_git(&the_index, path, buf->buf, buf->len, buf, 0);
 		return 0;
 	default:
 		return -1;
@@ -3705,8 +3716,7 @@ static int check_preimage(struct apply_state *state,
  is_new:
 	patch->is_new = 1;
 	patch->is_delete = 0;
-	free(patch->old_name);
-	patch->old_name = NULL;
+	FREE_AND_NULL(patch->old_name);
 	return 0;
 }
 
@@ -3741,7 +3751,7 @@ static int check_to_create(struct apply_state *state,
 			return 0;
 
 		return EXISTS_IN_WORKTREE;
-	} else if ((errno != ENOENT) && (errno != ENOTDIR)) {
+	} else if (!is_missing_file_error(errno)) {
 		return error_errno("%s", new_name);
 	}
 	return 0;
@@ -4091,181 +4101,181 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 	res = write_locked_index(&result, &lock, COMMIT_LOCK);
 	discard_index(&result);
 
-	 if (res)
-		 return error(_("could not write temporary index to %s"),
-			      state->fake_ancestor);
+	if (res)
+		return error(_("could not write temporary index to %s"),
+			     state->fake_ancestor);
 
-	 return 0;
- }
+	return 0;
+}
 
- static void stat_patch_list(struct apply_state *state, struct patch *patch)
- {
-	 int files, adds, dels;
+static void stat_patch_list(struct apply_state *state, struct patch *patch)
+{
+	int files, adds, dels;
 
-	 for (files = adds = dels = 0 ; patch ; patch = patch->next) {
-		 files++;
-		 adds += patch->lines_added;
-		 dels += patch->lines_deleted;
-		 show_stats(state, patch);
-	 }
+	for (files = adds = dels = 0 ; patch ; patch = patch->next) {
+		files++;
+		adds += patch->lines_added;
+		dels += patch->lines_deleted;
+		show_stats(state, patch);
+	}
 
-	 print_stat_summary(stdout, files, adds, dels);
- }
+	print_stat_summary(stdout, files, adds, dels);
+}
 
- static void numstat_patch_list(struct apply_state *state,
-				struct patch *patch)
- {
-	 for ( ; patch; patch = patch->next) {
-		 const char *name;
-		 name = patch->new_name ? patch->new_name : patch->old_name;
-		 if (patch->is_binary)
-			 printf("-\t-\t");
-		 else
-			 printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
-		 write_name_quoted(name, stdout, state->line_termination);
-	 }
- }
+static void numstat_patch_list(struct apply_state *state,
+			       struct patch *patch)
+{
+	for ( ; patch; patch = patch->next) {
+		const char *name;
+		name = patch->new_name ? patch->new_name : patch->old_name;
+		if (patch->is_binary)
+			printf("-\t-\t");
+		else
+			printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
+		write_name_quoted(name, stdout, state->line_termination);
+	}
+}
 
- static void show_file_mode_name(const char *newdelete, unsigned int mode, const char *name)
- {
-	 if (mode)
-		 printf(" %s mode %06o %s\n", newdelete, mode, name);
-	 else
-		 printf(" %s %s\n", newdelete, name);
- }
+static void show_file_mode_name(const char *newdelete, unsigned int mode, const char *name)
+{
+	if (mode)
+		printf(" %s mode %06o %s\n", newdelete, mode, name);
+	else
+		printf(" %s %s\n", newdelete, name);
+}
 
- static void show_mode_change(struct patch *p, int show_name)
- {
-	 if (p->old_mode && p->new_mode && p->old_mode != p->new_mode) {
-		 if (show_name)
-			 printf(" mode change %06o => %06o %s\n",
-				p->old_mode, p->new_mode, p->new_name);
-		 else
-			 printf(" mode change %06o => %06o\n",
-				p->old_mode, p->new_mode);
-	 }
- }
+static void show_mode_change(struct patch *p, int show_name)
+{
+	if (p->old_mode && p->new_mode && p->old_mode != p->new_mode) {
+		if (show_name)
+			printf(" mode change %06o => %06o %s\n",
+			       p->old_mode, p->new_mode, p->new_name);
+		else
+			printf(" mode change %06o => %06o\n",
+			       p->old_mode, p->new_mode);
+	}
+}
 
- static void show_rename_copy(struct patch *p)
- {
-	 const char *renamecopy = p->is_rename ? "rename" : "copy";
-	 const char *old, *new;
+static void show_rename_copy(struct patch *p)
+{
+	const char *renamecopy = p->is_rename ? "rename" : "copy";
+	const char *old, *new;
 
-	 /* Find common prefix */
-	 old = p->old_name;
-	 new = p->new_name;
-	 while (1) {
-		 const char *slash_old, *slash_new;
-		 slash_old = strchr(old, '/');
-		 slash_new = strchr(new, '/');
-		 if (!slash_old ||
-		     !slash_new ||
-		     slash_old - old != slash_new - new ||
-		     memcmp(old, new, slash_new - new))
-			 break;
-		 old = slash_old + 1;
-		 new = slash_new + 1;
-	 }
-	 /* p->old_name thru old is the common prefix, and old and new
-	  * through the end of names are renames
-	  */
-	 if (old != p->old_name)
-		 printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
-			(int)(old - p->old_name), p->old_name,
-			old, new, p->score);
-	 else
-		 printf(" %s %s => %s (%d%%)\n", renamecopy,
-			p->old_name, p->new_name, p->score);
-	 show_mode_change(p, 0);
- }
+	/* Find common prefix */
+	old = p->old_name;
+	new = p->new_name;
+	while (1) {
+		const char *slash_old, *slash_new;
+		slash_old = strchr(old, '/');
+		slash_new = strchr(new, '/');
+		if (!slash_old ||
+		    !slash_new ||
+		    slash_old - old != slash_new - new ||
+		    memcmp(old, new, slash_new - new))
+			break;
+		old = slash_old + 1;
+		new = slash_new + 1;
+	}
+	/* p->old_name thru old is the common prefix, and old and new
+	 * through the end of names are renames
+	 */
+	if (old != p->old_name)
+		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
+		       (int)(old - p->old_name), p->old_name,
+		       old, new, p->score);
+	else
+		printf(" %s %s => %s (%d%%)\n", renamecopy,
+		       p->old_name, p->new_name, p->score);
+	show_mode_change(p, 0);
+}
 
- static void summary_patch_list(struct patch *patch)
- {
-	 struct patch *p;
+static void summary_patch_list(struct patch *patch)
+{
+	struct patch *p;
 
-	 for (p = patch; p; p = p->next) {
-		 if (p->is_new)
-			 show_file_mode_name("create", p->new_mode, p->new_name);
-		 else if (p->is_delete)
-			 show_file_mode_name("delete", p->old_mode, p->old_name);
-		 else {
-			 if (p->is_rename || p->is_copy)
-				 show_rename_copy(p);
-			 else {
-				 if (p->score) {
-					 printf(" rewrite %s (%d%%)\n",
-						p->new_name, p->score);
-					 show_mode_change(p, 0);
-				 }
-				 else
-					 show_mode_change(p, 1);
-			 }
-		 }
-	 }
- }
+	for (p = patch; p; p = p->next) {
+		if (p->is_new)
+			show_file_mode_name("create", p->new_mode, p->new_name);
+		else if (p->is_delete)
+			show_file_mode_name("delete", p->old_mode, p->old_name);
+		else {
+			if (p->is_rename || p->is_copy)
+				show_rename_copy(p);
+			else {
+				if (p->score) {
+					printf(" rewrite %s (%d%%)\n",
+					       p->new_name, p->score);
+					show_mode_change(p, 0);
+				}
+				else
+					show_mode_change(p, 1);
+			}
+		}
+	}
+}
 
- static void patch_stats(struct apply_state *state, struct patch *patch)
- {
-	 int lines = patch->lines_added + patch->lines_deleted;
+static void patch_stats(struct apply_state *state, struct patch *patch)
+{
+	int lines = patch->lines_added + patch->lines_deleted;
 
-	 if (lines > state->max_change)
-		 state->max_change = lines;
-	 if (patch->old_name) {
-		 int len = quote_c_style(patch->old_name, NULL, NULL, 0);
-		 if (!len)
-			 len = strlen(patch->old_name);
-		 if (len > state->max_len)
-			 state->max_len = len;
-	 }
-	 if (patch->new_name) {
-		 int len = quote_c_style(patch->new_name, NULL, NULL, 0);
-		 if (!len)
-			 len = strlen(patch->new_name);
-		 if (len > state->max_len)
-			 state->max_len = len;
-	 }
- }
+	if (lines > state->max_change)
+		state->max_change = lines;
+	if (patch->old_name) {
+		int len = quote_c_style(patch->old_name, NULL, NULL, 0);
+		if (!len)
+			len = strlen(patch->old_name);
+		if (len > state->max_len)
+			state->max_len = len;
+	}
+	if (patch->new_name) {
+		int len = quote_c_style(patch->new_name, NULL, NULL, 0);
+		if (!len)
+			len = strlen(patch->new_name);
+		if (len > state->max_len)
+			state->max_len = len;
+	}
+}
 
- static int remove_file(struct apply_state *state, struct patch *patch, int rmdir_empty)
- {
-	 if (state->update_index) {
-		 if (remove_file_from_cache(patch->old_name) < 0)
-			 return error(_("unable to remove %s from index"), patch->old_name);
-	 }
-	 if (!state->cached) {
-		 if (!remove_or_warn(patch->old_mode, patch->old_name) && rmdir_empty) {
-			 remove_path(patch->old_name);
-		 }
-	 }
-	 return 0;
- }
+static int remove_file(struct apply_state *state, struct patch *patch, int rmdir_empty)
+{
+	if (state->update_index) {
+		if (remove_file_from_cache(patch->old_name) < 0)
+			return error(_("unable to remove %s from index"), patch->old_name);
+	}
+	if (!state->cached) {
+		if (!remove_or_warn(patch->old_mode, patch->old_name) && rmdir_empty) {
+			remove_path(patch->old_name);
+		}
+	}
+	return 0;
+}
 
- static int add_index_file(struct apply_state *state,
-			   const char *path,
-			   unsigned mode,
-			   void *buf,
-			   unsigned long size)
- {
-	 struct stat st;
-	 struct cache_entry *ce;
-	 int namelen = strlen(path);
-	 unsigned ce_size = cache_entry_size(namelen);
+static int add_index_file(struct apply_state *state,
+			  const char *path,
+			  unsigned mode,
+			  void *buf,
+			  unsigned long size)
+{
+	struct stat st;
+	struct cache_entry *ce;
+	int namelen = strlen(path);
+	unsigned ce_size = cache_entry_size(namelen);
 
-	 if (!state->update_index)
-		 return 0;
+	if (!state->update_index)
+		return 0;
 
-	 ce = xcalloc(1, ce_size);
-	 memcpy(ce->name, path, namelen);
-	 ce->ce_mode = create_ce_mode(mode);
-	 ce->ce_flags = create_ce_flags(0);
-	 ce->ce_namelen = namelen;
-	 if (S_ISGITLINK(mode)) {
-		 const char *s;
+	ce = xcalloc(1, ce_size);
+	memcpy(ce->name, path, namelen);
+	ce->ce_mode = create_ce_mode(mode);
+	ce->ce_flags = create_ce_flags(0);
+	ce->ce_namelen = namelen;
+	if (S_ISGITLINK(mode)) {
+		const char *s;
 
-		 if (!skip_prefix(buf, "Subproject commit ", &s) ||
-		     get_oid_hex(s, &ce->oid)) {
+		if (!skip_prefix(buf, "Subproject commit ", &s) ||
+		    get_oid_hex(s, &ce->oid)) {
 			free(ce);
-			return error(_("corrupt patch for submodule %s"), path);
+		       return error(_("corrupt patch for submodule %s"), path);
 		}
 	} else {
 		if (!state->cached) {
@@ -4805,6 +4815,7 @@ int apply_all_patches(struct apply_state *state,
 
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
+		char *to_free = NULL;
 		int fd;
 
 		if (!strcmp(arg, "-")) {
@@ -4814,21 +4825,21 @@ int apply_all_patches(struct apply_state *state,
 			errs |= res;
 			read_stdin = 0;
 			continue;
-		} else if (0 < state->prefix_length)
-			arg = prefix_filename(state->prefix,
-					      state->prefix_length,
-					      arg);
+		} else
+			arg = to_free = prefix_filename(state->prefix, arg);
 
 		fd = open(arg, O_RDONLY);
 		if (fd < 0) {
 			error(_("can't open patch '%s': %s"), arg, strerror(errno));
 			res = -128;
+			free(to_free);
 			goto end;
 		}
 		read_stdin = 0;
 		set_default_whitespace_mode(state);
 		res = apply_patch(state, fd, arg, options);
 		close(fd);
+		free(to_free);
 		if (res < 0)
 			goto end;
 		errs |= res;
