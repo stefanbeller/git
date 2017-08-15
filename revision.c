@@ -148,16 +148,14 @@ static void add_pending_object_with_path(struct rev_info *revs,
 	if (revs->reflog_info && obj->type == OBJ_COMMIT) {
 		struct strbuf buf = STRBUF_INIT;
 		int len = interpret_branch_name(name, 0, &buf, 0);
-		int st;
 
 		if (0 < len && name[len] && buf.len)
 			strbuf_addstr(&buf, name + len);
-		st = add_reflog_for_walk(revs->reflog_info,
-					 (struct commit *)obj,
-					 buf.buf[0] ? buf.buf: name);
+		add_reflog_for_walk(revs->reflog_info,
+				    (struct commit *)obj,
+				    buf.buf[0] ? buf.buf: name);
 		strbuf_release(&buf);
-		if (st)
-			return;
+		return; /* do not add the commit itself */
 	}
 	add_object_array_with_path(obj, name, &revs->pending, mode, path);
 }
@@ -1168,6 +1166,7 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 {
 	cb->all_revs = revs;
 	cb->all_flags = flags;
+	revs->rev_input_given = 1;
 }
 
 void clear_ref_exclusion(struct string_list **ref_excludes_p)
@@ -1303,7 +1302,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 		flags ^= UNINTERESTING | BOTTOM;
 		arg++;
 	}
-	if (get_sha1_committish(arg, oid.hash))
+	if (get_oid_committish(arg, &oid))
 		return 0;
 	while (1) {
 		it = get_reference(revs, arg, &oid, 0);
@@ -1452,7 +1451,7 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 	unsigned int a_flags, b_flags;
 	int symmetric = 0;
 	unsigned int flags_exclude = flags ^ (UNINTERESTING | BOTTOM);
-	unsigned int oc_flags = GET_SHA1_COMMITTISH | GET_SHA1_RECORD_PATH;
+	unsigned int oc_flags = GET_OID_COMMITTISH | GET_OID_RECORD_PATH;
 
 	a_name = arg;
 	if (!*a_name)
@@ -1466,8 +1465,8 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 	if (!*b_name)
 		b_name = "HEAD";
 
-	if (get_sha1_with_context(a_name, oc_flags, a_oid.hash, a_oc) ||
-	    get_sha1_with_context(b_name, oc_flags, b_oid.hash, b_oc))
+	if (get_oid_with_context(a_name, oc_flags, &a_oid, a_oc) ||
+	    get_oid_with_context(b_name, oc_flags, &b_oid, b_oc))
 		return -1;
 
 	if (!cant_be_filename) {
@@ -1548,7 +1547,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	int local_flags;
 	const char *arg = arg_;
 	int cant_be_filename = revarg_opt & REVARG_CANNOT_BE_FILENAME;
-	unsigned get_sha1_flags = GET_SHA1_RECORD_PATH;
+	unsigned get_sha1_flags = GET_OID_RECORD_PATH;
 
 	flags = flags & UNINTERESTING ? flags | BOTTOM : flags & ~BOTTOM;
 
@@ -1599,9 +1598,9 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	}
 
 	if (revarg_opt & REVARG_COMMITTISH)
-		get_sha1_flags |= GET_SHA1_COMMITTISH;
+		get_sha1_flags |= GET_OID_COMMITTISH;
 
-	if (get_sha1_with_context(arg, get_sha1_flags, oid.hash, &oc))
+	if (get_oid_with_context(arg, get_sha1_flags, &oid, &oc))
 		return revs->ignore_missing ? 0 : -1;
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
@@ -2315,11 +2314,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		opt->tweak(revs, opt);
 	if (revs->show_merge)
 		prepare_show_merge(revs);
-	if (revs->def && !revs->pending.nr && !got_rev_arg) {
+	if (revs->def && !revs->pending.nr && !revs->rev_input_given && !got_rev_arg) {
 		struct object_id oid;
 		struct object *object;
 		struct object_context oc;
-		if (get_sha1_with_context(revs->def, 0, oid.hash, &oc))
+		if (get_oid_with_context(revs->def, 0, &oid, &oc))
 			diagnose_missing_default(revs->def);
 		object = get_reference(revs, revs->def, &oid, 0);
 		add_pending_object_with_mode(revs, object, revs->def, oc.mode);
@@ -2364,6 +2363,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	if (revs->reverse && revs->reflog_info)
 		die("cannot combine --reverse with --walk-reflogs");
+	if (revs->reflog_info && revs->limited)
+		die("cannot combine --walk-reflogs with history-limiting options");
 	if (revs->rewrite_parents && revs->children.name)
 		die("cannot combine --parents and --children");
 
@@ -2963,6 +2964,18 @@ static inline int want_ancestry(const struct rev_info *revs)
 	return (revs->rewrite_parents || revs->children.name);
 }
 
+/*
+ * Return a timestamp to be used for --since/--until comparisons for this
+ * commit, based on the revision options.
+ */
+static timestamp_t comparison_date(const struct rev_info *revs,
+				   struct commit *commit)
+{
+	return revs->reflog_info ?
+		get_reflog_timestamp(revs->reflog_info) :
+		commit->date;
+}
+
 enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
@@ -2973,8 +2986,9 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 		return commit_show;
 	if (commit->object.flags & UNINTERESTING)
 		return commit_ignore;
-	if (revs->min_age != -1 && (commit->date > revs->min_age))
-		return commit_ignore;
+	if (revs->min_age != -1 &&
+	    comparison_date(revs, commit) > revs->min_age)
+			return commit_ignore;
 	if (revs->min_parents || (revs->max_parents >= 0)) {
 		int n = commit_list_count(commit->parents);
 		if ((n < revs->min_parents) ||
@@ -3107,17 +3121,19 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 
 static struct commit *get_revision_1(struct rev_info *revs)
 {
-	if (!revs->commits)
-		return NULL;
+	while (1) {
+		struct commit *commit;
 
-	do {
-		struct commit *commit = pop_commit(&revs->commits);
+		if (revs->reflog_info)
+			commit = next_reflog_entry(revs->reflog_info);
+		else
+			commit = pop_commit(&revs->commits);
 
-		if (revs->reflog_info) {
-			save_parents(revs, commit);
-			fake_reflog_parent(revs->reflog_info, commit);
+		if (!commit)
+			return NULL;
+
+		if (revs->reflog_info)
 			commit->object.flags &= ~(ADDED | SEEN | SHOWN);
-		}
 
 		/*
 		 * If we haven't done the list limiting, we need to look at
@@ -3126,9 +3142,12 @@ static struct commit *get_revision_1(struct rev_info *revs)
 		 */
 		if (!revs->limited) {
 			if (revs->max_age != -1 &&
-			    (commit->date < revs->max_age))
+			    comparison_date(revs, commit) < revs->max_age)
 				continue;
-			if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
+
+			if (revs->reflog_info)
+				try_to_simplify_commit(revs, commit);
+			else if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
 				if (!revs->ignore_missing_links)
 					die("Failed to traverse parents of commit %s",
 						oid_to_hex(&commit->object.oid));
@@ -3146,8 +3165,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 				track_linear(revs, commit);
 			return commit;
 		}
-	} while (revs->commits);
-	return NULL;
+	}
 }
 
 /*

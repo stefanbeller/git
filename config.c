@@ -16,6 +16,7 @@
 #include "string-list.h"
 #include "utf8.h"
 #include "dir.h"
+#include "color.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -1350,6 +1351,9 @@ int git_default_config(const char *var, const char *value, void *dummy)
 	if (starts_with(var, "advice."))
 		return git_default_advice_config(var, value);
 
+	if (git_color_config(var, value, dummy) < 0)
+		return -1;
+
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);
 		return 0;
@@ -1460,9 +1464,9 @@ int git_config_from_mem(config_fn_t fn, const enum config_origin_type origin_typ
 	return do_config_from(&top, fn, data);
 }
 
-int git_config_from_blob_sha1(config_fn_t fn,
+int git_config_from_blob_oid(config_fn_t fn,
 			      const char *name,
-			      const unsigned char *sha1,
+			      const struct object_id *oid,
 			      void *data)
 {
 	enum object_type type;
@@ -1470,7 +1474,7 @@ int git_config_from_blob_sha1(config_fn_t fn,
 	unsigned long size;
 	int ret;
 
-	buf = read_sha1_file(sha1, &type, &size);
+	buf = read_sha1_file(oid->hash, &type, &size);
 	if (!buf)
 		return error("unable to load config blob object '%s'", name);
 	if (type != OBJ_BLOB) {
@@ -1488,11 +1492,11 @@ static int git_config_from_blob_ref(config_fn_t fn,
 				    const char *name,
 				    void *data)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 
-	if (get_sha1(name, sha1) < 0)
+	if (get_oid(name, &oid) < 0)
 		return error("unable to resolve config blob '%s'", name);
-	return git_config_from_blob_sha1(fn, name, sha1, data);
+	return git_config_from_blob_oid(fn, name, &oid, data);
 }
 
 const char *git_etc_gitconfig(void)
@@ -1715,17 +1719,19 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 }
 
 static int config_set_element_cmp(const void *unused_cmp_data,
-				  const struct config_set_element *e1,
-				  const struct config_set_element *e2,
+				  const void *entry,
+				  const void *entry_or_key,
 				  const void *unused_keydata)
 {
+	const struct config_set_element *e1 = entry;
+	const struct config_set_element *e2 = entry_or_key;
+
 	return strcmp(e1->key, e2->key);
 }
 
 void git_configset_init(struct config_set *cs)
 {
-	hashmap_init(&cs->config_hash, (hashmap_cmp_fn)config_set_element_cmp,
-		     NULL, 0);
+	hashmap_init(&cs->config_hash, config_set_element_cmp, NULL, 0);
 	cs->hash_initialized = 1;
 	cs->list.nr = 0;
 	cs->list.alloc = 0;
