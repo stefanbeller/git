@@ -1883,6 +1883,31 @@ static int is_tip_reachable(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
+static int fetch_in_submodule(int argc, const char **argv, const char *prefix)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	if (argc < 2)
+		die(_("submodule--helper fetch-in-submodule requires atleast 1 argument"));
+
+	prepare_submodule_repo_env(&cp.env_array);
+	cp.git_cmd = 1;
+	cp.dir = argv[1];
+
+	if (argc == 2) {
+		argv_array_push(&cp.args, "fetch");
+	} else {
+		/* shift the remaining arguments before pushing argv */
+		argc -= 2;
+		argv += 2;
+		argv_array_push(&cp.args, "fetch");
+		argv_array_push(&cp.args, get_default_remote());
+		argv_array_pushv(&cp.args, argv);
+	}
+
+	return run_command(&cp);
+}
+
 static int push_check(int argc, const char **argv, const char *prefix)
 {
 	struct remote *remote;
@@ -2049,6 +2074,7 @@ static struct cmd_struct commands[] = {
 	{"deinit", module_deinit, 0},
 	{"remote-branch", resolve_remote_submodule_branch, 0},
 	{"is-tip-reachable", is_tip_reachable, 0},
+	{"fetch-in-submodule", fetch_in_submodule, 0},
 	{"push-check", push_check, 0},
 	{"absorb-git-dirs", absorb_git_dirs, SUPPORT_SUPER_PREFIX},
 	{"is-active", is_active, 0},
