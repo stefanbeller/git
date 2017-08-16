@@ -1862,6 +1862,27 @@ static int resolve_remote_submodule_branch(int argc, const char **argv,
 	return 0;
 }
 
+static int is_tip_reachable(int argc, const char **argv, const char *prefix)
+{
+	struct repository subrepo;
+	struct object_id oid;
+	int ret;
+
+	if (argc != 3)
+		die(_("submodule--helper is-tip-reachable requires exactly 2 arguments"));
+
+	if (get_oid_hex(argv[2], &oid) < 0)
+		die (_("not a valid object id '%s'"), argv[2]);
+
+	repo_submodule_init(&subrepo, the_repository, argv[1]);
+
+	ret = (oid_object_info(&subrepo, &oid, NULL) != OBJ_COMMIT);
+
+	repo_clear(&subrepo);
+
+	return ret;
+}
+
 static int push_check(int argc, const char **argv, const char *prefix)
 {
 	struct remote *remote;
@@ -2027,6 +2048,7 @@ static struct cmd_struct commands[] = {
 	{"sync", module_sync, SUPPORT_SUPER_PREFIX},
 	{"deinit", module_deinit, 0},
 	{"remote-branch", resolve_remote_submodule_branch, 0},
+	{"is-tip-reachable", is_tip_reachable, 0},
 	{"push-check", push_check, 0},
 	{"absorb-git-dirs", absorb_git_dirs, SUPPORT_SUPER_PREFIX},
 	{"is-active", is_active, 0},
