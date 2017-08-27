@@ -99,7 +99,6 @@ unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 	my $ok = join("|", qw(
 		TRACE
 		DEBUG
-		USE_LOOKUP
 		TEST
 		.*_TEST
 		PROVE
@@ -990,9 +989,6 @@ case $uname_s in
 	}
 	find () {
 		/usr/bin/find "$@"
-	}
-	sum () {
-		md5sum "$@"
 	}
 	# git sees Windows-style pwd
 	pwd () {

@@ -27,6 +27,7 @@
 #include "version.h"
 #include "mailmap.h"
 #include "gpg-interface.h"
+#include "progress.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -58,9 +59,9 @@ static int auto_decoration_style(void)
 	return (isatty(1) || pager_in_use()) ? DECORATE_SHORT_REFS : 0;
 }
 
-static int parse_decoration_style(const char *var, const char *value)
+static int parse_decoration_style(const char *value)
 {
-	switch (git_config_maybe_bool(var, value)) {
+	switch (git_parse_maybe_bool(value)) {
 	case 1:
 		return DECORATE_SHORT_REFS;
 	case 0:
@@ -82,7 +83,7 @@ static int decorate_callback(const struct option *opt, const char *arg, int unse
 	if (unset)
 		decoration_style = 0;
 	else if (arg)
-		decoration_style = parse_decoration_style("command line", arg);
+		decoration_style = parse_decoration_style(arg);
 	else
 		decoration_style = DECORATE_SHORT_REFS;
 
@@ -412,7 +413,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "log.date"))
 		return git_config_string(&default_date_mode, var, value);
 	if (!strcmp(var, "log.decorate")) {
-		decoration_style = parse_decoration_style(var, value);
+		decoration_style = parse_decoration_style(value);
 		if (decoration_style < 0)
 			decoration_style = 0; /* maybe warn? */
 		return 0;
@@ -824,7 +825,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "format.from")) {
-		int b = git_config_maybe_bool(var, value);
+		int b = git_parse_maybe_bool(value);
 		free(from);
 		if (b < 0)
 			from = xstrdup(value);
@@ -1422,6 +1423,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *branch_name = NULL;
 	char *base_commit = NULL;
 	struct base_tree_info bases;
+	int show_progress = 0;
+	struct progress *progress = NULL;
 
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
@@ -1493,6 +1496,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_FILENAME(0, "signature-file", &signature_file,
 				N_("add a signature from a file")),
 		OPT__QUIET(&quiet, N_("don't print the patch filenames")),
+		OPT_BOOL(0, "progress", &show_progress,
+			 N_("show progress while generating patches")),
 		OPT_END()
 	};
 
@@ -1752,8 +1757,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		start_number--;
 	}
 	rev.add_signoff = do_signoff;
+
+	if (show_progress)
+		progress = start_delayed_progress(_("Generating patches"), total);
 	while (0 <= --nr) {
 		int shown;
+		display_progress(progress, total - nr);
 		commit = list[nr];
 		rev.nr = total - nr + (start_number - 1);
 		/* Make the second and subsequent mails replies to the first */
@@ -1818,6 +1827,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (!use_stdout)
 			fclose(rev.diffopt.file);
 	}
+	stop_progress(&progress);
 	free(list);
 	free(branch_name);
 	string_list_clear(&extra_to, 0);

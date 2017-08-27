@@ -32,7 +32,7 @@ struct update_callback_data {
 	int add_errors;
 };
 
-static void chmod_pathspec(struct pathspec *pathspec, int force_mode)
+static void chmod_pathspec(struct pathspec *pathspec, char flip)
 {
 	int i;
 
@@ -42,8 +42,8 @@ static void chmod_pathspec(struct pathspec *pathspec, int force_mode)
 		if (pathspec && !ce_path_match(ce, pathspec, NULL))
 			continue;
 
-		if (chmod_cache_entry(ce, force_mode) < 0)
-			fprintf(stderr, "cannot chmod '%s'", ce->name);
+		if (chmod_cache_entry(ce, flip) < 0)
+			fprintf(stderr, "cannot chmod %cx '%s'\n", flip, ce->name);
 	}
 }
 
@@ -116,6 +116,7 @@ int add_files_to_cache(const char *prefix,
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &data;
+	rev.diffopt.flags |= DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG;
 	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 	return !!data.add_errors;

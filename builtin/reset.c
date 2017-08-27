@@ -75,13 +75,13 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 		struct object_id head_oid;
 		if (get_oid("HEAD", &head_oid))
 			return error(_("You do not have a valid HEAD."));
-		if (!fill_tree_descriptor(desc, head_oid.hash))
+		if (!fill_tree_descriptor(desc, &head_oid))
 			return error(_("Failed to find tree of HEAD."));
 		nr++;
 		opts.fn = twoway_merge;
 	}
 
-	if (!fill_tree_descriptor(desc + nr - 1, oid->hash))
+	if (!fill_tree_descriptor(desc + nr - 1, oid))
 		return error(_("Failed to find tree of %s."), oid_to_hex(oid));
 	if (unpack_trees(nr, desc, &opts))
 		return -1;
@@ -156,6 +156,7 @@ static int read_from_tree(const struct pathspec *pathspec,
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;
 	opt.format_callback_data = &intent_to_add;
+	opt.flags |= DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG;
 
 	if (do_diff_cache(tree_oid, &opt))
 		return 1;
@@ -307,8 +308,6 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
-
-	load_submodule_cache();
 
 	unborn = !strcmp(rev, "HEAD") && get_oid("HEAD", &oid);
 	if (unborn) {

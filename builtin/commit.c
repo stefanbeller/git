@@ -195,7 +195,6 @@ static void determine_whence(struct wt_status *s)
 static void status_init_config(struct wt_status *s, config_fn_t fn)
 {
 	wt_status_prepare(s);
-	gitmodules_config();
 	git_config(fn, s);
 	determine_whence(s);
 	init_diff_ui_defaults();
@@ -940,13 +939,16 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		return 0;
 	}
 
-	/*
-	 * Re-read the index as pre-commit hook could have updated it,
-	 * and write it out as a tree.  We must do this before we invoke
-	 * the editor and after we invoke run_status above.
-	 */
-	discard_cache();
+	if (!no_verify && find_hook("pre-commit")) {
+		/*
+		 * Re-read the index as pre-commit hook could have updated it,
+		 * and write it out as a tree.  We must do this before we invoke
+		 * the editor and after we invoke run_status above.
+		 */
+		discard_cache();
+	}
 	read_cache_from(index_file);
+
 	if (update_main_cache_tree(0)) {
 		error(_("Error building trees"));
 		return 0;

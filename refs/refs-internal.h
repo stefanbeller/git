@@ -62,6 +62,12 @@
 #define REF_DELETED_LOOSE 0x200
 
 /*
+ * Return the length of time to retry acquiring a loose reference lock
+ * before giving up, in milliseconds:
+ */
+long get_files_ref_lock_timeout_ms(void);
+
+/*
  * Return true iff refname is minimally safe. "Safe" here means that
  * deleting a loose reference by this name will not do any damage, for
  * example by causing a file that is not a reference to be deleted.
@@ -76,6 +82,15 @@
  * (like "HEAD" and "MERGE_HEAD" but not "config" or "FOO/BAR").
  */
 int refname_is_safe(const char *refname);
+
+/*
+ * Helper function: return true if refname, which has the specified
+ * oid and flags, can be resolved to an object in the database. If the
+ * referred-to object does not exist, emit a warning and return false.
+ */
+int ref_resolves_to_object(const char *refname,
+			   const struct object_id *oid,
+			   unsigned int flags);
 
 enum peel_status {
 	/* object was peeled successfully: */
@@ -655,6 +670,7 @@ struct ref_storage_be {
 };
 
 extern struct ref_storage_be refs_be_files;
+extern struct ref_storage_be refs_be_packed;
 
 /*
  * A representation of the reference store for the main repository or
