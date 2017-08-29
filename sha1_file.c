@@ -669,7 +669,9 @@ int check_and_freshen_file(const char *fn, int freshen)
 	return 1;
 }
 
-static int check_and_freshen_local(const unsigned char *sha1, int freshen)
+#define check_and_freshen_local(r, s, f) check_and_freshen_local_##r(s, f)
+static int check_and_freshen_local_the_repository(const unsigned char *sha1,
+						  int freshen)
 {
 	return check_and_freshen_file(sha1_file_name(the_repository, sha1),
 				      freshen);
@@ -689,7 +691,7 @@ static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
 
 static int check_and_freshen(const unsigned char *sha1, int freshen)
 {
-	return check_and_freshen_local(sha1, freshen) ||
+	return check_and_freshen_local(the_repository, sha1, freshen) ||
 	       check_and_freshen_nonlocal(sha1, freshen);
 }
 
