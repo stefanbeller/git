@@ -1709,9 +1709,11 @@ static void check_tag(const void *buf, size_t size)
 		die("corrupt tag");
 }
 
-static int index_mem(struct object_id *oid, void *buf, size_t size,
-		     enum object_type type,
-		     const char *path, unsigned flags)
+#define index_mem(r, o, b, sz, t, p, f) index_mem_##r(o, b, sz, t, p, f)
+static int index_mem_the_repository(struct object_id *oid,
+				    void *buf, size_t size,
+				    enum object_type type, const char *path,
+				    unsigned flags)
 {
 	int ret, re_allocated = 0;
 	int write_object = flags & HASH_WRITE_OBJECT;
@@ -1783,7 +1785,8 @@ static int index_pipe_the_repository(struct object_id *oid, int fd,
 	int ret;
 
 	if (strbuf_read(&sbuf, fd, 4096) >= 0)
-		ret = index_mem(oid, sbuf.buf, sbuf.len, type, path, flags);
+		ret = index_mem(the_repository, oid,
+				sbuf.buf, sbuf.len, type, path, flags);
 	else
 		ret = -1;
 	strbuf_release(&sbuf);
@@ -1800,7 +1803,8 @@ static int index_core_the_repository(struct object_id *oid, int fd, size_t size,
 	int ret;
 
 	if (!size) {
-		ret = index_mem(oid, "", size, type, path, flags);
+		ret = index_mem(the_repository, oid,
+				"", size, type, path, flags);
 	} else if (size <= SMALL_FILE_SIZE) {
 		char *buf = xmalloc(size);
 		ssize_t read_result = read_in_full(fd, buf, size);
@@ -1811,11 +1815,13 @@ static int index_core_the_repository(struct object_id *oid, int fd, size_t size,
 			ret = error("short read while indexing %s",
 				    path ? path : "<unknown>");
 		else
-			ret = index_mem(oid, buf, size, type, path, flags);
+			ret = index_mem(the_repository, oid,
+					buf, size, type, path, flags);
 		free(buf);
 	} else {
 		void *buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-		ret = index_mem(oid, buf, size, type, path, flags);
+		ret = index_mem(the_repository, oid,
+				buf, size, type, path, flags);
 		munmap(buf, size);
 	}
 	return ret;
