@@ -762,7 +762,8 @@ int has_loose_object_nonlocal(const unsigned char *sha1)
 	return check_and_freshen_nonlocal(the_repository, sha1, 0);
 }
 
-static int has_loose_object(const unsigned char *sha1)
+#define has_loose_object(r, s) has_loose_object_##r(s)
+static int has_loose_object_the_repository(const unsigned char *sha1)
 {
 	return check_and_freshen(the_repository, sha1, 0);
 }
@@ -1705,7 +1706,7 @@ int force_object_loose(const unsigned char *sha1, time_t mtime)
 	int hdrlen;
 	int ret;
 
-	if (has_loose_object(sha1))
+	if (has_loose_object(the_repository, sha1))
 		return 0;
 	buf = read_object(sha1, &type, &len);
 	if (!buf)
