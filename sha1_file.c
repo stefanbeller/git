@@ -1830,8 +1830,9 @@ static int index_core(struct object_id *oid, int fd, size_t size,
  * binary blobs, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
-static int index_stream(struct object_id *oid, int fd, size_t size,
-			enum object_type type, const char *path,
+#define index_stream(r, o, fd, s, t, p, f) index_stream_##r(o, fd, s, t, p, f)
+static int index_stream_the_repository(struct object_id *oid, int fd,
+			size_t size, enum object_type type, const char *path,
 			unsigned flags)
 {
 	return index_bulk_checkin(oid->hash, fd, size, type, path, flags);
@@ -1855,8 +1856,8 @@ int index_fd(struct object_id *oid, int fd, struct stat *st,
 		ret = index_core(oid, fd, xsize_t(st->st_size), type, path,
 				 flags);
 	else
-		ret = index_stream(oid, fd, xsize_t(st->st_size), type, path,
-				   flags);
+		ret = index_stream(the_repository, oid, fd,
+				   xsize_t(st->st_size), type, path, flags);
 	close(fd);
 	return ret;
 }
