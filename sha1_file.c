@@ -1585,7 +1585,8 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	return finalize_object_file(tmp_file.buf, filename);
 }
 
-static int freshen_loose_object(const unsigned char *sha1)
+#define freshen_loose_object(r, s) freshen_loose_object_##r(s)
+static int freshen_loose_object_the_repository(const unsigned char *sha1)
 {
 	return check_and_freshen(the_repository, sha1, 1);
 }
@@ -1612,7 +1613,8 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 	 * it out into .git/objects/??/?{38} file.
 	 */
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
-	if (freshen_packed_object(sha1) || freshen_loose_object(sha1))
+	if (freshen_packed_object(sha1) ||
+	    freshen_loose_object(the_repository, sha1))
 		return 0;
 	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
 }
@@ -1630,7 +1632,8 @@ int hash_sha1_file_literally(const void *buf, unsigned long len, const char *typ
 
 	if (!(flags & HASH_WRITE_OBJECT))
 		goto cleanup;
-	if (freshen_packed_object(oid->hash) || freshen_loose_object(oid->hash))
+	if (freshen_packed_object(oid->hash) ||
+	    freshen_loose_object(the_repository, oid->hash))
 		goto cleanup;
 	status = write_loose_object(oid->hash, header, hdrlen, buf, len, 0);
 
