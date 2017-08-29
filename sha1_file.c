@@ -1787,7 +1787,8 @@ static int index_pipe(struct object_id *oid, int fd, enum object_type type,
 
 #define SMALL_FILE_SIZE (32*1024)
 
-static int index_core(struct object_id *oid, int fd, size_t size,
+#define index_core(r, o, fd, sz, t, p, f) index_core_##r(o, fd, sz, t, p, f)
+static int index_core_the_repository(struct object_id *oid, int fd, size_t size,
 		      enum object_type type, const char *path,
 		      unsigned flags)
 {
@@ -1853,8 +1854,8 @@ int index_fd(struct object_id *oid, int fd, struct stat *st,
 		ret = index_pipe(oid, fd, type, path, flags);
 	else if (st->st_size <= big_file_threshold || type != OBJ_BLOB ||
 		 (path && would_convert_to_git(&the_index, path)))
-		ret = index_core(oid, fd, xsize_t(st->st_size), type, path,
-				 flags);
+		ret = index_core(the_repository, oid, fd,
+				 xsize_t(st->st_size), type, path, flags);
 	else
 		ret = index_stream(the_repository, oid, fd,
 				   xsize_t(st->st_size), type, path, flags);
