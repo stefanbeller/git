@@ -1756,8 +1756,10 @@ static int index_stream_convert_blob(unsigned char *sha1, int fd,
 	return ret;
 }
 
-static int index_pipe(unsigned char *sha1, int fd, enum object_type type,
-		      const char *path, unsigned flags)
+#define index_pipe(r, s, fd, t, p, f) index_pipe_##r(s, fd, t, p, f)
+static int index_pipe_the_repository(unsigned char *sha1, int fd,
+				     enum object_type type, const char *path,
+				     unsigned flags)
 {
 	struct strbuf sbuf = STRBUF_INIT;
 	int ret;
@@ -1836,7 +1838,8 @@ int index_fd(struct object_id *oid, int fd, struct stat *st,
 	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(path))
 		ret = index_stream_convert_blob(oid->hash, fd, path, flags);
 	else if (!S_ISREG(st->st_mode))
-		ret = index_pipe(oid->hash, fd, type, path, flags);
+		ret = index_pipe(the_repository, oid->hash, fd,
+				 type, path, flags);
 	else if (st->st_size <= big_file_threshold || type != OBJ_BLOB ||
 		 (path && would_convert_to_git(&the_index, path)))
 		ret = index_core(the_repository, oid->hash, fd,
