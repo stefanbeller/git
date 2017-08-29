@@ -735,7 +735,9 @@ static int check_and_freshen_local_the_repository(const unsigned char *sha1,
 				      freshen);
 }
 
-static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
+#define check_and_freshen_nonlocal(r, s, f) check_and_freshen_nonlocal_##r(s, f)
+static int check_and_freshen_nonlocal_the_repository(const unsigned char *sha1,
+						     int freshen)
 {
 	struct alternate_object_database *alt;
 	prepare_alt_odb(the_repository);
@@ -750,12 +752,12 @@ static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
 static int check_and_freshen(const unsigned char *sha1, int freshen)
 {
 	return check_and_freshen_local(the_repository, sha1, freshen) ||
-	       check_and_freshen_nonlocal(sha1, freshen);
+	       check_and_freshen_nonlocal(the_repository, sha1, freshen);
 }
 
 int has_loose_object_nonlocal(const unsigned char *sha1)
 {
-	return check_and_freshen_nonlocal(sha1, 0);
+	return check_and_freshen_nonlocal(the_repository, sha1, 0);
 }
 
 static int has_loose_object(const unsigned char *sha1)
