@@ -1806,8 +1806,11 @@ static int index_mem(struct object_id *oid, void *buf, size_t size,
 	return ret;
 }
 
-static int index_stream_convert_blob(struct object_id *oid, int fd,
-				     const char *path, unsigned flags)
+#define index_stream_convert_blob(r, o, fd, p, f) \
+		index_stream_convert_blob_##r(o, fd, p, f)
+static int index_stream_convert_blob_the_repository(struct object_id *oid,
+						    int fd, const char *path,
+						    unsigned flags)
 {
 	int ret;
 	const int write_object = flags & HASH_WRITE_OBJECT;
@@ -1909,7 +1912,8 @@ int index_fd(struct object_id *oid, int fd, struct stat *st,
 	 * die() for large files.
 	 */
 	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(path))
-		ret = index_stream_convert_blob(oid, fd, path, flags);
+		ret = index_stream_convert_blob(the_repository, oid, fd,
+						path, flags);
 	else if (!S_ISREG(st->st_mode))
 		ret = index_pipe(the_repository, oid, fd,
 				 type, path, flags);
