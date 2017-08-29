@@ -1701,7 +1701,8 @@ static void check_commit(const void *buf, size_t size)
 		die("corrupt commit");
 }
 
-static void check_tag(const void *buf, size_t size)
+#define check_tag(r, b, s) check_tag_##r(b, s)
+static void check_tag_the_repository(const void *buf, size_t size)
 {
 	struct tag t;
 	memset(&t, 0, sizeof(t));
@@ -1738,7 +1739,7 @@ static int index_mem_the_repository(struct object_id *oid,
 		if (type == OBJ_COMMIT)
 			check_commit(buf, size);
 		if (type == OBJ_TAG)
-			check_tag(buf, size);
+			check_tag(the_repository, buf, size);
 	}
 
 	if (write_object)
