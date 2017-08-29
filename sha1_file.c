@@ -1681,7 +1681,8 @@ int has_object_file_with_flags(const struct object_id *oid, int flags)
 	return has_sha1_file_with_flags(oid->hash, flags);
 }
 
-static void check_tree(const void *buf, size_t size)
+#define check_tree(r, b, s) check_tree_##r(b, s)
+static void check_tree_the_repository(const void *buf, size_t size)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
@@ -1736,7 +1737,7 @@ static int index_mem_the_repository(struct object_id *oid,
 	}
 	if (flags & HASH_FORMAT_CHECK) {
 		if (type == OBJ_TREE)
-			check_tree(buf, size);
+			check_tree(the_repository, buf, size);
 		if (type == OBJ_COMMIT)
 			check_commit(the_repository, buf, size);
 		if (type == OBJ_TAG)
