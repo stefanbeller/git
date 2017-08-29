@@ -1678,7 +1678,8 @@ static void check_tree(const void *buf, size_t size)
 		;
 }
 
-static void check_commit(const void *buf, size_t size)
+#define check_commit(r, b, s) check_commit_##r(b, s)
+static void check_commit_the_repository(const void *buf, size_t size)
 {
 	struct commit c;
 	memset(&c, 0, sizeof(c));
@@ -1722,7 +1723,7 @@ static int index_mem_the_repository(unsigned char *sha1,
 		if (type == OBJ_TREE)
 			check_tree(buf, size);
 		if (type == OBJ_COMMIT)
-			check_commit(buf, size);
+			check_commit(the_repository, buf, size);
 		if (type == OBJ_TAG)
 			check_tag(the_repository, buf, size);
 	}
