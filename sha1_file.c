@@ -749,7 +749,9 @@ static int check_and_freshen_nonlocal_the_repository(const unsigned char *sha1,
 	return 0;
 }
 
-static int check_and_freshen(const unsigned char *sha1, int freshen)
+#define check_and_freshen(r, s, f) check_and_freshen_##r(s, f)
+static int check_and_freshen_the_repository(const unsigned char *sha1,
+					    int freshen)
 {
 	return check_and_freshen_local(the_repository, sha1, freshen) ||
 	       check_and_freshen_nonlocal(the_repository, sha1, freshen);
@@ -762,7 +764,7 @@ int has_loose_object_nonlocal(const unsigned char *sha1)
 
 static int has_loose_object(const unsigned char *sha1)
 {
-	return check_and_freshen(sha1, 0);
+	return check_and_freshen(the_repository, sha1, 0);
 }
 
 static void mmap_limit_check(size_t length)
@@ -1642,7 +1644,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 
 static int freshen_loose_object(const unsigned char *sha1)
 {
-	return check_and_freshen(sha1, 1);
+	return check_and_freshen(the_repository, sha1, 1);
 }
 
 static int freshen_packed_object(const unsigned char *sha1)
