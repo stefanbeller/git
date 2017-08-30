@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "progress.h"
 #include "parse-options.h"
+#include "loose-object.h"
 #include "packfile.h"
 
 static const char * const prune_packed_usage[] = {

@@ -3,6 +3,7 @@
 #include "repository.h"
 #include "config.h"
 #include "object-store.h"
+#include "loose-object.h"
 #include "pack.h"
 #include "sideband.h"
 #include "run-command.h"
