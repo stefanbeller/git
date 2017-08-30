@@ -73,13 +73,11 @@ static int register_replace_ref(const char *refname,
 
 static void prepare_replace_object(void)
 {
-	static int replace_object_prepared;
-
-	if (replace_object_prepared)
+	if (the_repository->objects.replacements.prepared)
 		return;
 
 	for_each_replace_ref(register_replace_ref, NULL);
-	replace_object_prepared = 1;
+	the_repository->objects.replacements.prepared = 1;
 	if (!the_repository->objects.replacements.nr)
 		check_replace_refs = 0;
 }
