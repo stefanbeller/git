@@ -25,6 +25,7 @@
 #include "bulk-checkin.h"
 #include "repository.h"
 #include "object-store.h"
+#include "loose-object.h"
 #include "streaming.h"
 #include "path.h"
 #include "dir.h"
