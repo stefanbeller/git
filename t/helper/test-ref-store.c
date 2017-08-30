@@ -2,6 +2,7 @@
 #include "alternates.h"
 #include "refs.h"
 #include "worktree.h"
+#include "repository.h"
 
 static const char *notnull(const char *arg, const char *name)
 {
@@ -22,7 +23,7 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 	if (!argv[0]) {
 		die("ref store required");
 	} else if (!strcmp(argv[0], "main")) {
-		*refs = get_main_ref_store();
+		*refs = get_main_ref_store(the_repository);
 	} else if (skip_prefix(argv[0], "submodule:", &gitdir)) {
 		struct strbuf sb = STRBUF_INIT;
 		int ret;
