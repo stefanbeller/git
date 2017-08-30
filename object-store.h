@@ -3,7 +3,6 @@
 
 #include "strbuf.h"
 #include "mru.h"
-#include "replace-object.h"
 #include "alternates.h"
 
 /* in packfile.h */
@@ -32,7 +31,15 @@ struct object_store {
 	 * Objects that should be substituted by other objects
 	 * (see git-replace(1)).
 	 */
-	struct replace_objects replacements;
+	struct replace_objects {
+		/*
+		 * An array of replacements.  The array is kept sorted by the original
+		 * sha1.
+		 */
+		struct replace_object **items;
+
+		int alloc, nr;
+	} replacements;
 
 	/*
 	 * A fast, rough count of the number of objects in the repository.
@@ -49,7 +56,7 @@ struct object_store {
 	unsigned packed_git_initialized : 1;
 };
 #define OBJECT_STORE_INIT \
-	{ NULL, MRU_INIT, ALTERNATES_INIT, REPLACE_OBJECTS_INIT, 0, 0, 0 }
+	{ NULL, MRU_INIT, ALTERNATES_INIT, { NULL, 0, 0 }, 0, 0, 0 }
 
 struct packed_git {
 	struct packed_git *next;
