@@ -20,8 +20,14 @@ struct raw_object_store {
 
 	struct alternate_object_database *alt_odb_list;
 	struct alternate_object_database **alt_odb_tail;
+
+	/*
+	 * Whether packed_git has already been populated with this repository's
+	 * packs.
+	 */
+	unsigned packed_git_initialized : 1;
 };
-#define RAW_OBJECT_STORE_INIT { NULL, NULL, MRU_INIT, NULL, NULL }
+#define RAW_OBJECT_STORE_INIT { NULL, NULL, MRU_INIT, NULL, NULL, 0 }
 
 void raw_object_store_clear(struct raw_object_store *o);
 
