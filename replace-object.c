@@ -52,6 +52,8 @@ static int register_replace_ref(const char *refname,
 				const struct object_id *oid,
 				int flag, void *cb_data)
 {
+	struct repository *r = cb_data;
+
 	/* Get sha1 from refname */
 	const char *slash = strrchr(refname, '/');
 	const char *hash = slash ? slash + 1 : refname;
@@ -67,6 +69,7 @@ static int register_replace_ref(const char *refname,
 	hashcpy(repl_obj->replacement, oid->hash);
 
 	/* Register new object */
+	(void)r;
 	if (register_replace_object(the_repository, repl_obj, 1))
 		die("duplicate replace ref: %s", refname);
 
@@ -78,7 +81,7 @@ static void prepare_replace_object(void)
 	if (the_repository->objects.replacements.prepared)
 		return;
 
-	for_each_replace_ref(the_repository, register_replace_ref, NULL);
+	for_each_replace_ref(the_repository, register_replace_ref, the_repository);
 	the_repository->objects.replacements.prepared = 1;
 }
 
