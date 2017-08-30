@@ -24,7 +24,9 @@ extern const unsigned char *do_lookup_replace_object_the_repository(const unsign
  */
 static inline const unsigned char *lookup_replace_object(const unsigned char *sha1)
 {
-	if (!check_replace_refs)
+	if (!check_replace_refs ||
+	    (the_repository->objects.replacements.prepared &&
+	     the_repository->objects.replacements.nr == 0))
 		return sha1;
 	return do_lookup_replace_object(the_repository, sha1);
 }
