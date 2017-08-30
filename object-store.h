@@ -5,6 +5,7 @@
 #include "mru.h"
 #include "replace-object.h"
 #include "alternates.h"
+#include "packfile.h"
 
 struct object_store {
 	struct packed_git *packed_git;
