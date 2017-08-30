@@ -11,12 +11,10 @@ static const unsigned char *replace_sha1_access(size_t index, void *table)
 	return replace[index]->original;
 }
 
-#define replace_object_pos(r, s) \
-	replace_object_pos_##r(s)
-static int replace_object_pos_the_repository(const unsigned char *sha1)
+static int replace_object_pos(struct repository *r, const unsigned char *sha1)
 {
-	return sha1_pos(sha1, the_repository->objects.replacements.items,
-			the_repository->objects.replacements.nr,
+	return sha1_pos(sha1, r->objects.replacements.items,
+			r->objects.replacements.nr,
 			replace_sha1_access);
 }
 
