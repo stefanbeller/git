@@ -5,6 +5,7 @@
 #include "config.h"
 #include "submodule-config.h"
 #include "submodule.h"
+#include "alternates.h"
 #include "dir.h"
 #include "diff.h"
 #include "commit.h"

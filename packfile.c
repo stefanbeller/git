@@ -2,6 +2,7 @@
 #include "mru.h"
 #include "pack.h"
 #include "repository.h"
+#include "alternates.h"
 #include "dir.h"
 #include "mergesort.h"
 #include "packfile.h"
@@ -880,7 +881,7 @@ void prepare_packed_git(struct repository *r)
 		return;
 	prepare_packed_git_one(r, r->objectdir, 1);
 	prepare_alt_odb(r);
-	for (alt = r->objects.alt_odb_list; alt; alt = alt->next)
+	for (alt = r->objects.alt_odb.list; alt; alt = alt->next)
 		prepare_packed_git_one(r, alt->path, 0);
 	rearrange_packed_git(r);
 	prepare_packed_git_mru(r);

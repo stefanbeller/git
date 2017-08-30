@@ -2,6 +2,7 @@
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
+#include "alternates.h"
 #include "object-store.h"
 #include "commit.h"
 #include "tree.h"
@@ -696,7 +697,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		fsck_object_dir(get_object_directory());
 
 		prepare_alt_odb(the_repository);
-		for (alt = the_repository->objects.alt_odb_list;
+		for (alt = the_repository->objects.alt_odb.list;
 				alt; alt = alt->next)
 			fsck_object_dir(alt->path);
 

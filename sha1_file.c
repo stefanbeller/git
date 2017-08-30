@@ -10,6 +10,7 @@
 #include "config.h"
 #include "string-list.h"
 #include "lockfile.h"
+#include "alternates.h"
 #include "delta.h"
 #include "pack.h"
 #include "blob.h"
@@ -371,7 +372,7 @@ static int alt_odb_usable(struct repository *r, struct strbuf *path,
 	 * Prevent the common mistake of listing the same
 	 * thing twice, or object directory itself.
 	 */
-	for (alt = r->objects.alt_odb_list; alt; alt = alt->next) {
+	for (alt = r->objects.alt_odb.list; alt; alt = alt->next) {
 		if (!fspathcmp(path->buf, alt->path))
 			return 0;
 	}
@@ -384,7 +385,7 @@ static int alt_odb_usable(struct repository *r, struct strbuf *path,
 /*
  * Prepare alternate object database registry.
  *
- * The variable alt_odb_list points at the list of struct
+ * The variable objects.alt_odb.list points at the list of struct
  * alternate_object_database.  The elements on this list come from
  * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
  * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
@@ -433,8 +434,8 @@ static int link_alt_odb_entry(struct repository *r, const char *entry,
 	ent = alloc_alt_odb(pathbuf.buf);
 
 	/* add the alternate entry */
-	*r->objects.alt_odb_tail = ent;
-	r->objects.alt_odb_tail = &(ent->next);
+	*r->objects.alt_odb.tail = ent;
+	r->objects.alt_odb.tail = &(ent->next);
 	ent->next = NULL;
 
 	/* recursively add alternates */
@@ -571,7 +572,7 @@ void add_to_alternates_file(const char *reference)
 		fprintf_or_die(out, "%s\n", reference);
 		if (commit_lock_file(&lock))
 			die_errno("unable to move new alternates file into place");
-		if (the_repository->objects.alt_odb_tail)
+		if (the_repository->objects.alt_odb.tail)
 			link_alt_odb_entries(the_repository, reference,
 					     '\n', NULL, 0);
 	}
@@ -671,7 +672,7 @@ int foreach_alt_odb(struct repository *r, alt_odb_fn fn, void *cb)
 	int ret = 0;
 
 	prepare_alt_odb(r);
-	for (ent = r->objects.alt_odb_list; ent; ent = ent->next) {
+	for (ent = r->objects.alt_odb.list; ent; ent = ent->next) {
 		ret = fn(ent, cb);
 		if (ret)
 			break;
@@ -681,10 +682,10 @@ int foreach_alt_odb(struct repository *r, alt_odb_fn fn, void *cb)
 
 void prepare_alt_odb(struct repository *r)
 {
-	if (r->objects.alt_odb_tail)
+	if (r->objects.alt_odb.tail)
 		return;
 
-	r->objects.alt_odb_tail = &r->objects.alt_odb_list;
+	r->objects.alt_odb.tail = &r->objects.alt_odb.list;
 
 	if (!r->ignore_env) {
 		const char *alt = getenv(ALTERNATE_DB_ENVIRONMENT);
@@ -737,7 +738,7 @@ static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
 {
 	struct alternate_object_database *alt;
 	prepare_alt_odb(the_repository);
-	for (alt = the_repository->objects.alt_odb_list; alt; alt = alt->next) {
+	for (alt = the_repository->objects.alt_odb.list; alt; alt = alt->next) {
 		const char *path = alt_sha1_path(alt, sha1);
 		if (check_and_freshen_file(path, freshen))
 			return 1;
@@ -893,7 +894,7 @@ static int stat_sha1_file(struct repository *r, const unsigned char *sha1,
 
 	prepare_alt_odb(r);
 	errno = ENOENT;
-	for (alt = r->objects.alt_odb_list; alt; alt = alt->next) {
+	for (alt = r->objects.alt_odb.list; alt; alt = alt->next) {
 		*path = alt_sha1_path(alt, sha1);
 		if (!lstat(*path, st))
 			return 0;
@@ -920,7 +921,7 @@ static int open_sha1_file(struct repository *r,
 	most_interesting_errno = errno;
 
 	prepare_alt_odb(r);
-	for (alt = r->objects.alt_odb_list; alt; alt = alt->next) {
+	for (alt = r->objects.alt_odb.list; alt; alt = alt->next) {
 		*path = alt_sha1_path(alt, sha1);
 		fd = git_open(*path);
 		if (fd >= 0)

@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
+#include "alternates.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
