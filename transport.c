@@ -2,6 +2,7 @@
 #include "config.h"
 #include "transport.h"
 #include "repository.h"
+#include "alternates.h"
 #include "run-command.h"
 #include "pkt-line.h"
 #include "fetch-pack.h"
