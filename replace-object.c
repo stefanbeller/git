@@ -94,12 +94,13 @@ static void prepare_replace_object(struct repository *r)
  * permanently-allocated value.  This function always respects replace
  * references, regardless of the value of check_replace_refs.
  */
-const unsigned char *do_lookup_replace_object_the_repository(const unsigned char *sha1)
+const unsigned char *do_lookup_replace_object(struct repository *r,
+					      const unsigned char *sha1)
 {
 	int pos, depth = MAXREPLACEDEPTH;
 	const unsigned char *cur = sha1;
 
-	prepare_replace_object(the_repository);
+	prepare_replace_object(r);
 
 	/* Try to recursively replace the object */
 	do {
@@ -107,9 +108,9 @@ const unsigned char *do_lookup_replace_object_the_repository(const unsigned char
 			die("replace depth too high for object %s",
 			    sha1_to_hex(sha1));
 
-		pos = replace_object_pos(the_repository, cur);
+		pos = replace_object_pos(r, cur);
 		if (0 <= pos)
-			cur = the_repository->objects.replacements.items[pos]->replacement;
+			cur = r->objects.replacements.items[pos]->replacement;
 	} while (0 <= pos);
 
 	return cur;
