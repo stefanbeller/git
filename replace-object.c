@@ -18,8 +18,10 @@ static int replace_object_pos(const unsigned char *sha1)
 			replace_sha1_access);
 }
 
-static int register_replace_object(struct replace_object *replace,
-				   int ignore_dups)
+#define register_replace_object(r, rp, i) \
+	register_replace_object_##r(rp, i)
+static int register_replace_object_the_repository(struct replace_object *replace,
+						  int ignore_dups)
 {
 	int pos = replace_object_pos(replace->original);
 
@@ -65,7 +67,7 @@ static int register_replace_ref(const char *refname,
 	hashcpy(repl_obj->replacement, oid->hash);
 
 	/* Register new object */
-	if (register_replace_object(repl_obj, 1))
+	if (register_replace_object(the_repository, repl_obj, 1))
 		die("duplicate replace ref: %s", refname);
 
 	return 0;
