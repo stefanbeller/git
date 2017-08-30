@@ -9,6 +9,7 @@
 #include "diff.h"
 #include "parse-options.h"
 #include "userdiff.h"
+#include "loose-object.h"
 #include "streaming.h"
 #include "tree-walk.h"
 #include "sha1-array.h"

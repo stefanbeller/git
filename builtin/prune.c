@@ -3,6 +3,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "builtin.h"
+#include "loose-object.h"
 #include "reachable.h"
 #include "parse-options.h"
 #include "progress.h"

@@ -3,6 +3,7 @@
 #include "repository.h"
 #include "config.h"
 #include "object-store.h"
+#include "loose-object.h"
 #include "attr.h"
 #include "object.h"
 #include "blob.h"

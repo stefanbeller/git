@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "alternates.h"
+#include "loose-object.h"
 #include "tag.h"
 #include "commit.h"
 #include "tree.h"

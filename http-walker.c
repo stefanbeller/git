@@ -6,6 +6,7 @@
 #include "list.h"
 #include "transport.h"
 #include "object-store.h"
+#include "loose-object.h"
 #include "packfile.h"
 
 struct alt_base {

@@ -10,6 +10,7 @@
 #include "repository.h"
 #include "alternates.h"
 #include "object-store.h"
+#include "loose-object.h"
 #include "builtin.h"
 #include "parse-options.h"
 #include "quote.h"

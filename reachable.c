@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "object-store.h"
+#include "loose-object.h"
 #include "tag.h"
 #include "commit.h"
 #include "blob.h"

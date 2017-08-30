@@ -4,6 +4,7 @@
 #include "config.h"
 #include "alternates.h"
 #include "object-store.h"
+#include "loose-object.h"
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
