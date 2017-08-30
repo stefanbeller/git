@@ -6,7 +6,7 @@
 
 /* The main repository */
 static struct repository the_repo = {
-	NULL, NULL, NULL, OBJECT_STORE_INIT,
+	NULL, NULL, NULL, OBJECT_STORE_INIT, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, &the_index, 0, 0
 };
 struct repository *the_repository = &the_repo;

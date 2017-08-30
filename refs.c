@@ -1544,9 +1544,6 @@ static struct ref_store_hash_entry *alloc_ref_store_hash_entry(
 	return entry;
 }
 
-/* A pointer to the ref_store for the main repository: */
-static struct ref_store *main_ref_store;
-
 /* A hashmap of ref_stores, stored by submodule name: */
 static struct hashmap submodule_ref_stores;
 
@@ -1588,13 +1585,13 @@ static struct ref_store *ref_store_init(const char *gitdir,
 	return refs;
 }
 
-struct ref_store *get_main_ref_store_the_repository(void)
+struct ref_store *get_main_ref_store(struct repository *r)
 {
-	if (main_ref_store)
-		return main_ref_store;
+	if (r->main_ref_store)
+		return r->main_ref_store;
 
-	main_ref_store = ref_store_init(get_git_dir(), REF_STORE_ALL_CAPS);
-	return main_ref_store;
+	r->main_ref_store = ref_store_init(r->gitdir, REF_STORE_ALL_CAPS);
+	return r->main_ref_store;
 }
 
 /*
