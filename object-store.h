@@ -3,6 +3,7 @@
 
 #include "cache.h"
 #include "mru.h"
+#include "replace-object.h"
 
 struct object_store {
 	struct packed_git *packed_git;
@@ -15,6 +16,12 @@ struct object_store {
 
 	struct alternate_object_database *alt_odb_list;
 	struct alternate_object_database **alt_odb_tail;
+
+	/*
+	 * Objects that should be substituted by other objects
+	 * (see git-replace(1)).
+	 */
+	struct replace_objects replacements;
 
 	/*
 	 * A fast, rough count of the number of objects in the repository.
@@ -30,7 +37,7 @@ struct object_store {
 	 */
 	unsigned packed_git_initialized : 1;
 };
-#define OBJECT_STORE_INIT { NULL, MRU_INIT, NULL, NULL, 0, 0, 0 }
+#define OBJECT_STORE_INIT { NULL, MRU_INIT, NULL, NULL, REPLACE_OBJECTS_INIT, 0, 0, 0 }
 
 extern void object_store_clear(struct object_store *o);
 
