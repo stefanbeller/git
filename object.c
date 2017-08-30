@@ -437,4 +437,5 @@ void clear_object_flags(unsigned flags)
 
 void object_store_clear(struct object_store *o)
 {
+	/* TODO: free alt_odb_list/tail */
 }
