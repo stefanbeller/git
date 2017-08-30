@@ -75,7 +75,9 @@ static int register_replace_ref(const char *refname,
 	return 0;
 }
 
-static void prepare_replace_object(void)
+#define prepare_replace_object(r) \
+	prepare_replace_object_##r()
+static void prepare_replace_object_the_repository(void)
 {
 	if (the_repository->objects.replacements.prepared)
 		return;
@@ -99,7 +101,7 @@ const unsigned char *do_lookup_replace_object_the_repository(const unsigned char
 	int pos, depth = MAXREPLACEDEPTH;
 	const unsigned char *cur = sha1;
 
-	prepare_replace_object();
+	prepare_replace_object(the_repository);
 
 	/* Try to recursively replace the object */
 	do {
