@@ -10,6 +10,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
+#include "packfile.h"
 #include "delta.h"
 #include "pack.h"
 #include "pack-revindex.h"

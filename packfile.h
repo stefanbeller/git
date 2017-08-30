@@ -1,6 +1,25 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
+/* in cache.h */
+enum object_type;
+struct object_info;
+
+struct pack_window {
+	struct pack_window *next;
+	unsigned char *base;
+	off_t offset;
+	size_t len;
+	unsigned int last_used;
+	unsigned int inuse_cnt;
+};
+
+struct pack_entry {
+	off_t offset;
+	unsigned char sha1[20];
+	struct packed_git *p;
+};
+
 /*
  * Generate the filename to be used for a pack file with checksum "sha1" and
  * extension "ext". The result is written into the strbuf "buf", overwriting

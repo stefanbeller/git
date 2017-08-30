@@ -2,6 +2,7 @@
 #define PACK_H
 
 #include "object.h"
+#include "packfile.h"
 #include "csum-file.h"
 
 /*
