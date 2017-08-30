@@ -900,7 +900,8 @@ static int stat_sha1_file(struct raw_object_store *o, const unsigned char *sha1,
  * Like stat_sha1_file(), but actually open the object and return the
  * descriptor. See the caveats on the "path" parameter above.
  */
-static int open_sha1_file(const unsigned char *sha1, const char **path)
+static int open_sha1_file(struct raw_object_store *o,
+			  const unsigned char *sha1, const char **path)
 {
 	int fd;
 	struct alternate_object_database *alt;
@@ -908,7 +909,7 @@ static int open_sha1_file(const unsigned char *sha1, const char **path)
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	sha1_file_name(&the_repository->objects, &buf, sha1);
+	sha1_file_name(o, &buf, sha1);
 	*path = buf.buf;
 
 	fd = git_open(*path);
@@ -916,8 +917,8 @@ static int open_sha1_file(const unsigned char *sha1, const char **path)
 		return fd;
 	most_interesting_errno = errno;
 
-	prepare_alt_odb(&the_repository->objects);
-	for (alt = the_repository->objects.alt_odb_list; alt; alt = alt->next) {
+	prepare_alt_odb(o);
+	for (alt = o->alt_odb_list; alt; alt = alt->next) {
 		*path = alt_sha1_path(alt, sha1);
 		fd = git_open(*path);
 		if (fd >= 0)
@@ -943,7 +944,7 @@ static void *map_sha1_file_1(const char *path,
 	if (path)
 		fd = git_open(path);
 	else
-		fd = open_sha1_file(sha1, &path);
+		fd = open_sha1_file(&the_repository->objects, sha1, &path);
 	map = NULL;
 	if (fd >= 0) {
 		struct stat st;
