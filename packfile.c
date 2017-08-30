@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "mru.h"
+#include "packfile.h"
 #include "pack.h"
 #include "repository.h"
 #include "alternates.h"
