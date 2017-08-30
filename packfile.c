@@ -1450,7 +1450,7 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 	oi.sizep = size;
 	oi.contentp = &content;
 
-	if (sha1_object_info_extended(sha1, &oi, 0) < 0)
+	if (sha1_object_info_extended(the_repository, sha1, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
