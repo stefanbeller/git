@@ -13,8 +13,7 @@ struct replace_object {
  * This internal function is only declared here for the benefit of
  * lookup_replace_object().  Please do not call it directly.
  */
-#define do_lookup_replace_object(r, s) do_lookup_replace_object_##r(s)
-extern const unsigned char *do_lookup_replace_object_the_repository(const unsigned char *sha1);
+extern const unsigned char *do_lookup_replace_object(struct repository *r, const unsigned char *sha1);
 
 /*
  * If object sha1 should be replaced, return the replacement object's
