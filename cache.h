@@ -1735,7 +1735,9 @@ struct object_info {
 #define OBJECT_INFO_SKIP_CACHED 4
 /* Do not retry packed storage after checking packed and loose storage */
 #define OBJECT_INFO_QUICK 8
-extern int sha1_object_info_extended(const unsigned char *, struct object_info *, unsigned flags);
+#define sha1_object_info_extended(r, s, oi, f) \
+		sha1_object_info_extended_##r(s, oi, f)
+extern int sha1_object_info_extended_the_repository(const unsigned char *, struct object_info *, unsigned flags);
 
 /* Dumb servers support */
 extern int update_server_info(int);
