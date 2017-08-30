@@ -434,3 +434,7 @@ void clear_object_flags(unsigned flags)
 			obj->flags &= ~flags;
 	}
 }
+
+void object_store_clear(struct object_store *o)
+{
+}
