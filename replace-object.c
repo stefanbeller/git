@@ -94,7 +94,7 @@ static void prepare_replace_object(void)
  * permanently-allocated value.  This function always respects replace
  * references, regardless of the value of check_replace_refs.
  */
-const unsigned char *do_lookup_replace_object(const unsigned char *sha1)
+const unsigned char *do_lookup_replace_object_the_repository(const unsigned char *sha1)
 {
 	int pos, depth = MAXREPLACEDEPTH;
 	const unsigned char *cur = sha1;
