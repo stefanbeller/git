@@ -22,12 +22,20 @@ struct raw_object_store {
 	struct alternate_object_database **alt_odb_tail;
 
 	/*
+	 * A fast, rough count of the number of objects in the repository.
+	 * These two fields are not meant for direct access. Use
+	 * approximate_object_count() instead.
+	 */
+	unsigned long approximate_object_count;
+	unsigned approximate_object_count_valid : 1;
+
+	/*
 	 * Whether packed_git has already been populated with this repository's
 	 * packs.
 	 */
 	unsigned packed_git_initialized : 1;
 };
-#define RAW_OBJECT_STORE_INIT { NULL, NULL, MRU_INIT, NULL, NULL, 0 }
+#define RAW_OBJECT_STORE_INIT { NULL, NULL, MRU_INIT, NULL, NULL, 0, 0, 0 }
 
 void raw_object_store_clear(struct raw_object_store *o);
 
