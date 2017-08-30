@@ -26,7 +26,7 @@ static int verify_object(const unsigned char *sha1, const char *expected_type)
 	enum object_type type;
 	unsigned long size;
 	void *buffer = read_sha1_file(sha1, &type, &size);
-	const unsigned char *repl = lookup_replace_object(sha1);
+	const unsigned char *repl = lookup_replace_object(the_repository, sha1);
 
 	if (buffer) {
 		if (type == type_from_string(expected_type))
