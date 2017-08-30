@@ -78,8 +78,6 @@ static void prepare_replace_object(void)
 
 	for_each_replace_ref(register_replace_ref, NULL);
 	the_repository->objects.replacements.prepared = 1;
-	if (!the_repository->objects.replacements.nr)
-		check_replace_refs = 0;
 }
 
 /* We allow "recursive" replacement. Only within reason, though */
