@@ -11,6 +11,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "notes.h"
+#include "object-store.h"
 #include "blob.h"
 #include "commit.h"
 #include "refs.h"

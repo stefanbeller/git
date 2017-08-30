@@ -1,6 +1,10 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
+/* in object-store.h */
+struct packed_git;
+struct object_info;
+
 struct pack_window {
 	struct pack_window *next;
 	unsigned char *base;
