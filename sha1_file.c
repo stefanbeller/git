@@ -1234,7 +1234,7 @@ static int sha1_loose_object_info(struct repository *r,
 	return (status < 0) ? status : 0;
 }
 
-int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi, unsigned flags)
+int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct object_info *oi, unsigned flags)
 {
 	static struct object_info blank_oi = OBJECT_INFO_INIT;
 	struct pack_entry e;
@@ -1294,7 +1294,8 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 	rtype = packed_object_info(e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real);
-		return sha1_object_info_extended(real, oi, 0);
+		return sha1_object_info_extended(the_repository, real, oi,
+						 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
 		oi->u.packed.pack = e.p;
@@ -1313,7 +1314,7 @@ int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 
 	oi.typep = &type;
 	oi.sizep = sizep;
-	if (sha1_object_info_extended(sha1, &oi,
+	if (sha1_object_info_extended(the_repository, sha1, &oi,
 				      OBJECT_INFO_LOOKUP_REPLACE) < 0)
 		return -1;
 	return type;
@@ -1328,7 +1329,7 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 	oi.sizep = size;
 	oi.contentp = &content;
 
-	if (sha1_object_info_extended(sha1, &oi, 0) < 0)
+	if (sha1_object_info_extended(the_repository, sha1, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
@@ -1715,7 +1716,7 @@ int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 {
 	if (!startup_info->have_repository)
 		return 0;
-	return sha1_object_info_extended(sha1, NULL,
+	return sha1_object_info_extended(the_repository, sha1, NULL,
 					 flags | OBJECT_INFO_SKIP_CACHED) >= 0;
 }
 
