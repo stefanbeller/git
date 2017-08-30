@@ -18,33 +18,32 @@ static int replace_object_pos(struct repository *r, const unsigned char *sha1)
 			replace_sha1_access);
 }
 
-#define register_replace_object(r, rp, i) \
-	register_replace_object_##r(rp, i)
-static int register_replace_object_the_repository(struct replace_object *replace,
-						  int ignore_dups)
+static int register_replace_object(struct repository *r,
+				   struct replace_object *replace,
+				   int ignore_dups)
 {
-	int pos = replace_object_pos(the_repository, replace->original);
+	int pos = replace_object_pos(r, replace->original);
 
 	if (0 <= pos) {
 		if (ignore_dups)
 			free(replace);
 		else {
-			free(the_repository->objects.replacements.items[pos]);
-			the_repository->objects.replacements.items[pos] = replace;
+			free(r->objects.replacements.items[pos]);
+			r->objects.replacements.items[pos] = replace;
 		}
 		return 1;
 	}
 	pos = -pos - 1;
-	ALLOC_GROW(the_repository->objects.replacements.items,
-		   the_repository->objects.replacements.nr + 1,
-		   the_repository->objects.replacements.alloc);
-	the_repository->objects.replacements.nr++;
-	if (pos < the_repository->objects.replacements.nr)
-		memmove(the_repository->objects.replacements.items + pos + 1,
-			the_repository->objects.replacements.items + pos,
-			(the_repository->objects.replacements.nr - pos - 1) *
-			sizeof(*the_repository->objects.replacements.items));
-	the_repository->objects.replacements.items[pos] = replace;
+	ALLOC_GROW(r->objects.replacements.items,
+		   r->objects.replacements.nr + 1,
+		   r->objects.replacements.alloc);
+	r->objects.replacements.nr++;
+	if (pos < r->objects.replacements.nr)
+		memmove(r->objects.replacements.items + pos + 1,
+			r->objects.replacements.items + pos,
+			(r->objects.replacements.nr - pos - 1) *
+			sizeof(*r->objects.replacements.items));
+	r->objects.replacements.items[pos] = replace;
 	return 0;
 }
 
