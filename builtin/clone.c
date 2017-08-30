@@ -11,6 +11,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"
+#include "alternates.h"
 #include "parse-options.h"
 #include "fetch-pack.h"
 #include "refs.h"

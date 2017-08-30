@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "alternates.h"
 #include "refs.h"
 #include "worktree.h"
 

@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "mru.h"
 #include "replace-object.h"
+#include "alternates.h"
 
 struct object_store {
 	struct packed_git *packed_git;
@@ -14,8 +15,11 @@ struct object_store {
 	 */
 	struct mru packed_git_mru;
 
-	struct alternate_object_database *alt_odb_list;
-	struct alternate_object_database **alt_odb_tail;
+	/*
+	 * Additional object databases to fall back on when an object does not
+	 * exist in the current one (see --reference in git-clone(1)).
+	 */
+	struct alternates alt_odb;
 
 	/*
 	 * Objects that should be substituted by other objects
@@ -37,7 +41,8 @@ struct object_store {
 	 */
 	unsigned packed_git_initialized : 1;
 };
-#define OBJECT_STORE_INIT { NULL, MRU_INIT, NULL, NULL, REPLACE_OBJECTS_INIT, 0, 0, 0 }
+#define OBJECT_STORE_INIT \
+	{ NULL, MRU_INIT, ALTERNATES_INIT, REPLACE_OBJECTS_INIT, 0, 0, 0 }
 
 struct packed_git {
 	struct packed_git *next;
@@ -69,10 +74,5 @@ struct packed_git {
  */
 extern const char *sha1_file_name(struct repository *r, const unsigned char *sha1);
 extern void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
-
-extern void prepare_alt_odb(struct repository *r);
-
-typedef int alt_odb_fn(struct alternate_object_database *, void *);
-extern int foreach_alt_odb(struct repository *r, alt_odb_fn, void*);
 
 #endif /* OBJECT_STORE_H */

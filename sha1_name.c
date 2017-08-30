@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "config.h"
+#include "alternates.h"
 #include "tag.h"
 #include "commit.h"
 #include "tree.h"
@@ -106,7 +107,7 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 		 */
 		fakeent = alloc_alt_odb(get_object_directory());
 	}
-	fakeent->next = the_repository->objects.alt_odb_list;
+	fakeent->next = the_repository->objects.alt_odb.list;
 
 	for (alt = fakeent; alt && !ds->ambiguous; alt = alt->next) {
 		int pos;

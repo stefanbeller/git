@@ -8,6 +8,7 @@
 #include "config.h"
 #include "dir.h"
 #include "repository.h"
+#include "alternates.h"
 #include "object-store.h"
 #include "builtin.h"
 #include "parse-options.h"
