@@ -39,6 +39,8 @@ struct object_store {
 		struct replace_object **items;
 
 		int alloc, nr;
+
+		unsigned prepared : 1;
 	} replacements;
 
 	/*
@@ -56,7 +58,7 @@ struct object_store {
 	unsigned packed_git_initialized : 1;
 };
 #define OBJECT_STORE_INIT \
-	{ NULL, MRU_INIT, ALTERNATES_INIT, { NULL, 0, 0 }, 0, 0, 0 }
+	{ NULL, MRU_INIT, ALTERNATES_INIT, { NULL, 0, 0, 0 }, 0, 0, 0 }
 
 extern void object_store_clear(struct object_store *o);
 
