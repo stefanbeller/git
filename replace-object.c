@@ -75,15 +75,13 @@ static int register_replace_ref(const char *refname,
 	return 0;
 }
 
-#define prepare_replace_object(r) \
-	prepare_replace_object_##r()
-static void prepare_replace_object_the_repository(void)
+static void prepare_replace_object(struct repository *r)
 {
-	if (the_repository->objects.replacements.prepared)
+	if (r->objects.replacements.prepared)
 		return;
 
-	for_each_replace_ref(the_repository, register_replace_ref, the_repository);
-	the_repository->objects.replacements.prepared = 1;
+	for_each_replace_ref(r, register_replace_ref, r);
+	r->objects.replacements.prepared = 1;
 }
 
 /* We allow "recursive" replacement. Only within reason, though */
