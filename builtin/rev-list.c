@@ -4,6 +4,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "object-store.h"
 #include "pack.h"
 #include "pack-bitmap.h"
 #include "builtin.h"

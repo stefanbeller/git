@@ -3,6 +3,7 @@
 #include "lockfile.h"
 #include "sequencer.h"
 #include "dir.h"
+#include "object-store.h"
 #include "object.h"
 #include "commit.h"
 #include "tag.h"
