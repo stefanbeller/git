@@ -140,7 +140,7 @@ struct git_istream *open_istream(const unsigned char *sha1,
 {
 	struct git_istream *st;
 	struct object_info oi = OBJECT_INFO_INIT;
-	const unsigned char *real = lookup_replace_object(sha1);
+	const unsigned char *real = lookup_replace_object(the_repository, sha1);
 	enum input_source src = istream_source(real, type, &oi);
 
 	if (src < 0)
