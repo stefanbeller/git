@@ -34,6 +34,11 @@ struct repository {
 	struct object_store objects;
 
 	/*
+	 * The store in which the refs are hold.
+	 */
+	struct ref_store *main_ref_store;
+
+	/*
 	 * Path to the repository's graft file.
 	 * Cannot be NULL after initialization.
 	 */
