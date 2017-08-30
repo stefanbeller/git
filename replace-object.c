@@ -11,7 +11,9 @@ static const unsigned char *replace_sha1_access(size_t index, void *table)
 	return replace[index]->original;
 }
 
-static int replace_object_pos(const unsigned char *sha1)
+#define replace_object_pos(r, s) \
+	replace_object_pos_##r(s)
+static int replace_object_pos_the_repository(const unsigned char *sha1)
 {
 	return sha1_pos(sha1, the_repository->objects.replacements.items,
 			the_repository->objects.replacements.nr,
@@ -23,7 +25,7 @@ static int replace_object_pos(const unsigned char *sha1)
 static int register_replace_object_the_repository(struct replace_object *replace,
 						  int ignore_dups)
 {
-	int pos = replace_object_pos(replace->original);
+	int pos = replace_object_pos(the_repository, replace->original);
 
 	if (0 <= pos) {
 		if (ignore_dups)
@@ -108,7 +110,7 @@ const unsigned char *do_lookup_replace_object_the_repository(const unsigned char
 			die("replace depth too high for object %s",
 			    sha1_to_hex(sha1));
 
-		pos = replace_object_pos(cur);
+		pos = replace_object_pos(the_repository, cur);
 		if (0 <= pos)
 			cur = the_repository->objects.replacements.items[pos]->replacement;
 	} while (0 <= pos);
