@@ -1180,7 +1180,7 @@ int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct o
 	struct pack_entry e;
 	int rtype;
 	const unsigned char *real = (flags & OBJECT_INFO_LOOKUP_REPLACE) ?
-				    lookup_replace_object(sha1) :
+				    lookup_replace_object(the_repository, sha1) :
 				    sha1;
 
 	if (!oi)
@@ -1303,8 +1303,8 @@ void *read_sha1_file_extended(const unsigned char *sha1,
 	const struct packed_git *p;
 	const char *path;
 	struct stat st;
-	const unsigned char *repl = lookup_replace ? lookup_replace_object(sha1)
-						   : sha1;
+	const unsigned char *repl = lookup_replace ?
+		lookup_replace_object(the_repository, sha1) : sha1;
 
 	errno = 0;
 	data = read_object(repl, type, size);

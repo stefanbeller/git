@@ -21,7 +21,8 @@ extern const unsigned char *do_lookup_replace_object(struct repository *r, const
  * either sha1 or a pointer to a permanently-allocated value.  When
  * object replacement is suppressed, always return sha1.
  */
-static inline const unsigned char *lookup_replace_object(const unsigned char *sha1)
+#define lookup_replace_object(r, s) lookup_replace_object_##r(s)
+static inline const unsigned char *lookup_replace_object_the_repository(const unsigned char *sha1)
 {
 	if (!check_replace_refs ||
 	    (the_repository->objects.replacements.prepared &&
