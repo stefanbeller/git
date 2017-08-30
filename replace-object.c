@@ -76,7 +76,7 @@ static void prepare_replace_object(void)
 	if (the_repository->objects.replacements.prepared)
 		return;
 
-	for_each_replace_ref(register_replace_ref, NULL);
+	for_each_replace_ref(the_repository, register_replace_ref, NULL);
 	the_repository->objects.replacements.prepared = 1;
 }
 
