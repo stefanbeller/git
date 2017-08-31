@@ -142,8 +142,9 @@ extern int packed_object_info_the_repository(struct packed_git *pack, off_t offs
 extern void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1);
 extern const struct packed_git *has_packed_and_bad(const unsigned char *sha1);
 
-#define find_pack_entry(r, s, e) find_pack_entry_##r(s, e)
-extern int find_pack_entry_the_repository(const unsigned char *sha1, struct pack_entry *e);
+extern int find_pack_entry(struct repository *r,
+			   const unsigned char *sha1,
+			   struct pack_entry *e);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 
