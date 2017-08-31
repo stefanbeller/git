@@ -1294,7 +1294,7 @@ int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct o
 		 */
 		return 0;
 
-	rtype = packed_object_info(e.p, e.offset, oi);
+	rtype = packed_object_info(the_repository, e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real);
 		return sha1_object_info_extended(the_repository, real, oi,
