@@ -1839,17 +1839,19 @@ static int fill_pack_entry(const unsigned char *sha1,
  * Iff a pack file contains the object named by sha1, return true and
  * store its location to e.
  */
-int find_pack_entry_the_repository(const unsigned char *sha1, struct pack_entry *e)
+int find_pack_entry(struct repository *r,
+		    const unsigned char *sha1,
+		    struct pack_entry *e)
 {
 	struct mru_entry *p;
 
-	prepare_packed_git(the_repository);
-	if (!the_repository->objects.packed_git)
+	prepare_packed_git(r);
+	if (!r->objects.packed_git)
 		return 0;
 
-	for (p = the_repository->objects.packed_git_mru.head; p; p = p->next) {
+	for (p = r->objects.packed_git_mru.head; p; p = p->next) {
 		if (fill_pack_entry(sha1, e, p->item)) {
-			mru_mark(&the_repository->objects.packed_git_mru, p);
+			mru_mark(&r->objects.packed_git_mru, p);
 			return 1;
 		}
 	}
