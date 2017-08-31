@@ -1237,13 +1237,14 @@ static int sha1_loose_object_info(struct repository *r,
 	return (status < 0) ? status : 0;
 }
 
-int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct object_info *oi, unsigned flags)
+int sha1_object_info_extended(struct repository *r, const unsigned char *sha1,
+			      struct object_info *oi, unsigned flags)
 {
 	static struct object_info blank_oi = OBJECT_INFO_INIT;
 	struct pack_entry e;
 	int rtype;
 	const unsigned char *real = (flags & OBJECT_INFO_LOOKUP_REPLACE) ?
-				    lookup_replace_object(the_repository, sha1) :
+				    lookup_replace_object(r, sha1) :
 				    sha1;
 
 	if (is_null_sha1(real))
@@ -1272,17 +1273,17 @@ int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct o
 		}
 	}
 
-	if (!find_pack_entry(the_repository, real, &e)) {
+	if (!find_pack_entry(r, real, &e)) {
 		/* Most likely it's a loose object. */
-		if (!sha1_loose_object_info(the_repository, real, oi, flags))
+		if (!sha1_loose_object_info(r, real, oi, flags))
 			return 0;
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (flags & OBJECT_INFO_QUICK) {
 			return -1;
 		} else {
-			reprepare_packed_git(the_repository);
-			if (!find_pack_entry(the_repository, real, &e))
+			reprepare_packed_git(r);
+			if (!find_pack_entry(r, real, &e))
 				return -1;
 		}
 	}
@@ -1294,11 +1295,10 @@ int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct o
 		 */
 		return 0;
 
-	rtype = packed_object_info(the_repository, e.p, e.offset, oi);
+	rtype = packed_object_info(r, e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real);
-		return sha1_object_info_extended(the_repository, real, oi,
-						 0);
+		return sha1_object_info_extended(r, real, oi, 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
 		oi->u.packed.pack = e.p;
@@ -1310,14 +1310,16 @@ int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct o
 }
 
 /* returns enum object_type or negative */
-int sha1_object_info_the_repository(const unsigned char *sha1, unsigned long *sizep)
+int sha1_object_info(struct repository *r,
+		     const unsigned char *sha1,
+		     unsigned long *sizep)
 {
 	enum object_type type;
 	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.typep = &type;
 	oi.sizep = sizep;
-	if (sha1_object_info_extended(the_repository, sha1, &oi,
+	if (sha1_object_info_extended(r, sha1, &oi,
 				      OBJECT_INFO_LOOKUP_REPLACE) < 0)
 		return -1;
 	return type;

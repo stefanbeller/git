@@ -93,10 +93,7 @@ static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *
 }
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
-
-#define sha1_object_info(r, sha1, size) \
-	sha1_object_info_##r(sha1, size)
-extern int sha1_object_info_the_repository(const unsigned char *, unsigned long *);
+extern int sha1_object_info(struct repository *r, const unsigned char *sha1, unsigned long *sizep);
 extern int hash_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 extern int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type, struct object_id *oid, unsigned flags);
@@ -168,8 +165,10 @@ struct object_info {
 #define OBJECT_INFO_SKIP_CACHED 4
 /* Do not retry packed storage after checking packed and loose storage */
 #define OBJECT_INFO_QUICK 8
-#define sha1_object_info_extended(r, s, oi, f) \
-		sha1_object_info_extended_##r(s, oi, f)
-extern int sha1_object_info_extended_the_repository(const unsigned char *, struct object_info *, unsigned flags);
+
+extern int sha1_object_info_extended(struct repository *r,
+				     const unsigned char *sha1,
+				     struct object_info *oi,
+				     unsigned flags);
 
 #endif /* OBJECT_STORE_H */
