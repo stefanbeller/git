@@ -7,6 +7,7 @@
 #include "quote.h"
 #include "tree.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "object-store.h"
 
 static struct treeent {
@@ -117,7 +118,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 	}
 
 	/* Check the type of object identified by sha1 */
-	obj_type = sha1_object_info(sha1, NULL);
+	obj_type = sha1_object_info(the_repository, sha1, NULL);
 	if (obj_type < 0) {
 		if (allow_missing) {
 			; /* no problem - missing objects are presumed to be of the right type */

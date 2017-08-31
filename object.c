@@ -256,7 +256,7 @@ struct object *parse_object(const struct object_id *oid)
 
 	if ((obj && obj->type == OBJ_BLOB) ||
 	    (!obj && has_object_file(oid) &&
-	     sha1_object_info(oid->hash, NULL) == OBJ_BLOB)) {
+	     sha1_object_info(the_repository, oid->hash, NULL) == OBJ_BLOB)) {
 		if (check_sha1_signature(repl, NULL, 0, NULL) < 0) {
 			error("sha1 mismatch %s", oid_to_hex(oid));
 			return NULL;

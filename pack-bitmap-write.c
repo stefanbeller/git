@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "repository.h"
 #include "object-store.h"
 #include "commit.h"
 #include "tag.h"
@@ -74,7 +75,8 @@ void bitmap_writer_build_type_index(struct pack_idx_entry **index,
 			break;
 
 		default:
-			real_type = sha1_object_info(entry->idx.oid.hash,
+			real_type = sha1_object_info(the_repository,
+						     entry->idx.oid.hash,
 						     NULL);
 			break;
 		}

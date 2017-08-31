@@ -259,7 +259,7 @@ enum peel_status peel_object(const unsigned char *name, unsigned char *sha1)
 	struct object *o = lookup_unknown_object(name);
 
 	if (o->type == OBJ_NONE) {
-		int type = sha1_object_info(name, NULL);
+		int type = sha1_object_info(the_repository, name, NULL);
 		if (type < 0 || !object_as_type(o, type, 0))
 			return PEEL_INVALID;
 	}

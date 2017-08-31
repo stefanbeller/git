@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "config.h"
+#include "repository.h"
 #include "object-store.h"
 #include "blob.h"
 #include "tree.h"
@@ -95,7 +96,7 @@ static int show_tree(const unsigned char *sha1, struct strbuf *base,
 			char size_text[24];
 			if (!strcmp(type, blob_type)) {
 				unsigned long size;
-				if (sha1_object_info(sha1, &size) == OBJ_BAD)
+				if (sha1_object_info(the_repository, sha1, &size) == OBJ_BAD)
 					xsnprintf(size_text, sizeof(size_text),
 						  "BAD");
 				else

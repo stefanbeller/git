@@ -5,6 +5,7 @@
 #include "config.h"
 #include "tar.h"
 #include "archive.h"
+#include "repository.h"
 #include "object-store.h"
 #include "streaming.h"
 #include "run-command.h"
@@ -277,7 +278,7 @@ static int write_tar_entry(struct archiver_args *args,
 		memcpy(header.name, path, pathlen);
 
 	if (S_ISREG(mode) && !args->convert &&
-	    sha1_object_info(sha1, &size) == OBJ_BLOB &&
+	    sha1_object_info(the_repository, sha1, &size) == OBJ_BLOB &&
 	    size > big_file_threshold)
 		buffer = NULL;
 	else if (S_ISLNK(mode) || S_ISREG(mode)) {

@@ -6,6 +6,7 @@
 #include "archive.h"
 #include "streaming.h"
 #include "utf8.h"
+#include "repository.h"
 #include "object-store.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
@@ -326,7 +327,8 @@ static int write_zip_entry(struct archiver_args *args,
 		compressed_size = 0;
 		buffer = NULL;
 	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
-		enum object_type type = sha1_object_info(sha1, &size);
+		enum object_type type = sha1_object_info(the_repository, sha1,
+							 &size);
 
 		method = 0;
 		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
