@@ -1519,7 +1519,8 @@ static void check_object(struct object_entry *entry)
 		unuse_pack(&w_curs);
 	}
 
-	entry->type = sha1_object_info(entry->idx.oid.hash, &entry->size);
+	entry->type = sha1_object_info(the_repository, entry->idx.oid.hash,
+				       &entry->size);
 	/*
 	 * The error condition is checked in prepare_pack().  This is
 	 * to permit a missing preferred base object to be ignored
@@ -1581,7 +1582,8 @@ static void drop_reused_delta(struct object_entry *entry)
 		 * And if that fails, the error will be recorded in entry->type
 		 * and dealt with in prepare_pack().
 		 */
-		entry->type = sha1_object_info(entry->idx.oid.hash,
+		entry->type = sha1_object_info(the_repository,
+					       entry->idx.oid.hash,
 					       &entry->size);
 	}
 }
@@ -2689,7 +2691,8 @@ static void add_objects_in_unpacked_packs(struct rev_info *revs)
 static int add_loose_object(const struct object_id *oid, const char *path,
 			    void *data)
 {
-	enum object_type type = sha1_object_info(oid->hash, NULL);
+	enum object_type type = sha1_object_info(the_repository, oid->hash,
+						 NULL);
 
 	if (type < 0) {
 		warning("loose object at %s could not be examined", path);

@@ -10,6 +10,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "refs.h"
+#include "repository.h"
 #include "object-store.h"
 #include "tag.h"
 #include "run-command.h"
@@ -211,7 +212,7 @@ static void create_tag(const struct object_id *object, const char *tag,
 	struct strbuf header = STRBUF_INIT;
 	char *path = NULL;
 
-	type = sha1_object_info(object->hash, NULL);
+	type = sha1_object_info(the_repository, object->hash, NULL);
 	if (type <= OBJ_NONE)
 	    die(_("bad object type."));
 
@@ -294,7 +295,7 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 	}
 
 	strbuf_addstr(sb, " (");
-	type = sha1_object_info(oid->hash, NULL);
+	type = sha1_object_info(the_repository, oid->hash, NULL);
 	switch (type) {
 	default:
 		strbuf_addstr(sb, "object of unknown type");

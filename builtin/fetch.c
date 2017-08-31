@@ -5,6 +5,7 @@
 #include "config.h"
 #include "repository.h"
 #include "refs.h"
+#include "repository.h"
 #include "object-store.h"
 #include "commit.h"
 #include "builtin.h"
@@ -624,7 +625,7 @@ static int update_local_ref(struct ref *ref,
 	struct branch *current_branch = branch_get(NULL);
 	const char *pretty_ref = prettify_refname(ref->name);
 
-	type = sha1_object_info(ref->new_oid.hash, NULL);
+	type = sha1_object_info(the_repository, ref->new_oid.hash, NULL);
 	if (type < 0)
 		die(_("object %s not found"), oid_to_hex(&ref->new_oid));
 
