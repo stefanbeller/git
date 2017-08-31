@@ -1272,7 +1272,7 @@ int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct o
 		}
 	}
 
-	if (!find_pack_entry(real, &e)) {
+	if (!find_pack_entry(the_repository, real, &e)) {
 		/* Most likely it's a loose object. */
 		if (!sha1_loose_object_info(the_repository, real, oi, flags))
 			return 0;
@@ -1282,7 +1282,7 @@ int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct o
 			return -1;
 		} else {
 			reprepare_packed_git(the_repository);
-			if (!find_pack_entry(real, &e))
+			if (!find_pack_entry(the_repository, real, &e))
 				return -1;
 		}
 	}
@@ -1648,7 +1648,7 @@ static int freshen_loose_object(const unsigned char *sha1)
 static int freshen_packed_object(const unsigned char *sha1)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(sha1, &e))
+	if (!find_pack_entry(the_repository, sha1, &e))
 		return 0;
 	if (e.p->freshened)
 		return 1;
