@@ -1082,9 +1082,9 @@ static const unsigned char *get_delta_base_sha1(struct packed_git *p,
 		return NULL;
 }
 
-#define retry_bad_packed_offset(r, p, o) \
-	retry_bad_packed_offset_##r(p, o)
-static int retry_bad_packed_offset_the_repository(struct packed_git *p, off_t obj_offset)
+static int retry_bad_packed_offset(struct repository *r,
+				   struct packed_git *p,
+				   off_t obj_offset)
 {
 	int type;
 	struct revindex_entry *revidx;
@@ -1094,7 +1094,7 @@ static int retry_bad_packed_offset_the_repository(struct packed_git *p, off_t ob
 		return OBJ_BAD;
 	sha1 = nth_packed_object_sha1(p, revidx->nr);
 	mark_bad_packed_object(p, sha1);
-	type = sha1_object_info(the_repository, sha1, NULL);
+	type = sha1_object_info(r, sha1, NULL);
 	if (type <= OBJ_NONE)
 		return OBJ_BAD;
 	return type;
@@ -1102,13 +1102,12 @@ static int retry_bad_packed_offset_the_repository(struct packed_git *p, off_t ob
 
 #define POI_STACK_PREALLOC 64
 
-#define packed_to_object_type(r, p, o, t, w, c) \
-	packed_to_object_type_##r(p, o, t, w, c)
-static enum object_type packed_to_object_type_the_repository(struct packed_git *p,
-							     off_t obj_offset,
-							     enum object_type type,
-							     struct pack_window **w_curs,
-							     off_t curpos)
+static enum object_type packed_to_object_type(struct repository *r,
+					      struct packed_git *p,
+					      off_t obj_offset,
+					      enum object_type type,
+					      struct pack_window **w_curs,
+					      off_t curpos)
 {
 	off_t small_poi_stack[POI_STACK_PREALLOC];
 	off_t *poi_stack = small_poi_stack;
@@ -1135,7 +1134,7 @@ static enum object_type packed_to_object_type_the_repository(struct packed_git *
 		if (type <= OBJ_NONE) {
 			/* If getting the base itself fails, we first
 			 * retry the base, otherwise unwind */
-			type = retry_bad_packed_offset(the_repository, p, base_offset);
+			type = retry_bad_packed_offset(r, p, base_offset);
 			if (type > OBJ_NONE)
 				goto out;
 			goto unwind;
@@ -1163,7 +1162,7 @@ out:
 unwind:
 	while (poi_stack_nr) {
 		obj_offset = poi_stack[--poi_stack_nr];
-		type = retry_bad_packed_offset(the_repository, p, obj_offset);
+		type = retry_bad_packed_offset(r, p, obj_offset);
 		if (type > OBJ_NONE)
 			goto out;
 	}
@@ -1312,8 +1311,8 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	hashmap_add(&delta_base_cache, ent);
 }
 
-int packed_object_info_the_repository(struct packed_git *p, off_t obj_offset,
-				      struct object_info *oi)
+int packed_object_info(struct repository *r, struct packed_git *p,
+		       off_t obj_offset, struct object_info *oi)
 {
 	struct pack_window *w_curs = NULL;
 	unsigned long size;
@@ -1359,7 +1358,7 @@ int packed_object_info_the_repository(struct packed_git *p, off_t obj_offset,
 
 	if (oi->typep || oi->typename) {
 		enum object_type ptot;
-		ptot = packed_to_object_type(the_repository, p, obj_offset,
+		ptot = packed_to_object_type(r, p, obj_offset,
 					     type, &w_curs, curpos);
 		if (oi->typep)
 			*oi->typep = ptot;
