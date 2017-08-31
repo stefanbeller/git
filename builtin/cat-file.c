@@ -117,7 +117,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		/* else fallthrough */
 
 	case 'p':
-		type = sha1_object_info(oid.hash, NULL);
+		type = sha1_object_info(the_repository, oid.hash, NULL);
 		if (type < 0)
 			die("Not a valid object name %s", obj_name);
 
@@ -141,7 +141,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	case 0:
 		if (type_from_string(exp_type) == OBJ_BLOB) {
 			struct object_id blob_oid;
-			if (sha1_object_info(oid.hash, NULL) == OBJ_TAG) {
+			if (sha1_object_info(the_repository, oid.hash, NULL) == OBJ_TAG) {
 				char *buffer = read_sha1_file(oid.hash, &type, &size);
 				const char *target;
 				if (!skip_prefix(buffer, "object ", &target) ||
@@ -151,7 +151,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			} else
 				oidcpy(&blob_oid, &oid);
 
-			if (sha1_object_info(blob_oid.hash, NULL) == OBJ_BLOB)
+			if (sha1_object_info(the_repository, blob_oid.hash, NULL) == OBJ_BLOB)
 				return stream_blob_to_fd(1, &blob_oid, NULL, 0);
 			/*
 			 * we attempted to dereference a tag to a blob

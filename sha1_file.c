@@ -1310,7 +1310,7 @@ int sha1_object_info_extended_the_repository(const unsigned char *sha1, struct o
 }
 
 /* returns enum object_type or negative */
-int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
+int sha1_object_info_the_repository(const unsigned char *sha1, unsigned long *sizep)
 {
 	enum object_type type;
 	struct object_info oi = OBJECT_INFO_INIT;
@@ -1962,7 +1962,7 @@ int read_pack_header(int fd, struct pack_header *header)
 
 void assert_sha1_type(const unsigned char *sha1, enum object_type expect)
 {
-	enum object_type type = sha1_object_info(sha1, NULL);
+	enum object_type type = sha1_object_info(the_repository, sha1, NULL);
 	if (type < 0)
 		die("%s is not a valid object", sha1_to_hex(sha1));
 	if (type != expect)
