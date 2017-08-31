@@ -13,6 +13,7 @@
 #include "attr.h"
 #include "run-command.h"
 #include "utf8.h"
+#include "repository.h"
 #include "object-store.h"
 #include "userdiff.h"
 #include "submodule-config.h"
@@ -3616,7 +3617,8 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 	else {
 		enum object_type type;
 		if (size_only || (flags & CHECK_BINARY)) {
-			type = sha1_object_info(s->oid.hash, &s->size);
+			type = sha1_object_info(the_repository, s->oid.hash,
+						&s->size);
 			if (type < 0)
 				die("unable to read %s",
 				    oid_to_hex(&s->oid));

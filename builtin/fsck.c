@@ -69,7 +69,8 @@ static const char *printable_type(struct object *obj)
 	const char *ret;
 
 	if (obj->type == OBJ_NONE) {
-		enum object_type type = sha1_object_info(obj->oid.hash, NULL);
+		enum object_type type = sha1_object_info(the_repository,
+							 obj->oid.hash, NULL);
 		if (type > 0)
 			object_as_type(obj, type, 0);
 	}

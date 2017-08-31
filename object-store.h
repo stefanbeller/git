@@ -91,7 +91,10 @@ static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *
 }
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
-extern int sha1_object_info(const unsigned char *, unsigned long *);
+
+#define sha1_object_info(r, sha1, size) \
+	sha1_object_info_##r(sha1, size)
+extern int sha1_object_info_the_repository(const unsigned char *, unsigned long *);
 extern int hash_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 extern int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type, struct object_id *oid, unsigned flags);
