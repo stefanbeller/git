@@ -815,7 +815,7 @@ static int check_has_commit(const struct object_id *oid, void *data)
 {
 	struct has_commit_data *cb = data;
 
-	enum object_type type = sha1_object_info(oid->hash, NULL);
+	enum object_type type = sha1_object_info(the_repository, oid->hash, NULL);
 
 	switch (type) {
 	case OBJ_COMMIT:

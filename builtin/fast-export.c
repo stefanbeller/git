@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "config.h"
 #include "refs.h"
+#include "repository.h"
 #include "object-store.h"
 #include "commit.h"
 #include "object.h"
@@ -948,7 +949,7 @@ static void import_marks(char *input_file)
 		if (last_idnum < mark)
 			last_idnum = mark;
 
-		type = sha1_object_info(oid.hash, NULL);
+		type = sha1_object_info(the_repository, oid.hash, NULL);
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(&oid));
 

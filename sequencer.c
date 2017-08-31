@@ -3,6 +3,7 @@
 #include "lockfile.h"
 #include "sequencer.h"
 #include "dir.h"
+#include "repository.h"
 #include "object-store.h"
 #include "object.h"
 #include "commit.h"
@@ -2334,7 +2335,9 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 
 		if (!get_oid(name, &oid)) {
 			if (!lookup_commit_reference_gently(&oid, 1)) {
-				enum object_type type = sha1_object_info(oid.hash, NULL);
+				enum object_type type = sha1_object_info(the_repository,
+									 oid.hash,
+									 NULL);
 				return error(_("%s: can't cherry-pick a %s"),
 					name, typename(type));
 			}

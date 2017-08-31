@@ -2,6 +2,7 @@
 #include "config.h"
 #include "remote.h"
 #include "refs.h"
+#include "repository.h"
 #include "object-store.h"
 #include "commit.h"
 #include "diff.h"
@@ -1362,7 +1363,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			continue; /* not a tag */
 		if (string_list_has_string(&dst_tag, ref->name))
 			continue; /* they already have it */
-		if (sha1_object_info(ref->new_oid.hash, NULL) != OBJ_TAG)
+		if (sha1_object_info(the_repository, ref->new_oid.hash, NULL) != OBJ_TAG)
 			continue; /* be conservative */
 		item = string_list_append(&src_tag, ref->name);
 		item->util = ref;
