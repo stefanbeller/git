@@ -68,8 +68,7 @@ static int register_replace_ref(const char *refname,
 	hashcpy(repl_obj->replacement, oid->hash);
 
 	/* Register new object */
-	(void)r;
-	if (register_replace_object(the_repository, repl_obj, 1))
+	if (register_replace_object(r, repl_obj, 1))
 		die("duplicate replace ref: %s", refname);
 
 	return 0;
