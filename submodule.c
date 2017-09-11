@@ -811,14 +811,15 @@ static int append_oid_to_argv(const struct object_id *oid, void *data)
 
 struct has_commit_data {
 	int result;
-	const char *path;
+	struct repository *repo;
 };
 
 static int check_has_commit(const struct object_id *oid, void *data)
 {
 	struct has_commit_data *cb = data;
+	struct repository *r = cb->repo;
 
-	enum object_type type = sha1_object_info(the_repository, oid->hash, NULL);
+	enum object_type type = sha1_object_info(r, oid->hash, NULL);
 
 	switch (type) {
 	case OBJ_COMMIT:
@@ -832,24 +833,43 @@ static int check_has_commit(const struct object_id *oid, void *data)
 		return 0;
 	default:
 		die(_("submodule entry '%s' (%s) is a %s, not a commit"),
-		    cb->path, oid_to_hex(oid), typename(type));
+		    r->submodule_prefix, oid_to_hex(oid), typename(type));
 	}
+}
+
+/*
+ * Initialize 'out' based on the provided submodule path.
+ *
+ * Unlike repo_submodule_init, this tolerates submodules not present
+ * in .gitmodules. NEEDSWORK: The repo_submodule_init behavior is
+ * preferrable. This function exists only to preserve historical behavior.
+ *
+ * Returns 0 on success, -1 when the submodule is not present.
+ */
+static int open_submodule(struct repository *out, const char *path)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	if (submodule_to_gitdir(&sb, path))
+		return -1;
+
+	if (repo_init(out, sb.buf, NULL)) {
+		strbuf_release(&sb);
+		return -1;
+	}
+
+	out->submodule_prefix = xstrdup(path);
+
+	strbuf_release(&sb);
+	return 0;
 }
 
 static int submodule_has_commits(const char *path, struct oid_array *commits)
 {
-	struct has_commit_data has_commit = { 1, path };
+	struct repository sub;
+	struct has_commit_data has_commit = { 1, &sub };
 
-	/*
-	 * Perform a cheap, but incorrect check for the existence of 'commits'.
-	 * This is done by adding the submodule's object store to the in-core
-	 * object store, and then querying for each commit's existence.  If we
-	 * do not have the commit object anywhere, there is no chance we have
-	 * it in the object store of the correct submodule and have it
-	 * reachable from a ref, so we can fail early without spawning rev-list
-	 * which is expensive.
-	 */
-	if (add_submodule_odb(path))
+	if (open_submodule(&sub, path))
 		return 0;
 
 	oid_array_for_each_unique(commits, check_has_commit, &has_commit);
@@ -878,6 +898,7 @@ static int submodule_has_commits(const char *path, struct oid_array *commits)
 		strbuf_release(&out);
 	}
 
+	repo_clear(&sub);
 	return has_commit.result;
 }
 
@@ -897,6 +918,9 @@ static int submodule_needs_pushing(const char *path, struct oid_array *commits)
 		 */
 		return 0;
 
+	/* The submodule odb is needed for access to its refs. */
+	if (add_submodule_odb(path))
+		BUG("submodule '%s' is both present and absent", path);
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		struct strbuf buf = STRBUF_INIT;
