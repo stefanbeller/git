@@ -308,6 +308,22 @@ test_expect_success 'submodule entry pointing at a tag is error' '
 	test_i18ngrep "is a tag, not a commit" err
 '
 
+test_expect_success 'replace ref does not interfere with submodule access' '
+	test_commit -C work/gar/bage one &&
+	test_commit -C work/gar/bage two &&
+	git -C work/gar/bage reset HEAD^^ &&
+	git -C work/gar/bage replace two one &&
+	test_when_finished "git -C work/gar/bage replace -d two" &&
+
+	test_commit -C work/gar/bage three &&
+	git -C work add gar/bage &&
+	git -C work commit -m "advance submodule" &&
+
+	git -C work push --recurse-submodules=on-demand ../pub.git master 2>err &&
+	! grep error err &&
+	! grep fatal err
+'
+
 test_expect_success 'push fails if recurse submodules option passed as yes' '
 	(
 		cd work/gar/bage &&
