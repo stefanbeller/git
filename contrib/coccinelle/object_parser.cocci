@@ -124,3 +124,10 @@ expression F;
  lookup_commit_or_die(
 +the_repository,
  E, F)
+
+@@
+expression E;
+@@
+ lookup_commit(
++the_repository,
+ E)

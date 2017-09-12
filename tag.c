@@ -150,7 +150,7 @@ int parse_tag_buffer_the_repository(struct tag *item, const void *data, unsigned
 	} else if (!strcmp(type, tree_type)) {
 		item->tagged = (struct object *)lookup_tree(the_repository, &oid);
 	} else if (!strcmp(type, commit_type)) {
-		item->tagged = (struct object *)lookup_commit(&oid);
+		item->tagged = (struct object *)lookup_commit(the_repository, &oid);
 	} else if (!strcmp(type, tag_type)) {
 		item->tagged = (struct object *)lookup_tag(the_repository, &oid);
 	} else {
