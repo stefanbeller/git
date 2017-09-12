@@ -489,7 +489,7 @@ static void show_one_mergetag(struct commit *commit,
 	size_t payload_size, gpg_message_offset;
 
 	hash_sha1_file(extra->value, extra->len, typename(OBJ_TAG), oid.hash);
-	tag = lookup_tag(&oid);
+	tag = lookup_tag(the_repository, &oid);
 	if (!tag)
 		return; /* error message already given */
 
