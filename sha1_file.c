@@ -523,7 +523,7 @@ void add_to_alternates_file_the_repository(const char *reference)
 	free(alts);
 }
 
-void add_to_alternates_memory(const char *reference)
+void add_to_alternates_memory_the_repository(const char *reference)
 {
 	/*
 	 * Make sure alternates are initialized, or else our entry may be
