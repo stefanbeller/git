@@ -116,3 +116,11 @@ expression E;
  lookup_commit_reference(
 +the_repository,
  E)
+
+@@
+expression E;
+expression F;
+@@
+ lookup_commit_or_die(
++the_repository,
+ E, F)

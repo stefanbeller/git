@@ -62,7 +62,8 @@ struct commit *lookup_commit_reference_by_name(const char *name);
  * get a commit and return it. If "oid" does not dereference to
  * a commit, use ref_name to report an error and die.
  */
-struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref_name);
+#define lookup_commit_or_die(r, o, rn) lookup_commit_or_die_##r(o, rn)
+struct commit *lookup_commit_or_die_the_repository(const struct object_id *oid, const char *ref_name);
 
 int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long size);
 int parse_commit_gently(struct commit *item, int quiet_on_missing);
