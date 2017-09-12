@@ -3451,7 +3451,7 @@ static int reuse_worktree_file(const char *name, const struct object_id *oid, in
 	 * objects however would tend to be slower as they need
 	 * to be individually opened and inflated.
 	 */
-	if (!FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(oid->hash))
+	if (!FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(the_repository, oid->hash))
 		return 0;
 
 	/*

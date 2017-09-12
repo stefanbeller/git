@@ -3062,7 +3062,7 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 {
 	if (commit->object.flags & SHOWN)
 		return commit_ignore;
-	if (revs->unpacked && has_sha1_pack(commit->object.oid.hash))
+	if (revs->unpacked && has_sha1_pack(the_repository, commit->object.oid.hash))
 		return commit_ignore;
 	if (revs->show_all)
 		return commit_show;
