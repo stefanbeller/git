@@ -78,7 +78,8 @@ char *notes_cache_get(struct notes_cache *c, struct object_id *key_oid,
 	value_oid = get_note(&c->tree, key_oid);
 	if (!value_oid)
 		return NULL;
-	value = read_sha1_file(value_oid->hash, &type, &size);
+	value = read_sha1_file(the_repository, value_oid->hash, &type,
+			       &size);
 
 	*outsize = size;
 	return value;

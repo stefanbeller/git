@@ -1412,7 +1412,8 @@ static void load_tree(struct tree_entry *root)
 			die("Can't load tree %s", oid_to_hex(oid));
 	} else {
 		enum object_type type;
-		buf = read_sha1_file(oid->hash, &type, &size);
+		buf = read_sha1_file(the_repository, oid->hash, &type,
+				     &size);
 		if (!buf || type != OBJ_TREE)
 			die("Can't load tree %s", oid_to_hex(oid));
 	}
@@ -2973,7 +2974,8 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 	char *buf;
 
 	if (!oe || oe->pack_id == MAX_PACK_ID) {
-		buf = read_sha1_file(oid->hash, &type, &size);
+		buf = read_sha1_file(the_repository, oid->hash, &type,
+				     &size);
 	} else {
 		type = oe->type;
 		buf = gfi_unpack_entry(oe, &size);
@@ -3079,7 +3081,8 @@ static struct object_entry *dereference(struct object_entry *oe,
 		buf = gfi_unpack_entry(oe, &size);
 	} else {
 		enum object_type unused;
-		buf = read_sha1_file(oid->hash, &unused, &size);
+		buf = read_sha1_file(the_repository, oid->hash, &unused,
+				     &size);
 	}
 	if (!buf)
 		die("Can't load object %s", oid_to_hex(oid));
