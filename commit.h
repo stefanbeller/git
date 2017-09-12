@@ -280,7 +280,8 @@ struct ref;
 extern int register_shallow(const struct object_id *oid);
 #define unregister_shallow(r, o) unregister_shallow_##r(o)
 extern int unregister_shallow_the_repository(const struct object_id *oid);
-extern int for_each_commit_graft(each_commit_graft_fn, void *);
+#define for_each_commit_graft(r, f, c) for_each_commit_graft_##r(f, c)
+extern int for_each_commit_graft_the_repository(each_commit_graft_fn, void *);
 extern int is_repository_shallow(void);
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);

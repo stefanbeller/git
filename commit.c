@@ -224,7 +224,7 @@ struct commit_graft *lookup_commit_graft_the_repository(const struct object_id *
 	return the_repository->parsed_objects.grafts[pos];
 }
 
-int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
+int for_each_commit_graft_the_repository(each_commit_graft_fn fn, void *cb_data)
 {
 	int i, ret;
 	for (i = ret = 0; i < the_repository->parsed_objects.grafts_nr && !ret; i++)

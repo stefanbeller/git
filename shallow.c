@@ -272,7 +272,7 @@ static int write_shallow_commits_1(struct strbuf *out, int use_pack_protocol,
 	data.use_pack_protocol = use_pack_protocol;
 	data.count = 0;
 	data.flags = flags;
-	for_each_commit_graft(write_one_shallow, &data);
+	for_each_commit_graft(the_repository, write_one_shallow, &data);
 	if (!extra)
 		return data.count;
 	for (i = 0; i < extra->nr; i++) {
@@ -347,7 +347,8 @@ void advertise_shallow_grafts(int fd)
 {
 	if (!is_repository_shallow())
 		return;
-	for_each_commit_graft(advertise_shallow_grafts_cb, &fd);
+	for_each_commit_graft(the_repository, advertise_shallow_grafts_cb,
+			      &fd);
 }
 
 /*
