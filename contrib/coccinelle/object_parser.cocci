@@ -85,6 +85,15 @@ expression F;
 @@
 expression E;
 expression F;
+expression G;
+@@
+ parse_commit_buffer(
++the_repository,
+ E, F, G)
+
+@@
+expression E;
+expression F;
 @@
  parse_object_or_die(
 + the_repository,
