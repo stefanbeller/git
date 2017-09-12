@@ -237,13 +237,18 @@ static void scan_windows(struct packed_git *p,
 
 static int unuse_one_window(struct packed_git *current)
 {
+	int i = 0;
 	struct packed_git *p, *lru_p = NULL;
 	struct pack_window *lru_w = NULL, *lru_l = NULL;
 
 	if (current)
 		scan_windows(current, &lru_p, &lru_w, &lru_l);
-	for (p = the_repository->objects.packed_git; p; p = p->next)
-		scan_windows(p, &lru_p, &lru_w, &lru_l);
+	for (i = -1; i < open_repos_nr; i++) {
+		struct repository *r = i == -1 ? the_repository : open_repos[i];
+		for (p = r->objects.packed_git; p; p = p->next)
+			scan_windows(p, &lru_p, &lru_w, &lru_l);
+	}
+
 	if (lru_p) {
 		munmap(lru_w->base, lru_w->len);
 		pack_mapped -= lru_w->len;
