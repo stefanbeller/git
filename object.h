@@ -166,6 +166,8 @@ void object_array_remove_duplicates(struct object_array *array);
  */
 void object_array_clear(struct object_array *array);
 
-void clear_object_flags(unsigned flags);
+#define clear_object_flags(r, flags) \
+	clear_object_flags_##r(flags)
+void clear_object_flags_the_repository(unsigned flags);
 
 #endif /* OBJECT_H */

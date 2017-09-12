@@ -2841,7 +2841,7 @@ static void set_children(struct rev_info *revs)
 
 void reset_revision_walk(void)
 {
-	clear_object_flags(SEEN | ADDED | SHOWN);
+	clear_object_flags(the_repository, SEEN | ADDED | SHOWN);
 }
 
 int prepare_revision_walk(struct rev_info *revs)
