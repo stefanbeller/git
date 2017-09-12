@@ -121,7 +121,7 @@ static int stream_blocked(const unsigned char *sha1)
 	char buf[BLOCKSIZE];
 	ssize_t readlen;
 
-	st = open_istream(sha1, &type, &sz, NULL);
+	st = open_istream(the_repository, sha1, &type, &sz, NULL);
 	if (!st)
 		return error("cannot stream blob %s", sha1_to_hex(sha1));
 	for (;;) {
