@@ -521,7 +521,7 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
 		}
 	}
 
-	nr = get_max_object_index();
+	nr = get_max_object_index(the_repository);
 	for (i = 0; i < nr; i++) {
 		struct object *o = get_indexed_object(i);
 		if (o && o->type == OBJ_COMMIT)
@@ -579,7 +579,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 	 * Prepare the commit graph to track what refs can reach what
 	 * (new) shallow commits.
 	 */
-	nr = get_max_object_index();
+	nr = get_max_object_index(the_repository);
 	for (i = 0; i < nr; i++) {
 		struct object *o = get_indexed_object(i);
 		if (!o || o->type != OBJ_COMMIT)

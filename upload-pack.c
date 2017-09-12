@@ -497,7 +497,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 
 	namebuf[0] = '^';
 	namebuf[GIT_SHA1_HEXSZ + 1] = '\n';
-	for (i = get_max_object_index(); 0 < i; ) {
+	for (i = get_max_object_index(the_repository); 0 < i; ) {
 		o = get_indexed_object(--i);
 		if (!o)
 			continue;
@@ -561,7 +561,7 @@ static int get_reachable_list(struct object_array *src,
 			o->flags &= ~TMP_MARK;
 		}
 	}
-	for (i = get_max_object_index(); 0 < i; i--) {
+	for (i = get_max_object_index(the_repository); 0 < i; i--) {
 		o = get_indexed_object(i - 1);
 		if (o && o->type == OBJ_COMMIT &&
 		    (o->flags & TMP_MARK)) {
