@@ -23,7 +23,8 @@ int read_loose_object(const char *path,
  * with the specified name.  This function does not respect replace
  * references.
  */
-extern int has_loose_object_nonlocal(const unsigned char *sha1);
+#define has_loose_object_nonlocal(r, s) has_loose_object_nonlocal_##r(s)
+extern int has_loose_object_nonlocal_the_repository(const unsigned char *sha1);
 
 /*
  * Iterate over the files in the loose-object parts of the object
