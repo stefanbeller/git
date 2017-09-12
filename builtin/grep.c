@@ -447,7 +447,9 @@ static int grep_submodule(struct grep_opt *opt, struct repository *superproject,
 					     oid_to_hex(oid));
 
 		grep_read_lock();
-		data = read_object_with_reference(object->oid.hash, tree_type,
+		data = read_object_with_reference(the_repository,
+						  object->oid.hash,
+						  tree_type,
 						  &size, NULL);
 		grep_read_unlock();
 
@@ -609,7 +611,8 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		int hit, len;
 
 		grep_read_lock();
-		data = read_object_with_reference(obj->oid.hash, tree_type,
+		data = read_object_with_reference(the_repository,
+						  obj->oid.hash, tree_type,
 						  &size, NULL);
 		grep_read_unlock();
 

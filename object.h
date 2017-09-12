@@ -121,7 +121,9 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet);
  * Returns NULL if 'sha1' can not be peeled to an object of the
  * specified type.
  */
-extern void *read_object_with_reference(const unsigned char *sha1,
+#define read_object_with_reference(r, s, t, sz, o) \
+		read_object_with_reference_##r(s, t, sz, o)
+extern void *read_object_with_reference_the_repository(const unsigned char *sha1,
 					const char *required_type,
 					unsigned long *size,
 					unsigned char *sha1_ret);
