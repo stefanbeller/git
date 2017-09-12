@@ -106,7 +106,8 @@ extern void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsi
  * The in-core object data should be in "map". If "map" == NULL, reads the
  * named object using the streaming interface and rehashes it on the fly.
  */
-extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
+#define check_sha1_signature(r, s, m, sz, t) check_sha1_signature_##r(s, m, sz, t)
+extern int check_sha1_signature_the_repository(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
 /*
  * Convenience for sha1_object_info_extended() with a NULL struct
