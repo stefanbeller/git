@@ -1861,7 +1861,7 @@ int find_pack_entry(struct repository *r,
 	return 0;
 }
 
-int has_sha1_pack(const unsigned char *sha1)
+int has_sha1_pack_the_repository(const unsigned char *sha1)
 {
 	struct pack_entry e;
 	return find_pack_entry(the_repository, sha1, &e);

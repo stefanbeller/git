@@ -144,7 +144,8 @@ extern int find_pack_entry(struct repository *r,
 			   const unsigned char *sha1,
 			   struct pack_entry *e);
 
-extern int has_sha1_pack(const unsigned char *sha1);
+#define has_sha1_pack(r, s) has_sha1_pack_##r(s)
+extern int has_sha1_pack_the_repository(const unsigned char *sha1);
 
 extern int has_pack_index(const unsigned char *sha1);
 
