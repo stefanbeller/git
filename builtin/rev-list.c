@@ -222,7 +222,7 @@ static void finish_object(struct object *obj, const char *name, void *cb_data)
 	if (obj->type == OBJ_BLOB && !has_object_file(&obj->oid))
 		finish_object__ma(obj);
 	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
-		parse_object(&obj->oid);
+		parse_object(the_repository, &obj->oid);
 }
 
 static void show_object(struct object *obj, const char *name, void *cb_data)
