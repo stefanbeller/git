@@ -1277,7 +1277,8 @@ static struct commit *get_base_commit(const char *base_commit,
 
 			if (get_oid(upstream, &oid))
 				die(_("Failed to resolve '%s' as a valid ref."), upstream);
-			commit = lookup_commit_or_die(&oid, "upstream base");
+			commit = lookup_commit_or_die(the_repository, &oid,
+						      "upstream base");
 			base_list = get_merge_bases_many(commit, total, list);
 			/* There should be one and only one merge base. */
 			if (!base_list || base_list->next)

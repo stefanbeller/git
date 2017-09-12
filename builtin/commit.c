@@ -1691,7 +1691,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	if (get_oid("HEAD", &oid))
 		current_head = NULL;
 	else {
-		current_head = lookup_commit_or_die(&oid, "HEAD");
+		current_head = lookup_commit_or_die(the_repository, &oid, "HEAD");
 		if (parse_commit(current_head))
 			die(_("could not parse HEAD commit"));
 	}
