@@ -93,6 +93,13 @@ expression G;
 
 @@
 expression E;
+@@
+ unregister_shallow(
++ the_repository,
+ E)
+
+@@
+expression E;
 expression F;
 @@
  parse_object_or_die(
