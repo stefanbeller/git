@@ -177,7 +177,7 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 	}
 }
 
-struct object *lookup_unknown_object(const unsigned char *sha1)
+struct object *lookup_unknown_object_the_repository(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(the_repository, sha1);
 	if (!obj)

@@ -138,7 +138,8 @@ struct object *parse_object_or_die(const struct object_id *oid, const char *name
 struct object *parse_object_buffer(const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p);
 
 /** Returns the object, with potentially excess memory allocated. **/
-struct object *lookup_unknown_object(const unsigned  char *sha1);
+#define lookup_unknown_object(r, s) lookup_unknown_object_##r(s)
+struct object *lookup_unknown_object_the_repository(const unsigned char *sha1);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);
