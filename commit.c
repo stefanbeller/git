@@ -23,7 +23,8 @@ const char *commit_type = "commit";
 struct commit *lookup_commit_reference_gently(const struct object_id *oid,
 					      int quiet)
 {
-	struct object *obj = deref_tag(parse_object(the_repository, oid),
+	struct object *obj = deref_tag(the_repository,
+				       parse_object(the_repository, oid),
 				       NULL, 0);
 
 	if (!obj)
