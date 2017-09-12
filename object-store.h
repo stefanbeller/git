@@ -9,7 +9,7 @@
 /* in packfile.h */
 struct pack_window;
 
-struct object_store {
+struct raw_object_store {
 	struct packed_git *packed_git;
 
 	/*
@@ -54,7 +54,7 @@ struct object_store {
 	 */
 	unsigned packed_git_initialized : 1;
 };
-#define OBJECT_STORE_INIT \
+#define RAW_OBJECT_STORE_INIT \
 	{ NULL, MRU_INIT, ALTERNATES_INIT, { NULL, 0, 0, 0 }, 0, 0, 0 }
 
 struct packed_git {
