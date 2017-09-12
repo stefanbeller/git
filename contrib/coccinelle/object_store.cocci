@@ -34,3 +34,13 @@ expression G;
  read_sha1_file(
 +the_repository,
  E, F, G)
+
+@@
+expression E;
+expression F;
+expression G;
+expression H;
+@@
+open_istream(
++ the_repository,
+ E, F, G, H)

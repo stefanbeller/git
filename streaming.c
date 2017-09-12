@@ -136,7 +136,7 @@ static enum input_source istream_source(const unsigned char *sha1,
 	}
 }
 
-struct git_istream *open_istream(const unsigned char *sha1,
+struct git_istream *open_istream_the_repository(const unsigned char *sha1,
 				 enum object_type *type,
 				 unsigned long *size,
 				 struct stream_filter *filter)
@@ -524,7 +524,7 @@ int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter 
 	ssize_t kept = 0;
 	int result = -1;
 
-	st = open_istream(oid->hash, &type, &sz, filter);
+	st = open_istream(the_repository, oid->hash, &type, &sz, filter);
 	if (!st) {
 		if (filter)
 			free_stream_filter(filter);
