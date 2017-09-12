@@ -2624,7 +2624,7 @@ static void add_objects_in_unpacked_packs(struct rev_info *revs)
 
 		for (i = 0; i < p->num_objects; i++) {
 			sha1 = nth_packed_object_sha1(p, i);
-			o = lookup_unknown_object(sha1);
+			o = lookup_unknown_object(the_repository, sha1);
 			if (!(o->flags & OBJECT_ADDED))
 				mark_in_pack_object(o, p, &in_pack);
 			o->flags |= OBJECT_ADDED;
