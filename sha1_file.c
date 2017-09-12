@@ -1706,7 +1706,7 @@ static void check_commit_the_repository(const void *buf, size_t size)
 {
 	struct commit c;
 	memset(&c, 0, sizeof(c));
-	if (parse_commit_buffer(&c, buf, size))
+	if (parse_commit_buffer(the_repository, &c, buf, size))
 		die("corrupt commit");
 }
 
