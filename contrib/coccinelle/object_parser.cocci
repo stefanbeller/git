@@ -48,6 +48,15 @@ expression E;
 @@
 expression E;
 expression F;
+expression G;
+@@
+ parse_commit_buffer(
++the_repository,
+ E, F, G)
+
+@@
+expression E;
+expression F;
 @@
  create_object(
 + the_repository,
