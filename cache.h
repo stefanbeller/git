@@ -1195,8 +1195,6 @@ extern int git_open_cloexec(const char *name, int flags);
 extern int unpack_sha1_header(git_zstream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz);
 extern int parse_sha1_header(const char *hdr, unsigned long *sizep);
 
-extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
-
 extern int finalize_object_file(const char *tmpfile, const char *filename);
 
 /* Helper to check and "touch" a file */

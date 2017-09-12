@@ -102,6 +102,15 @@ extern int force_object_loose(const unsigned char *sha1, time_t mtime);
 extern void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
 
 /*
+ * Rehash an object's data to make sure the object name actually matches
+ * "sha1" to detect object corruption.
+ *
+ * The in-core object data should be in "map". If "map" == NULL, reads the
+ * named object using the streaming interface and rehashes it on the fly.
+ */
+extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
+
+/*
  * Convenience for sha1_object_info_extended() with a NULL struct
  * object_info. OBJECT_INFO_SKIP_CACHED is automatically set; pass
  * nonzero flags to also set other flags.

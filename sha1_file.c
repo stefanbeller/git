@@ -802,12 +802,6 @@ void *xmmap(void *start, size_t length,
 	return ret;
 }
 
-/*
- * With an in-core object data in "map", rehash it to make sure the
- * object name actually matches "sha1" to detect object corruption.
- * With "map" == NULL, try reading the object named with "sha1" using
- * the streaming interface and rehash it to do the same.
- */
 int check_sha1_signature(const unsigned char *sha1, void *map,
 			 unsigned long size, const char *type)
 {
