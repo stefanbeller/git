@@ -4,9 +4,13 @@
 struct object_parser {
 	struct object **obj_hash;
 	int nr_objs, obj_hash_size;
+
+	/* parent substitutions from .git/info/grafts and .git/shallow */
+	struct commit_graft **grafts;
+	int grafts_alloc, grafts_nr;
 };
 
-#define OBJECT_PARSER_INIT { NULL, 0, 0 }
+#define OBJECT_PARSER_INIT { NULL, 0, 0, NULL, 0, 0 }
 
 struct object_list {
 	struct object *item;
