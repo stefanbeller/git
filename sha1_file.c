@@ -702,7 +702,7 @@ static int check_and_freshen_the_repository(const unsigned char *sha1,
 	       check_and_freshen_nonlocal(the_repository, sha1, freshen);
 }
 
-int has_loose_object_nonlocal(const unsigned char *sha1)
+int has_loose_object_nonlocal_the_repository(const unsigned char *sha1)
 {
 	return check_and_freshen_nonlocal(the_repository, sha1, 0);
 }
