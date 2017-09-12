@@ -137,22 +137,23 @@ static enum input_source istream_source(struct repository *r,
 	}
 }
 
-struct git_istream *open_istream_the_repository(const unsigned char *sha1,
+struct git_istream *open_istream(struct repository *r,
+				 const unsigned char *sha1,
 				 enum object_type *type,
 				 unsigned long *size,
 				 struct stream_filter *filter)
 {
 	struct git_istream *st;
 	struct object_info oi = OBJECT_INFO_INIT;
-	const unsigned char *real = lookup_replace_object(the_repository, sha1);
-	enum input_source src = istream_source(the_repository, real, type, &oi);
+	const unsigned char *real = lookup_replace_object(r, sha1);
+	enum input_source src = istream_source(r, real, type, &oi);
 
 	if (src < 0)
 		return NULL;
 
 	st = xmalloc(sizeof(*st));
-	if (open_istream_tbl[src](the_repository, st, &oi, real, type)) {
-		if (open_istream_incore(the_repository, st, &oi, real, type)) {
+	if (open_istream_tbl[src](r, st, &oi, real, type)) {
+		if (open_istream_incore(r, st, &oi, real, type)) {
 			free(st);
 			return NULL;
 		}
