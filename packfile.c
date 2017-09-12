@@ -1004,7 +1004,7 @@ void mark_bad_packed_object(struct packed_git *p, const unsigned char *sha1)
 	p->num_bad_objects++;
 }
 
-const struct packed_git *has_packed_and_bad(const unsigned char *sha1)
+const struct packed_git *has_packed_and_bad_the_repository(const unsigned char *sha1)
 {
 	struct packed_git *p;
 	unsigned i;
