@@ -1739,7 +1739,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		while (strbuf_getline_lf(&m, fp) != EOF) {
 			struct commit *parent;
 
-			parent = get_merge_parent(m.buf);
+			parent = get_merge_parent(the_repository, m.buf);
 			if (!parent)
 				die(_("Corrupt MERGE_HEAD file (%s)"), m.buf);
 			pptr = commit_list_append(parent, pptr);

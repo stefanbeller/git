@@ -318,7 +318,8 @@ extern void set_merge_remote_desc(struct commit *commit,
  * and return it, while storing merge_remote_desc in its ->util field,
  * to allow callers to tell if we are told to merge a tag.
  */
-struct commit *get_merge_parent(const char *name);
+#define get_merge_parent(r, name) get_merge_parent_##r(name)
+struct commit *get_merge_parent_the_repository(const char *name);
 
 extern int parse_signed_commit(const struct commit *commit,
 			       struct strbuf *message, struct strbuf *signature);
