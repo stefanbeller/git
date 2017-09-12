@@ -25,7 +25,8 @@ static inline int parse_tree(struct tree *tree)
 void free_tree_buffer(struct tree *tree);
 
 /* Parses and returns the tree in the given ent, chasing tags and commits. */
-struct tree *parse_tree_indirect(const struct object_id *oid);
+#define parse_tree_indirect(r, o) parse_tree_indirect_##r(o)
+struct tree *parse_tree_indirect_the_repository(const struct object_id *oid);
 
 #define READ_TREE_RECURSIVE 1
 typedef int (*read_tree_fn_t)(const unsigned char *, struct strbuf *, const char *, unsigned int, int, void *);

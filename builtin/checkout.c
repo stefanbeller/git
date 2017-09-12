@@ -513,11 +513,12 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			topts.dir->flags |= DIR_SHOW_IGNORED;
 			setup_standard_excludes(topts.dir);
 		}
-		tree = parse_tree_indirect(old->commit ?
+		tree = parse_tree_indirect(the_repository, old->commit ?
 					   &old->commit->object.oid :
 					   &empty_tree_oid);
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
-		tree = parse_tree_indirect(&new->commit->object.oid);
+		tree = parse_tree_indirect(the_repository,
+					   &new->commit->object.oid);
 		init_tree_desc(&trees[1], tree->buffer, tree->size);
 
 		ret = unpack_trees(2, trees, &topts);
@@ -1045,7 +1046,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	new->commit = lookup_commit_reference_gently(rev, 1);
 	if (!new->commit) {
 		/* not a commit */
-		*source_tree = parse_tree_indirect(rev);
+		*source_tree = parse_tree_indirect(the_repository, rev);
 	} else {
 		parse_commit_or_die(new->commit);
 		*source_tree = new->commit->tree;

@@ -614,13 +614,13 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 	opts.verbose_update = 1;
 	opts.trivial_merges_only = 1;
 	opts.merge = 1;
-	trees[nr_trees] = parse_tree_indirect(common);
+	trees[nr_trees] = parse_tree_indirect(the_repository, common);
 	if (!trees[nr_trees++])
 		return -1;
-	trees[nr_trees] = parse_tree_indirect(head);
+	trees[nr_trees] = parse_tree_indirect(the_repository, head);
 	if (!trees[nr_trees++])
 		return -1;
-	trees[nr_trees] = parse_tree_indirect(one);
+	trees[nr_trees] = parse_tree_indirect(the_repository, one);
 	if (!trees[nr_trees++])
 		return -1;
 	opts.fn = threeway_merge;
