@@ -1386,7 +1386,7 @@ void *read_sha1_file_extended_the_repository(const unsigned char *sha1,
 		die("loose object %s (stored in %s) is corrupt",
 		    sha1_to_hex(repl), path);
 
-	if ((p = has_packed_and_bad(repl)) != NULL)
+	if ((p = has_packed_and_bad(the_repository, repl)) != NULL)
 		die("packed object %s (stored in %s) is corrupt",
 		    sha1_to_hex(repl), p->pack_name);
 
