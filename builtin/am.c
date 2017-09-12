@@ -1466,7 +1466,7 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
 	if (get_mail_commit_oid(&commit_oid, mail) < 0)
 		die(_("could not parse %s"), mail);
 
-	commit = lookup_commit_or_die(&commit_oid, mail);
+	commit = lookup_commit_or_die(the_repository, &commit_oid, mail);
 
 	get_commit_info(state, commit);
 

@@ -37,7 +37,8 @@ struct commit *lookup_commit_reference_the_repository(const struct object_id *oi
 	return lookup_commit_reference_gently(the_repository, oid, 0);
 }
 
-struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref_name)
+struct commit *lookup_commit_or_die_the_repository(
+		const struct object_id *oid, const char *ref_name)
 {
 	struct commit *c = lookup_commit_reference(the_repository, oid);
 	if (!c)
