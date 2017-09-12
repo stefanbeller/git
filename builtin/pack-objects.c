@@ -1002,7 +1002,7 @@ static int want_object_in_pack(const unsigned char *sha1,
 	struct mru_entry *entry;
 	int want;
 
-	if (!exclude && local && has_loose_object_nonlocal(sha1))
+	if (!exclude && local && has_loose_object_nonlocal(the_repository, sha1))
 		return 0;
 
 	/*
