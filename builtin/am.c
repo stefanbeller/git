@@ -1431,9 +1431,9 @@ static void write_index_patch(const struct am_state *state)
 	FILE *fp;
 
 	if (!get_oid_tree("HEAD", &head))
-		tree = lookup_tree(&head);
+		tree = lookup_tree(the_repository, &head);
 	else
-		tree = lookup_tree(&empty_tree_oid);
+		tree = lookup_tree(the_repository, &empty_tree_oid);
 
 	fp = xfopen(am_path(state, "patch"), "w");
 	init_revisions(&rev_info, NULL);
