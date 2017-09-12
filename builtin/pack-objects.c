@@ -1346,7 +1346,8 @@ static void add_preferred_base(unsigned char *sha1)
 	if (window <= num_preferred_base++)
 		return;
 
-	data = read_object_with_reference(sha1, tree_type, &size, tree_sha1);
+	data = read_object_with_reference(the_repository, sha1, tree_type,
+					  &size, tree_sha1);
 	if (!data)
 		return;
 

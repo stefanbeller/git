@@ -210,3 +210,13 @@ expression E;
  lookup_unknown_object(
 +the_repository,
  E)
+
+@@
+expression E;
+expression F;
+expression G;
+expression H;
+@@
+ read_object_with_reference(
++the_repository,
+ E, F, G, H)

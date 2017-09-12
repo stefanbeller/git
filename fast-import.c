@@ -2589,7 +2589,8 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
 	} else if (!get_oid(p, &commit_oid)) {
 		unsigned long size;
-		char *buf = read_object_with_reference(commit_oid.hash,
+		char *buf = read_object_with_reference(the_repository,
+						       commit_oid.hash,
 			commit_type, &size, commit_oid.hash);
 		if (!buf || size < 46)
 			die("Not a valid commit: %s", p);
@@ -2660,7 +2661,7 @@ static void parse_from_existing(struct branch *b)
 		unsigned long size;
 		char *buf;
 
-		buf = read_object_with_reference(b->oid.hash,
+		buf = read_object_with_reference(the_repository, b->oid.hash,
 						 commit_type, &size,
 						 b->oid.hash);
 		parse_from_commit(b, buf, size);
@@ -2739,7 +2740,8 @@ static struct hash_list *parse_merge(unsigned int *count)
 			oidcpy(&n->oid, &oe->idx.oid);
 		} else if (!get_oid(from, &n->oid)) {
 			unsigned long size;
-			char *buf = read_object_with_reference(n->oid.hash,
+			char *buf = read_object_with_reference(the_repository,
+							       n->oid.hash,
 				commit_type, &size, n->oid.hash);
 			if (!buf || size < 46)
 				die("Not a valid commit: %s", from);
