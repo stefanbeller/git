@@ -42,7 +42,7 @@ static struct commit *get_commit_reference(const char *arg)
 
 	if (get_oid(arg, &revkey))
 		die("Not a valid object name %s", arg);
-	r = lookup_commit_reference(&revkey);
+	r = lookup_commit_reference(the_repository, &revkey);
 	if (!r)
 		die("Not a valid commit name %s", arg);
 
@@ -171,7 +171,7 @@ static int handle_fork_point(int argc, const char **argv)
 	if (get_oid(commitname, &oid))
 		die("Not a valid object name: '%s'", commitname);
 
-	derived = lookup_commit_reference(&oid);
+	derived = lookup_commit_reference(the_repository, &oid);
 	memset(&revs, 0, sizeof(revs));
 	revs.initial = 1;
 	for_each_reflog_ent(refname, collect_one_reflog_ent, &revs);
