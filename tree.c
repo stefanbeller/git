@@ -242,7 +242,7 @@ void free_tree_buffer(struct tree *tree)
 	tree->object.parsed = 0;
 }
 
-struct tree *parse_tree_indirect(const struct object_id *oid)
+struct tree *parse_tree_indirect_the_repository(const struct object_id *oid)
 {
 	struct object *obj = parse_object(the_repository, oid);
 	do {
