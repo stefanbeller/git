@@ -1349,11 +1349,6 @@ extern int df_name_compare(const char *name1, int len1, int mode1, const char *n
 extern int name_compare(const char *name1, size_t len1, const char *name2, size_t len2);
 extern int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2);
 
-extern void *read_object_with_reference(const unsigned char *sha1,
-					const char *required_type,
-					unsigned long *size,
-					unsigned char *sha1_ret);
-
 extern struct object *peel_to_type(const char *name, int namelen,
 				   struct object *o, enum object_type);
 
