@@ -1894,7 +1894,7 @@ static int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn c
 	return r;
 }
 
-int for_each_packed_object(each_packed_object_fn cb, void *data, unsigned flags)
+int for_each_packed_object_the_repository(each_packed_object_fn cb, void *data, unsigned flags)
 {
 	struct packed_git *p;
 	int r = 0;

@@ -155,7 +155,7 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 				  FOR_EACH_OBJECT_LOCAL_ONLY);
 	if (r)
 		return r;
-	return for_each_packed_object(add_recent_packed, &data,
+	return for_each_packed_object(the_repository, add_recent_packed, &data,
 				      FOR_EACH_OBJECT_LOCAL_ONLY);
 }
 
