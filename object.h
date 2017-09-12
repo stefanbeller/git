@@ -4,6 +4,10 @@
 struct object_parser {
 	struct object **obj_hash;
 	int nr_objs, obj_hash_size;
+
+	/* parent substitutions from .git/info/grafts and .git/shallow */
+	struct commit_graft **grafts;
+	int grafts_alloc, grafts_nr;
 };
 
 struct object_parser *object_parser_new(void);
