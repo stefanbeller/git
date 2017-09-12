@@ -443,7 +443,8 @@ static int grep_submodule(struct grep_opt *opt, struct repository *superproject,
 		unsigned long size;
 		struct strbuf base = STRBUF_INIT;
 
-		object = parse_object_or_die(oid, oid_to_hex(oid));
+		object = parse_object_or_die(the_repository, oid,
+					     oid_to_hex(oid));
 
 		grep_read_lock();
 		data = read_object_with_reference(object->oid.hash, tree_type,
@@ -993,7 +994,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			break;
 		}
 
-		object = parse_object_or_die(&oid, arg);
+		object = parse_object_or_die(the_repository, &oid, arg);
 		if (!seen_dashdash)
 			verify_non_filename(prefix, arg);
 		add_object_array_with_path(object, arg, &list, oc.mode, oc.path);
