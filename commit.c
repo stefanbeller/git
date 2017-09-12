@@ -59,7 +59,7 @@ struct commit *lookup_commit_the_repository(const struct object_id *oid)
 	return object_as_type(obj, OBJ_COMMIT, 0);
 }
 
-struct commit *lookup_commit_reference_by_name(const char *name)
+struct commit *lookup_commit_reference_by_name_the_repository(const char *name)
 {
 	struct object_id oid;
 	struct commit *commit;
