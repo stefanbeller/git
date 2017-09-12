@@ -106,13 +106,17 @@ struct repository {
 
 extern struct repository *the_repository;
 
+/* Any open repo except the_repository */
+extern struct repository **open_repos;
+extern int open_repos_nr;
+
 extern void repo_set_gitdir(struct repository *repo, const char *path);
 extern void repo_set_worktree(struct repository *repo, const char *path);
 extern int repo_init(struct repository *repo, const char *gitdir, const char *worktree);
 extern int repo_submodule_init(struct repository *submodule,
 			       struct repository *superproject,
 			       const char *path);
-extern void repo_clear(struct repository *repo);
+extern void repo_free(struct repository *repo);
 
 /*
  * Populates the repository's index from its index_file, an index struct will
