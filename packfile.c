@@ -1254,7 +1254,8 @@ static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 	free(ent);
 }
 
-static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
+#define cache_or_unpack_entry(r, p, bo, bs, t) cache_or_unpack_entry_##r(p, bo, bs, t)
+static void *cache_or_unpack_entry_the_repository(struct packed_git *p, off_t base_offset,
 	unsigned long *base_size, enum object_type *type)
 {
 	struct delta_base_cache_entry *ent;
@@ -1328,7 +1329,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 	 * a "real" type later if the caller is interested.
 	 */
 	if (oi->contentp) {
-		*oi->contentp = cache_or_unpack_entry(p, obj_offset, oi->sizep,
+		*oi->contentp = cache_or_unpack_entry(the_repository, p, obj_offset, oi->sizep,
 						      &type);
 		if (!*oi->contentp)
 			type = OBJ_BAD;
