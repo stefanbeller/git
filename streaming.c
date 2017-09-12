@@ -440,9 +440,6 @@ static open_method_decl(pack_non_delta)
 	struct pack_window *window;
 	enum object_type in_pack_type;
 
-	if (r != the_repository)
-		BUG("r != the_repository");
-
 	st->u.in_pack.pack = oi->u.packed.pack;
 	st->u.in_pack.pos = oi->u.packed.offset;
 	window = NULL;
