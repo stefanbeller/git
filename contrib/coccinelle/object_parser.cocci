@@ -37,6 +37,15 @@ expression G;
 
 @@
 expression E;
+expression F;
+expression G;
+@@
+ deref_tag(
++the_repository,
+ E, F, G)
+
+@@
+expression E;
 @@
  parse_object(
 + the_repository,
