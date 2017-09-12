@@ -49,6 +49,17 @@ expression E;
 expression E;
 expression F;
 expression G;
+expression H;
+expression I;
+@@
+parse_object_buffer(
++ the_repository,
+ E, F, G, H, I)
+
+@@
+expression E;
+expression F;
+expression G;
 @@
  parse_commit_buffer(
 +the_repository,
