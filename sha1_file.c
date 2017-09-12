@@ -1342,7 +1342,7 @@ void *read_sha1_file_extended_the_repository(const unsigned char *sha1,
 	return NULL;
 }
 
-void *read_object_with_reference(const unsigned char *sha1,
+void *read_object_with_reference_the_repository(const unsigned char *sha1,
 				 const char *required_type_name,
 				 unsigned long *size,
 				 unsigned char *actual_sha1_return)
