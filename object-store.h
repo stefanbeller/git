@@ -79,12 +79,13 @@ struct packed_git {
 	char pack_name[FLEX_ARRAY]; /* more */
 };
 
-extern void *read_sha1_file_extended(const unsigned char *sha1,
+#define read_sha1_file_extended(r, s, t, sz, l) read_sha1_file_extended_##r(s, t, sz, l)
+extern void *read_sha1_file_extended_the_repository(const unsigned char *sha1,
 				     enum object_type *type,
 				     unsigned long *size, int lookup_replace);
 static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
-	return read_sha1_file_extended(sha1, type, size, 1);
+	return read_sha1_file_extended(the_repository, sha1, type, size, 1);
 }
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
