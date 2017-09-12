@@ -35,8 +35,8 @@ static int run_gpg_verify(const char *buf, unsigned long size, unsigned flags)
 	return ret;
 }
 
-int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
-		unsigned flags)
+int gpg_verify_tag_the_repository(const struct object_id *oid,
+		const char *name_to_report, unsigned flags)
 {
 	enum object_type type;
 	char *buf;

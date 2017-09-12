@@ -66,7 +66,7 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		if (gpg_verify_tag(&oid, name, flags)) {
+		if (gpg_verify_tag(the_repository, &oid, name, flags)) {
 			had_error = 1;
 			continue;
 		}
