@@ -426,7 +426,7 @@ void object_array_remove_duplicates(struct object_array *array)
 	}
 }
 
-void clear_object_flags(unsigned flags)
+void clear_object_flags_the_repository(unsigned flags)
 {
 	int i;
 
