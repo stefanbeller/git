@@ -231,7 +231,7 @@ struct object *parse_object_buffer(const struct object_id *oid, enum object_type
 	return obj;
 }
 
-struct object *parse_object_or_die(const struct object_id *oid,
+struct object *parse_object_or_die_the_repository(const struct object_id *oid,
 				   const char *name)
 {
 	struct object *o = parse_object(the_repository, oid);
