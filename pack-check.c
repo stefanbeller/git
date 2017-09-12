@@ -134,7 +134,7 @@ static int verify_packfile(struct packed_git *p,
 			data = NULL;
 			data_valid = 0;
 		} else {
-			data = unpack_entry(p, entries[i].offset, &type, &size);
+			data = unpack_entry(the_repository, p, entries[i].offset, &type, &size);
 			data_valid = 1;
 		}
 
