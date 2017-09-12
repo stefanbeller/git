@@ -260,7 +260,7 @@ struct object *parse_object_the_repository(const struct object_id *oid)
 	if ((obj && obj->type == OBJ_BLOB) ||
 	    (!obj && has_object_file(oid) &&
 	     sha1_object_info(the_repository, oid->hash, NULL) == OBJ_BLOB)) {
-		if (check_sha1_signature(repl, NULL, 0, NULL) < 0) {
+		if (check_sha1_signature(the_repository, repl, NULL, 0, NULL) < 0) {
 			error("sha1 mismatch %s", oid_to_hex(oid));
 			return NULL;
 		}
@@ -270,7 +270,7 @@ struct object *parse_object_the_repository(const struct object_id *oid)
 
 	buffer = read_sha1_file(oid->hash, &type, &size);
 	if (buffer) {
-		if (check_sha1_signature(repl, buffer, size, typename(type)) < 0) {
+		if (check_sha1_signature(the_repository, repl, buffer, size, typename(type)) < 0) {
 			free(buffer);
 			error("sha1 mismatch %s", sha1_to_hex(repl));
 			return NULL;

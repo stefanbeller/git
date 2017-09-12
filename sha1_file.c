@@ -751,7 +751,7 @@ void *xmmap(void *start, size_t length,
 	return ret;
 }
 
-int check_sha1_signature(const unsigned char *sha1, void *map,
+int check_sha1_signature_the_repository(const unsigned char *sha1, void *map,
 			 unsigned long size, const char *type)
 {
 	unsigned char real_sha1[20];
@@ -2176,7 +2176,7 @@ int read_loose_object(const char *path,
 			git_inflate_end(&stream);
 			goto out;
 		}
-		if (check_sha1_signature(expected_sha1, *contents,
+		if (check_sha1_signature(the_repository, expected_sha1, *contents,
 					 *size, typename(*type))) {
 			error("sha1 mismatch for %s (expected %s)", path,
 			      sha1_to_hex(expected_sha1));
