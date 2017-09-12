@@ -824,7 +824,7 @@ int check_sha1_signature_the_repository(const unsigned char *sha1, void *map,
 		return hashcmp(sha1, real_sha1) ? -1 : 0;
 	}
 
-	st = open_istream(sha1, &obj_type, &size, NULL);
+	st = open_istream(the_repository, sha1, &obj_type, &size, NULL);
 	if (!st)
 		return -1;
 
