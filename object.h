@@ -98,8 +98,7 @@ extern struct object *get_indexed_object(unsigned int);
 #define lookup_object(r, s) lookup_object_##r(s)
 struct object *lookup_object_the_repository(const unsigned char *sha1);
 
-#define create_object(r, s, o) create_object_##r(s, o)
-extern void *create_object_the_repository(const unsigned char *sha1, void *obj);
+extern void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
 
 #define object_as_type(r, o, t, q) object_as_type_##r(o, t, q)
 void *object_as_type_the_repository(struct object *obj, enum object_type type, int quiet);
