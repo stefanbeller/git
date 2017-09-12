@@ -32,3 +32,10 @@ expression E;
  get_indexed_object(
 +the_repository,
  E)
+
+@@
+expression E;
+@@
+ lookup_object(
++the_repository,
+ E)
