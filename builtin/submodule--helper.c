@@ -788,7 +788,7 @@ static int add_possible_reference_from_superproject(
 		 */
 		strbuf_addf(&sb, "modules/%s/", sas->submodule_name);
 
-		sm_alternate = compute_alternate_path(sb.buf, &err);
+		sm_alternate = compute_alternate_path(the_repository, sb.buf, &err);
 		if (sm_alternate) {
 			string_list_append(sas->reference, xstrdup(sb.buf));
 			free(sm_alternate);
