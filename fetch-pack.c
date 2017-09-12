@@ -436,7 +436,7 @@ static int find_common(struct fetch_pack_args *args,
 				/* make sure that it is parsed as shallow */
 				if (!parse_object(the_repository, &oid))
 					die(_("error in object: %s"), line);
-				if (unregister_shallow(&oid))
+				if (unregister_shallow(the_repository, &oid))
 					die(_("no shallow found: %s"), line);
 				continue;
 			}
