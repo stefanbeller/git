@@ -111,7 +111,8 @@ ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
 	return st->vtbl->read(st, buf, sz);
 }
 
-static enum input_source istream_source(const unsigned char *sha1,
+#define istream_source(r, s, t, o) istream_source_##r(s, t, o)
+static enum input_source istream_source_the_repository(const unsigned char *sha1,
 					enum object_type *type,
 					struct object_info *oi)
 {
@@ -144,7 +145,7 @@ struct git_istream *open_istream_the_repository(const unsigned char *sha1,
 	struct git_istream *st;
 	struct object_info oi = OBJECT_INFO_INIT;
 	const unsigned char *real = lookup_replace_object(the_repository, sha1);
-	enum input_source src = istream_source(real, type, &oi);
+	enum input_source src = istream_source(the_repository, real, type, &oi);
 
 	if (src < 0)
 		return NULL;
