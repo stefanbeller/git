@@ -185,7 +185,7 @@ static int ce_compare_link(const struct cache_entry *ce, size_t expected_size)
 	if (strbuf_readlink(&sb, ce->name, expected_size))
 		return -1;
 
-	buffer = read_sha1_file(ce->oid.hash, &type, &size);
+	buffer = read_sha1_file(the_repository, ce->oid.hash, &type, &size);
 	if (buffer) {
 		if (size == sb.len)
 			match = memcmp(buffer, sb.buf, size);
@@ -2671,7 +2671,8 @@ void *read_blob_data_from_index(const struct index_state *istate,
 	}
 	if (pos < 0)
 		return NULL;
-	data = read_sha1_file(istate->cache[pos]->oid.hash, &type, &sz);
+	data = read_sha1_file(the_repository, istate->cache[pos]->oid.hash,
+			      &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;

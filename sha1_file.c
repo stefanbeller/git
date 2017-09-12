@@ -1358,7 +1358,8 @@ void *read_object_with_reference(const unsigned char *sha1,
 		int ref_length = -1;
 		const char *ref_type = NULL;
 
-		buffer = read_sha1_file(actual_sha1, &type, &isize);
+		buffer = read_sha1_file(the_repository, actual_sha1, &type,
+					&isize);
 		if (!buffer)
 			return NULL;
 		if (type == required_type) {

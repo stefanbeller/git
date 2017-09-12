@@ -239,7 +239,8 @@ static void export_blob(const struct object_id *oid)
 		object = (struct object *)lookup_blob(the_repository, oid);
 		eaten = 0;
 	} else {
-		buf = read_sha1_file(oid->hash, &type, &size);
+		buf = read_sha1_file(the_repository, oid->hash, &type,
+				     &size);
 		if (!buf)
 			die ("Could not read blob %s", oid_to_hex(oid));
 		if (check_sha1_signature(the_repository, oid->hash, buf, size, typename(type)) < 0)
@@ -686,7 +687,8 @@ static void handle_tag(const char *name, struct tag *tag)
 		return;
 	}
 
-	buf = read_sha1_file(tag->object.oid.hash, &type, &size);
+	buf = read_sha1_file(the_repository, tag->object.oid.hash, &type,
+			     &size);
 	if (!buf)
 		die ("Could not read tag %s", oid_to_hex(&tag->object.oid));
 	message = memmem(buf, size, "\n\n", 2);

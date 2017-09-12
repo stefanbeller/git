@@ -323,7 +323,7 @@ static void write_note_to_worktree(const struct object_id *obj,
 {
 	enum object_type type;
 	unsigned long size;
-	void *buf = read_sha1_file(note->hash, &type, &size);
+	void *buf = read_sha1_file(the_repository, note->hash, &type, &size);
 
 	if (!buf)
 		die("cannot read note %s for object %s",

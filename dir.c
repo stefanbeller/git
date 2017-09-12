@@ -617,7 +617,8 @@ static void *read_skip_worktree_file_from_index(const struct index_state *istate
 		return NULL;
 	if (!ce_skip_worktree(istate->cache[pos]))
 		return NULL;
-	data = read_sha1_file(istate->cache[pos]->oid.hash, &type, &sz);
+	data = read_sha1_file(the_repository, istate->cache[pos]->oid.hash,
+			      &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;

@@ -25,3 +25,12 @@ expression H;
  read_sha1_file_extended(
 +the_repository,
  E, F, G, H)
+
+@@
+expression E;
+expression F;
+expression G;
+@@
+ read_sha1_file(
++the_repository,
+ E, F, G)
