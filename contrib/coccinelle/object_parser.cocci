@@ -25,3 +25,10 @@ expression F;
  get_max_object_index(
 +the_repository
  )
+
+@@
+expression E;
+@@
+ get_indexed_object(
++the_repository,
+ E)

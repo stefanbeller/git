@@ -318,7 +318,7 @@ static void check_connectivity(void)
 		fprintf(stderr, "Checking connectivity (%d objects)\n", max);
 
 	for (i = 0; i < max; i++) {
-		struct object *obj = get_indexed_object(i);
+		struct object *obj = get_indexed_object(the_repository, i);
 
 		if (obj)
 			check_object(obj);

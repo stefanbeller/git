@@ -245,7 +245,7 @@ static unsigned check_objects(void)
 
 	max = get_max_object_index(the_repository);
 	for (i = 0; i < max; i++)
-		foreign_nr += check_object(get_indexed_object(i));
+		foreign_nr += check_object(get_indexed_object(the_repository, i));
 	return foreign_nr;
 }
 
