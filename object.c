@@ -174,11 +174,12 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 	}
 }
 
-struct object *lookup_unknown_object_the_repository(const unsigned char *sha1)
+struct object *lookup_unknown_object(struct repository *r,
+				     const unsigned char *sha1)
 {
-	struct object *obj = lookup_object(the_repository, sha1);
+	struct object *obj = lookup_object(r, sha1);
 	if (!obj)
-		obj = create_object(the_repository, sha1,
+		obj = create_object(r, sha1,
 				    alloc_object_node());
 	return obj;
 }
