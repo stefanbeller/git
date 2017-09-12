@@ -671,7 +671,7 @@ static void send_unshallow(const struct object_array *shallows)
 			 * parse and add the parents to the want list, then
 			 * re-register it.
 			 */
-			unregister_shallow(&object->oid);
+			unregister_shallow(the_repository, &object->oid);
 			object->parsed = 0;
 			parse_commit_or_die((struct commit *)object);
 			parents = ((struct commit *)object)->parents;

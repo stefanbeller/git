@@ -230,7 +230,7 @@ int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 	return ret;
 }
 
-int unregister_shallow(const struct object_id *oid)
+int unregister_shallow_the_repository(const struct object_id *oid)
 {
 	int pos = commit_graft_pos(the_repository, oid->hash);
 	if (pos < 0)
