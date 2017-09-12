@@ -898,7 +898,7 @@ static int submodule_has_commits(const char *path, struct oid_array *commits)
 		strbuf_release(&out);
 	}
 
-	repo_clear(&sub);
+	repo_free(&sub);
 	return has_commit.result;
 }
 
