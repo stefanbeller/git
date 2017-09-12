@@ -453,7 +453,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 		o.buffer_output = 2;
 	o.show_rename_progress = 1;
 
-	head_tree = parse_tree_indirect(head);
+	head_tree = parse_tree_indirect(the_repository, head);
 	next_tree = next ? next->tree : empty_tree();
 	base_tree = base ? base->tree : empty_tree();
 

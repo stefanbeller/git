@@ -12,6 +12,12 @@ expression E;
 +the_repository,
  E)
 
+@@
+expression E;
+@@
+ parse_tree_indirect(
++the_repository,
+ E)
 
 @@
 expression E;
