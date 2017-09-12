@@ -1326,7 +1326,8 @@ int sha1_object_info(struct repository *r,
 	return type;
 }
 
-static void *read_object(const unsigned char *sha1, enum object_type *type,
+#define read_object(r, s, t, sz) read_object_##r(s, t, sz)
+static void *read_object_the_repository(const unsigned char *sha1, enum object_type *type,
 			 unsigned long *size)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
@@ -1376,7 +1377,7 @@ void *read_sha1_file_extended(const unsigned char *sha1,
 		lookup_replace_object(the_repository, sha1) : sha1;
 
 	errno = 0;
-	data = read_object(repl, type, size);
+	data = read_object(the_repository, repl, type, size);
 	if (data)
 		return data;
 
@@ -1712,7 +1713,7 @@ int force_object_loose(const unsigned char *sha1, time_t mtime)
 
 	if (has_loose_object(the_repository, sha1))
 		return 0;
-	buf = read_object(sha1, &type, &len);
+	buf = read_object(the_repository, sha1, &type, &len);
 	if (!buf)
 		return error("cannot read sha1_file for %s", sha1_to_hex(sha1));
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(type), len) + 1;
