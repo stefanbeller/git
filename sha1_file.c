@@ -599,7 +599,7 @@ void add_to_alternates_memory_the_repository(const char *reference)
  * `path` may be relative and should point to $GITDIR.
  * `err` must not be null.
  */
-char *compute_alternate_path(const char *path, struct strbuf *err)
+char *compute_alternate_path_the_repository(const char *path, struct strbuf *err)
 {
 	char *ref_git = NULL;
 	const char *repo, *ref_git_s;

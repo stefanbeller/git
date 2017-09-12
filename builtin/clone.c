@@ -319,7 +319,7 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 {
 	struct strbuf err = STRBUF_INIT;
 	int *required = cb_data;
-	char *ref_git = compute_alternate_path(item->string, &err);
+	char *ref_git = compute_alternate_path(the_repository, item->string, &err);
 
 	if (!ref_git) {
 		if (*required)
