@@ -481,7 +481,7 @@ static int batch_objects(struct batch_options *opt)
 		struct object_cb_data cb;
 
 		for_each_loose_object(batch_loose_object, &sa, 0);
-		for_each_packed_object(batch_packed_object, &sa, 0);
+		for_each_packed_object(the_repository, batch_packed_object, &sa, 0);
 
 		cb.opt = opt;
 		cb.expand = &data;

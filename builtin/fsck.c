@@ -696,7 +696,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	fsck_head_link();
 	if (connectivity_only) {
 		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
-		for_each_packed_object(mark_packed_for_connectivity, NULL, 0);
+		for_each_packed_object(the_repository, mark_packed_for_connectivity, NULL, 0);
 	} else {
 		fsck_object_dir(get_object_directory());
 
