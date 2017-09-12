@@ -692,7 +692,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		else {
 			struct pretty_print_context ctx = {0};
 			struct commit *c;
-			c = lookup_commit_reference_by_name(squash_message);
+			c = lookup_commit_reference_by_name(the_repository,
+							    squash_message);
 			if (!c)
 				die(_("could not lookup commit %s"), squash_message);
 			ctx.output_encoding = get_commit_output_encoding();
@@ -725,7 +726,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	} else if (fixup_message) {
 		struct pretty_print_context ctx = {0};
 		struct commit *commit;
-		commit = lookup_commit_reference_by_name(fixup_message);
+		commit = lookup_commit_reference_by_name(the_repository,
+							 fixup_message);
 		if (!commit)
 			die(_("could not lookup commit %s"), fixup_message);
 		ctx.output_encoding = get_commit_output_encoding();
@@ -1109,7 +1111,7 @@ static const char *read_commit_message(const char *name)
 	const char *out_enc;
 	struct commit *commit;
 
-	commit = lookup_commit_reference_by_name(name);
+	commit = lookup_commit_reference_by_name(the_repository, name);
 	if (!commit)
 		die(_("could not lookup commit %s"), name);
 	out_enc = get_commit_output_encoding();

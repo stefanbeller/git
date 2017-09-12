@@ -131,3 +131,10 @@ expression E;
  lookup_commit(
 +the_repository,
  E)
+
+@@
+expression E;
+@@
+ lookup_commit_reference_by_name(
++the_repository,
+ E)

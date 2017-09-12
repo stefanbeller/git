@@ -1264,7 +1264,8 @@ static struct commit *get_base_commit(const char *base_commit,
 	int i = 0, rev_nr = 0;
 
 	if (base_commit && strcmp(base_commit, "auto")) {
-		base = lookup_commit_reference_by_name(base_commit);
+		base = lookup_commit_reference_by_name(the_repository,
+						       base_commit);
 		if (!base)
 			die(_("Unknown commit %s"), base_commit);
 	} else if ((base_commit && !strcmp(base_commit, "auto")) || base_auto) {

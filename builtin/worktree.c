@@ -228,7 +228,8 @@ static int add_worktree(const char *path, const char *refname,
 		if (!opts->force)
 			die_if_checked_out(symref.buf, 0);
 	} else { /* must be a commit */
-		commit = lookup_commit_reference_by_name(refname);
+		commit = lookup_commit_reference_by_name(the_repository,
+							 refname);
 		if (!commit)
 			die(_("invalid reference: %s"), refname);
 	}
