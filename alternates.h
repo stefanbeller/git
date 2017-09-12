@@ -34,7 +34,8 @@ struct alternate_object_database {
 	char path[FLEX_ARRAY];
 };
 extern void prepare_alt_odb(struct repository *r);
-extern char *compute_alternate_path(const char *path, struct strbuf *err);
+#define compute_alternate_path(r, p, e) compute_alternate_path_##r(p, e)
+extern char *compute_alternate_path_the_repository(const char *path, struct strbuf *err);
 typedef int alt_odb_fn(struct alternate_object_database *, void *);
 extern int foreach_alt_odb(struct repository *r, alt_odb_fn, void*);
 
