@@ -267,7 +267,7 @@ enum peel_status peel_object(const struct object_id *name, struct object_id *oid
 	if (o->type != OBJ_TAG)
 		return PEEL_NON_TAG;
 
-	o = deref_tag_noverify(o);
+	o = deref_tag_noverify(the_repository, o);
 	if (!o)
 		return PEEL_INVALID;
 
