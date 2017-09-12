@@ -295,7 +295,7 @@ static void describe(const char *arg, int last_one)
 
 	if (get_oid(arg, &oid))
 		die(_("Not a valid object name %s"), arg);
-	cmit = lookup_commit_reference(&oid);
+	cmit = lookup_commit_reference(the_repository, &oid);
 	if (!cmit)
 		die(_("%s is not a valid '%s' object"), arg, commit_type);
 
