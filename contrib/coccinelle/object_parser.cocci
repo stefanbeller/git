@@ -192,3 +192,10 @@ expression F;
  for_each_commit_graft(
 +the_repository,
  E, F)
+
+@@
+expression E;
+@@
+ lookup_unknown_object(
++the_repository,
+ E)
