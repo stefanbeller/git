@@ -1306,7 +1306,7 @@ int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
  * deal with them should arrange to call read_object() and give error
  * messages themselves.
  */
-void *read_sha1_file_extended(const unsigned char *sha1,
+void *read_sha1_file_extended_the_repository(const unsigned char *sha1,
 			      enum object_type *type,
 			      unsigned long *size,
 			      int lookup_replace)
