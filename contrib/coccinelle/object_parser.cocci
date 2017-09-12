@@ -101,3 +101,11 @@ expression E;
  lookup_object(
 +the_repository,
  E)
+
+@@
+expression E;
+expression F;
+@@
+ lookup_commit_reference_gently(
++the_repository,
+ E, F)
