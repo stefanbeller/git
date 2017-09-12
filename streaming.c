@@ -15,7 +15,8 @@ enum input_source {
 	pack_non_delta = 2
 };
 
-typedef int (*open_istream_fn)(struct git_istream *,
+typedef int (*open_istream_fn)(struct repository *,
+			       struct git_istream *,
 			       struct object_info *,
 			       const unsigned char *,
 			       enum object_type *);
@@ -29,7 +30,9 @@ struct stream_vtbl {
 
 #define open_method_decl(name) \
 	int open_istream_ ##name \
-	(struct git_istream *st, struct object_info *oi, \
+	(struct repository *r, \
+	 struct git_istream *st, \
+	 struct object_info *oi, \
 	 const unsigned char *sha1, \
 	 enum object_type *type)
 
@@ -147,8 +150,8 @@ struct git_istream *open_istream(const unsigned char *sha1,
 		return NULL;
 
 	st = xmalloc(sizeof(*st));
-	if (open_istream_tbl[src](st, &oi, real, type)) {
-		if (open_istream_incore(st, &oi, real, type)) {
+	if (open_istream_tbl[src](the_repository, st, &oi, real, type)) {
+		if (open_istream_incore(the_repository, st, &oi, real, type)) {
 			free(st);
 			return NULL;
 		}
@@ -338,6 +341,9 @@ static struct stream_vtbl loose_vtbl = {
 
 static open_method_decl(loose)
 {
+	if (r != the_repository)
+		BUG("r != the_repository");
+
 	st->u.loose.mapped = map_sha1_file(the_repository,
 					   sha1, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
@@ -433,6 +439,9 @@ static open_method_decl(pack_non_delta)
 	struct pack_window *window;
 	enum object_type in_pack_type;
 
+	if (r != the_repository)
+		BUG("r != the_repository");
+
 	st->u.in_pack.pack = oi->u.packed.pack;
 	st->u.in_pack.pos = oi->u.packed.offset;
 	window = NULL;
@@ -490,6 +499,9 @@ static struct stream_vtbl incore_vtbl = {
 
 static open_method_decl(incore)
 {
+	if (r != the_repository)
+		BUG("r != the_repository");
+
 	st->u.incore.buf = read_sha1_file_extended(the_repository, sha1,
 						   type, &st->size, 0);
 	st->u.incore.read_ptr = 0;
