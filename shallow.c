@@ -32,7 +32,7 @@ int register_shallow(const struct object_id *oid)
 {
 	struct commit_graft *graft =
 		xmalloc(sizeof(struct commit_graft));
-	struct commit *commit = lookup_commit(oid);
+	struct commit *commit = lookup_commit(the_repository, oid);
 
 	oidcpy(&graft->oid, oid);
 	graft->nr_parent = -1;
@@ -244,7 +244,7 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 	if (graft->nr_parent != -1)
 		return 0;
 	if (data->flags & SEEN_ONLY) {
-		struct commit *c = lookup_commit(&graft->oid);
+		struct commit *c = lookup_commit(the_repository, &graft->oid);
 		if (!c || !(c->object.flags & SEEN)) {
 			if (data->flags & VERBOSE)
 				printf("Removing %s from .git/shallow\n",
@@ -606,7 +606,8 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 
 	/* Mark potential bottoms so we won't go out of bound */
 	for (i = 0; i < nr_shallow; i++) {
-		struct commit *c = lookup_commit(&oid[shallow[i]]);
+		struct commit *c = lookup_commit(the_repository,
+						 &oid[shallow[i]]);
 		c->object.flags |= BOTTOM;
 	}
 
@@ -617,7 +618,8 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 		int bitmap_size = DIV_ROUND_UP(pi.nr_bits, 32) * sizeof(uint32_t);
 		memset(used, 0, sizeof(*used) * info->shallow->nr);
 		for (i = 0; i < nr_shallow; i++) {
-			const struct commit *c = lookup_commit(&oid[shallow[i]]);
+			const struct commit *c = lookup_commit(the_repository,
+							       &oid[shallow[i]]);
 			uint32_t **map = ref_bitmap_at(&pi.ref_bitmap, c);
 			if (*map)
 				used[shallow[i]] = xmemdupz(*map, bitmap_size);
@@ -687,7 +689,7 @@ static void post_assign_shallow(struct shallow_info *info,
 	for (i = dst = 0; i < info->nr_theirs; i++) {
 		if (i != dst)
 			info->theirs[dst] = info->theirs[i];
-		c = lookup_commit(&oid[info->theirs[i]]);
+		c = lookup_commit(the_repository, &oid[info->theirs[i]]);
 		bitmap = ref_bitmap_at(ref_bitmap, c);
 		if (!*bitmap)
 			continue;
@@ -708,7 +710,7 @@ static void post_assign_shallow(struct shallow_info *info,
 	for (i = dst = 0; i < info->nr_ours; i++) {
 		if (i != dst)
 			info->ours[dst] = info->ours[i];
-		c = lookup_commit(&oid[info->ours[i]]);
+		c = lookup_commit(the_repository, &oid[info->ours[i]]);
 		bitmap = ref_bitmap_at(ref_bitmap, c);
 		if (!*bitmap)
 			continue;
@@ -730,7 +732,8 @@ static void post_assign_shallow(struct shallow_info *info,
 int delayed_reachability_test(struct shallow_info *si, int c)
 {
 	if (si->need_reachability_test[c]) {
-		struct commit *commit = lookup_commit(&si->shallow->oid[c]);
+		struct commit *commit = lookup_commit(the_repository,
+						      &si->shallow->oid[c]);
 
 		if (!si->commits) {
 			struct commit_array ca;

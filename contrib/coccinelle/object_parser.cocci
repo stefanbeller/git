@@ -74,3 +74,10 @@ expression E;
  lookup_commit_reference(
 +the_repository,
  E)
+
+@@
+expression E;
+@@
+ lookup_commit(
++the_repository,
+ E)
