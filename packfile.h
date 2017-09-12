@@ -160,6 +160,7 @@ typedef int each_packed_object_fn(const struct object_id *oid,
 				  struct packed_git *pack,
 				  uint32_t pos,
 				  void *data);
-extern int for_each_packed_object(each_packed_object_fn, void *, unsigned flags);
+#define for_each_packed_object(r, fn, c, fl) for_each_packed_object_##r(fn, c, fl)
+extern int for_each_packed_object_the_repository(each_packed_object_fn, void *, unsigned flags);
 
 #endif
