@@ -22,6 +22,15 @@ expression E;
 
 @@
 expression E;
+expression F;
+expression G;
+@@
+ parse_tag_buffer(
++the_repository,
+ E, F, G)
+
+@@
+expression E;
 @@
  parse_object(
 + the_repository,
