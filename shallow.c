@@ -38,7 +38,7 @@ int register_shallow(const struct object_id *oid)
 	graft->nr_parent = -1;
 	if (commit && commit->object.parsed)
 		commit->parents = NULL;
-	return register_commit_graft(graft, 0);
+	return register_commit_graft(the_repository, graft, 0);
 }
 
 int is_repository_shallow(void)
