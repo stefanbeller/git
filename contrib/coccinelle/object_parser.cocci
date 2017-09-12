@@ -69,6 +69,17 @@ expression E;
 
 @@
 expression E;
+expression F;
+expression G;
+expression H;
+expression I;
+@@
+parse_object_buffer(
++ the_repository,
+ E, F, G, H, I)
+
+@@
+expression E;
 @@
  get_merge_parent(
 + the_repository,
