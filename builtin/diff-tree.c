@@ -68,7 +68,7 @@ static int diff_tree_stdin(char *line)
 	line[len-1] = 0;
 	if (parse_oid_hex(line, &oid, &p))
 		return -1;
-	obj = parse_object(&oid);
+	obj = parse_object(the_repository, &oid);
 	if (!obj)
 		return -1;
 	if (obj->type == OBJ_COMMIT)

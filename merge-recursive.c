@@ -2144,7 +2144,8 @@ static struct commit *get_ref(const struct object_id *oid, const char *name)
 {
 	struct object *object;
 
-	object = deref_tag(parse_object(oid), name, strlen(name));
+	object = deref_tag(parse_object(the_repository, oid), name,
+			   strlen(name));
 	if (!object)
 		return NULL;
 	if (object->type == OBJ_TREE)
