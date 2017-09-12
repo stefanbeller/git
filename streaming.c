@@ -500,10 +500,7 @@ static struct stream_vtbl incore_vtbl = {
 
 static open_method_decl(incore)
 {
-	if (r != the_repository)
-		BUG("r != the_repository");
-
-	st->u.incore.buf = read_sha1_file_extended(the_repository, sha1,
+	st->u.incore.buf = read_sha1_file_extended(r, sha1,
 						   type, &st->size, 0);
 	st->u.incore.read_ptr = 0;
 	st->vtbl = &incore_vtbl;
