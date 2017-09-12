@@ -109,6 +109,22 @@ extern void *create_object(struct repository *r, const unsigned char *sha1, void
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
 
 /*
+ * Resolves 'sha1' to an object of the specified type and returns the
+ * raw content of the resulting object.
+ *
+ * For example, with required_type == OBJ_TREE, this can be passed a
+ * tree, commit, or tag object id to get the raw tree object pointed
+ * to by the named object.
+ *
+ * Returns NULL if 'sha1' can not be peeled to an object of the
+ * specified type.
+ */
+extern void *read_object_with_reference(const unsigned char *sha1,
+					const char *required_type,
+					unsigned long *size,
+					unsigned char *sha1_ret);
+
+/*
  * Returns the object, having parsed it to find out what it is.
  *
  * Returns NULL if the object is missing or corrupt.
