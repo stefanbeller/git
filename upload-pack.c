@@ -3,6 +3,7 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "repository.h"
 #include "object-store.h"
 #include "tag.h"
 #include "object.h"
@@ -299,7 +300,7 @@ static int got_oid(const char *hex, struct object_id *oid)
 	if (!has_object_file(oid))
 		return -1;
 
-	o = parse_object(oid);
+	o = parse_object(the_repository, oid);
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
 	if (o->type == OBJ_COMMIT) {
@@ -337,7 +338,7 @@ static int reachable(struct commit *want)
 			break;
 		}
 		if (!commit->object.parsed)
-			parse_object(&commit->object.oid);
+			parse_object(the_repository, &commit->object.oid);
 		if (commit->object.flags & REACHABLE)
 			continue;
 		commit->object.flags |= REACHABLE;
@@ -758,7 +759,7 @@ static void receive_needs(void)
 			struct object *object;
 			if (get_oid_hex(arg, &oid))
 				die("invalid shallow line: %s", line);
-			object = parse_object(&oid);
+			object = parse_object(the_repository, &oid);
 			if (!object)
 				continue;
 			if (object->type != OBJ_COMMIT)
@@ -824,7 +825,7 @@ static void receive_needs(void)
 		if (parse_feature_request(features, "include-tag"))
 			use_include_tag = 1;
 
-		o = parse_object(&oid_buf);
+		o = parse_object(the_repository, &oid_buf);
 		if (!o) {
 			packet_write_fmt(1,
 					 "ERR upload-pack: not our ref %s",
