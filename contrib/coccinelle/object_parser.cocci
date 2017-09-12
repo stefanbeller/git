@@ -98,3 +98,10 @@ expression F;
  register_commit_graft(
 +the_repository,
  E, F)
+
+@@
+expression E;
+@@
+ lookup_commit_graft(
++the_repository,
+ E)
