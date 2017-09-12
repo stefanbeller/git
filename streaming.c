@@ -111,8 +111,8 @@ ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
 	return st->vtbl->read(st, buf, sz);
 }
 
-#define istream_source(r, s, t, o) istream_source_##r(s, t, o)
-static enum input_source istream_source_the_repository(const unsigned char *sha1,
+static enum input_source istream_source(struct repository *r,
+					const unsigned char *sha1,
 					enum object_type *type,
 					struct object_info *oi)
 {
@@ -121,7 +121,7 @@ static enum input_source istream_source_the_repository(const unsigned char *sha1
 
 	oi->typep = type;
 	oi->sizep = &size;
-	status = sha1_object_info_extended(the_repository, sha1, oi, 0);
+	status = sha1_object_info_extended(r, sha1, oi, 0);
 	if (status < 0)
 		return stream_error;
 
