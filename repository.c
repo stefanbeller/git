@@ -126,6 +126,36 @@ static int read_and_verify_repository_format(struct repository_format *format,
 	return ret;
 }
 
+struct repository **open_repos;
+int open_repos_nr;
+static int open_repos_alloc;
+
+static void repo_clear(struct repository *repo)
+{
+	FREE_AND_NULL(repo->gitdir);
+	FREE_AND_NULL(repo->commondir);
+	FREE_AND_NULL(repo->objectdir);
+	FREE_AND_NULL(repo->graft_file);
+	FREE_AND_NULL(repo->index_file);
+	FREE_AND_NULL(repo->worktree);
+	FREE_AND_NULL(repo->submodule_prefix);
+
+	if (repo->config) {
+		git_configset_clear(repo->config);
+		FREE_AND_NULL(repo->config);
+	}
+
+	if (repo->submodule_cache) {
+		submodule_cache_free(repo->submodule_cache);
+		repo->submodule_cache = NULL;
+	}
+
+	if (repo->index) {
+		discard_index(repo->index);
+		FREE_AND_NULL(repo->index);
+	}
+}
+
 /*
  * Initialize 'repo' based on the provided 'gitdir'.
  * Return 0 upon success and a non-zero value upon failure.
@@ -147,6 +177,9 @@ int repo_init(struct repository *repo, const char *gitdir, const char *worktree)
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);
+
+	ALLOC_GROW(open_repos, open_repos_nr + 1, open_repos_alloc);
+	open_repos[open_repos_nr++] = repo;
 
 	return 0;
 
@@ -207,30 +240,23 @@ out:
 	return ret;
 }
 
-void repo_clear(struct repository *repo)
+void repo_free(struct repository *repo)
 {
-	FREE_AND_NULL(repo->gitdir);
-	FREE_AND_NULL(repo->commondir);
-	FREE_AND_NULL(repo->objectdir);
-	FREE_AND_NULL(repo->graft_file);
-	FREE_AND_NULL(repo->index_file);
-	FREE_AND_NULL(repo->worktree);
-	FREE_AND_NULL(repo->submodule_prefix);
-
-	if (repo->config) {
-		git_configset_clear(repo->config);
-		FREE_AND_NULL(repo->config);
+	int i;
+	for (i = 0; i < open_repos_nr; i++) {
+		if (open_repos[i] != repo)
+			continue;
+		MOVE_ARRAY(open_repos + i,
+			   open_repos + i + 1,
+			   open_repos_nr - i - 1);
+		break;
 	}
 
-	if (repo->submodule_cache) {
-		submodule_cache_free(repo->submodule_cache);
-		repo->submodule_cache = NULL;
-	}
+	if (i == open_repos_nr)
+		BUG("free'ing non-open repo?");
 
-	if (repo->index) {
-		discard_index(repo->index);
-		FREE_AND_NULL(repo->index);
-	}
+	open_repos_nr--;
+	repo_clear(repo);
 }
 
 int repo_read_index(struct repository *repo)

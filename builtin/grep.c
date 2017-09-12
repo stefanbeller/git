@@ -466,7 +466,7 @@ static int grep_submodule(struct grep_opt *opt, struct repository *superproject,
 		hit = grep_cache(opt, &submodule, pathspec, 1);
 	}
 
-	repo_clear(&submodule);
+	repo_free(&submodule);
 	return hit;
 }
 
