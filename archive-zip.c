@@ -340,7 +340,8 @@ static int write_zip_entry(struct archiver_args *args,
 
 		if (S_ISREG(mode) && type == OBJ_BLOB && !args->convert &&
 		    size > big_file_threshold) {
-			stream = open_istream(sha1, &type, &size, NULL);
+			stream = open_istream(the_repository, sha1, &type,
+					      &size, NULL);
 			if (!stream)
 				return error("cannot stream blob %s",
 					     sha1_to_hex(sha1));
