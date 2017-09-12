@@ -288,7 +288,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 			error("Could not interpret response from server '%s' as something to pull", target[i]);
 			goto done;
 		}
-		if (process(walker, lookup_unknown_object(oids[i].hash)))
+		if (process(walker, lookup_unknown_object(the_repository, oids[i].hash)))
 			goto done;
 	}
 

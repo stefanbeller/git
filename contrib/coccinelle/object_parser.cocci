@@ -105,3 +105,10 @@ expression E;
  lookup_commit_graft(
 +the_repository,
  E)
+
+@@
+expression E;
+@@
+ lookup_unknown_object(
++the_repository,
+ E)
