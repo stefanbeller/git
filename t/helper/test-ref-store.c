@@ -31,7 +31,7 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 		ret = strbuf_git_path_submodule(&sb, gitdir, "objects/");
 		if (ret)
 			die("strbuf_git_path_submodule failed: %d", ret);
-		add_to_alternates_memory(sb.buf);
+		add_to_alternates_memory(the_repository, sb.buf);
 		strbuf_release(&sb);
 
 		*refs = get_submodule_ref_store(gitdir);

@@ -162,7 +162,7 @@ static int add_submodule_odb(const char *path)
 		ret = -1;
 		goto done;
 	}
-	add_to_alternates_memory(objects_directory.buf);
+	add_to_alternates_memory(the_repository, objects_directory.buf);
 done:
 	strbuf_release(&objects_directory);
 	return ret;
