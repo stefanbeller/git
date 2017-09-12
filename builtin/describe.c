@@ -499,7 +499,7 @@ static void describe(const char *arg, int last_one)
 
 	if (cmit)
 		describe_commit(&oid, &sb);
-	else if (lookup_blob(&oid))
+	else if (lookup_blob(the_repository, &oid))
 		describe_blob(oid, &sb);
 	else
 		die(_("%s is neither a commit nor blob"), arg);
