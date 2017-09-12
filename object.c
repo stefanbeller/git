@@ -12,7 +12,7 @@ unsigned int get_max_object_index_the_repository(void)
 	return the_repository->parsed_objects.obj_hash_size;
 }
 
-struct object *get_indexed_object(unsigned int idx)
+struct object *get_indexed_object_the_repository(unsigned int idx)
 {
 	return the_repository->parsed_objects.obj_hash[idx];
 }

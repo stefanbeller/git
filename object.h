@@ -85,7 +85,8 @@ extern unsigned int get_max_object_index_the_repository(void);
 /*
  * Return the object from the specified bucket in the object hashmap.
  */
-extern struct object *get_indexed_object(unsigned int);
+#define get_indexed_object(r, i) get_indexed_object_##r(i)
+extern struct object *get_indexed_object_the_repository(unsigned int);
 
 /*
  * This can be used to see if we have heard of the object before, but
