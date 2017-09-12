@@ -20,3 +20,8 @@ expression F;
  create_object(
 + the_repository,
  E, F)
+
+@@ @@
+ get_max_object_index(
++the_repository
+ )

@@ -313,7 +313,7 @@ static void check_connectivity(void)
 	traverse_reachable();
 
 	/* Look up all the requirements, warn about missing objects.. */
-	max = get_max_object_index();
+	max = get_max_object_index(the_repository);
 	if (verbose)
 		fprintf(stderr, "Checking connectivity (%d objects)\n", max);
 

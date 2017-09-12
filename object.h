@@ -66,7 +66,8 @@ extern int type_from_string_gently(const char *str, ssize_t, int gentle);
 /*
  * Return the current number of buckets in the object hashmap.
  */
-extern unsigned int get_max_object_index(void);
+#define get_max_object_index(r) get_max_object_index_##r()
+extern unsigned int get_max_object_index_the_repository(void);
 
 /*
  * Return the object from the specified bucket in the object hashmap.

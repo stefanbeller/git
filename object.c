@@ -7,7 +7,7 @@
 #include "commit.h"
 #include "tag.h"
 
-unsigned int get_max_object_index(void)
+unsigned int get_max_object_index_the_repository(void)
 {
 	return the_repository->parsed_objects.obj_hash_size;
 }
