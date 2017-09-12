@@ -8,8 +8,7 @@
 /* opaque */
 struct git_istream;
 
-#define open_istream(r, s, t, sz, f) open_istream_##r(s, t, sz, f)
-extern struct git_istream *open_istream_the_repository(const unsigned char *, enum object_type *, unsigned long *, struct stream_filter *);
+extern struct git_istream *open_istream(struct repository *, const unsigned char *, enum object_type *, unsigned long *, struct stream_filter *);
 extern int close_istream(struct git_istream *);
 extern ssize_t read_istream(struct git_istream *, void *, size_t);
 
