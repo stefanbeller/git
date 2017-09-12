@@ -184,3 +184,11 @@ expression E;
  lookup_commit_graft(
 +the_repository,
  E)
+
+@@
+expression E;
+expression F;
+@@
+ for_each_commit_graft(
++the_repository,
+ E, F)
