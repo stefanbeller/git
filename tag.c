@@ -80,7 +80,7 @@ struct object *deref_tag_the_repository(struct object *o, const char *warn, int 
 	return o;
 }
 
-struct object *deref_tag_noverify(struct object *o)
+struct object *deref_tag_noverify_the_repository(struct object *o)
 {
 	while (o && o->type == OBJ_TAG) {
 		o = parse_object(the_repository, &o->oid);
