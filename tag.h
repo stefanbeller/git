@@ -20,7 +20,8 @@ extern int parse_tag(struct tag *item);
 extern struct object *deref_tag_the_repository(struct object *, const char *, int);
 #define deref_tag_noverify(r, o) deref_tag_noverify_##r(o)
 extern struct object *deref_tag_noverify_the_repository(struct object *);
-extern int gpg_verify_tag(const struct object_id *oid,
+#define gpg_verify_tag(r, o, n, f) gpg_verify_tag_##r(o, n, f)
+extern int gpg_verify_tag_the_repository(const struct object_id *oid,
 		const char *name_to_report, unsigned flags);
 
 #endif /* TAG_H */
