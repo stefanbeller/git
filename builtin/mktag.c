@@ -30,7 +30,9 @@ static int verify_object(const unsigned char *sha1, const char *expected_type)
 
 	if (buffer) {
 		if (type == type_from_string(expected_type))
-			ret = check_sha1_signature(repl, buffer, size, expected_type);
+			ret = check_sha1_signature(the_repository, repl,
+						   buffer, size,
+						   expected_type);
 		free(buffer);
 	}
 	return ret;
