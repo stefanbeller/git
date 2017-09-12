@@ -69,6 +69,13 @@ expression E;
 
 @@
 expression E;
+@@
+ get_merge_parent(
++ the_repository,
+ E)
+
+@@
+expression E;
 expression F;
 @@
  parse_object_or_die(

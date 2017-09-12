@@ -1608,7 +1608,7 @@ void set_merge_remote_desc(struct commit *commit,
 	commit->util = desc;
 }
 
-struct commit *get_merge_parent(const char *name)
+struct commit *get_merge_parent_the_repository(const char *name)
 {
 	struct object *obj;
 	struct commit *commit;

@@ -450,7 +450,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	remote = bname.buf;
 
 	oidclr(&branch_head);
-	remote_head = get_merge_parent(remote);
+	remote_head = get_merge_parent(the_repository, remote);
 	if (!remote_head)
 		die(_("'%s' does not point to a commit"), remote);
 
@@ -1064,7 +1064,8 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
 		else {
 			char saved = merge_names->buf[pos + GIT_SHA1_HEXSZ];
 			merge_names->buf[pos + GIT_SHA1_HEXSZ] = '\0';
-			commit = get_merge_parent(merge_names->buf + pos);
+			commit = get_merge_parent(the_repository,
+						  merge_names->buf + pos);
 			merge_names->buf[pos + GIT_SHA1_HEXSZ] = saved;
 		}
 		if (!commit) {
@@ -1101,7 +1102,8 @@ static struct commit_list *collect_parents(struct commit *head_commit,
 		remoteheads = reduce_parents(head_commit, head_subsumed, remoteheads);
 	} else {
 		for (i = 0; i < argc; i++) {
-			struct commit *commit = get_merge_parent(argv[i]);
+			struct commit *commit = get_merge_parent(the_repository,
+								 argv[i]);
 			if (!commit)
 				help_unknown_ref(argv[i], "merge",
 						 _("not something we can merge"));
