@@ -12,3 +12,10 @@ expression F;
  create_object(
 + the_repository,
  E, F)
+
+@@
+expression E;
+@@
+ lookup_object(
++the_repository,
+ E)
