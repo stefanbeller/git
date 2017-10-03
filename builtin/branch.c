@@ -23,6 +23,7 @@
 #include "wt-status.h"
 #include "ref-filter.h"
 #include "worktree.h"
+#include "submodule.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged | --no-merged]"),
@@ -196,11 +197,13 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	struct object_id oid;
 	char *name = NULL;
 	const char *fmt;
-	int i;
+	int i, k;
 	int ret = 0;
 	int remote_branch = 0;
 	struct strbuf bname = STRBUF_INIT;
 	unsigned allowed_interpret;
+	struct ref_store *refs;
+	struct submodule_list sub_list = SUBMODULE_LIST_INIT;
 
 	switch (kinds) {
 	case FILTER_REFS_REMOTES:
@@ -224,17 +227,28 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		if (!head_rev)
 			die(_("Couldn't look up commit object for HEAD"));
 	}
+
+	if (recurse_submodules) {
+		struct pathspec ps;
+		if (module_list_compute(0, NULL, NULL, &ps, &sub_list) < 0)
+			die(_("could not compute all submodules"));
+	}
+
+	for (refs = get_main_ref_store(), k = 0;
+	     refs != NULL && k < sub_list.nr;
+	     refs = get_submodule_ref_store(sub_list.entries[k]->name), k++)
 	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
 		char *target = NULL;
 		int flags = 0;
 
-		strbuf_branchname(&bname, argv[i], allowed_interpret);
+		/* TODO */strbuf_branchname(&bname, argv[i], allowed_interpret);
 		free(name);
 		name = mkpathdup(fmt, bname.buf);
 
 		if (kinds == FILTER_REFS_BRANCHES) {
 			const struct worktree *wt =
-				find_shared_symref("HEAD", name);
+				/* TODO: make worktrees and submodules compatible */
+				/* TODO */ find_shared_symref("HEAD", name);
 			if (wt) {
 				error(_("Cannot delete branch '%s' "
 					"checked out at '%s'"),
@@ -244,11 +258,11 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			}
 		}
 
-		target = resolve_refdup(name,
-					RESOLVE_REF_READING
-					| RESOLVE_REF_NO_RECURSE
-					| RESOLVE_REF_ALLOW_BAD_NAME,
-					oid.hash, &flags);
+		target = refs_resolve_refdup(refs, name,
+					     RESOLVE_REF_READING
+					     | RESOLVE_REF_NO_RECURSE
+					     | RESOLVE_REF_ALLOW_BAD_NAME,
+					     oid.hash, &flags);
 		if (!target) {
 			error(remote_branch
 			      ? _("remote-tracking branch '%s' not found.")
@@ -258,14 +272,15 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		}
 
 		if (!(flags & (REF_ISSYMREF|REF_ISBROKEN)) &&
-		    check_branch_commit(bname.buf, name, &oid, head_rev, kinds,
+		    /* TODO */ check_branch_commit(bname.buf, name, &oid, head_rev, kinds,
 					force)) {
 			ret = 1;
 			goto next;
 		}
 
-		if (delete_ref(NULL, name, is_null_oid(&oid) ? NULL : oid.hash,
-			       REF_NODEREF)) {
+		if (refs_delete_ref(refs, NULL, name,
+				    is_null_oid(&oid) ? NULL : oid.hash,
+				    REF_NODEREF)) {
 			error(remote_branch
 			      ? _("Error deleting remote-tracking branch '%s'")
 			      : _("Error deleting branch '%s'"),
@@ -280,9 +295,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			       bname.buf,
 			       (flags & REF_ISBROKEN) ? "broken"
 			       : (flags & REF_ISSYMREF) ? target
-			       : find_unique_abbrev(oid.hash, DEFAULT_ABBREV));
+			       : /* TODO */ find_unique_abbrev(oid.hash, DEFAULT_ABBREV));
 		}
-		delete_branch_config(bname.buf);
+		/* TODO */ delete_branch_config(bname.buf);
 
 	next:
 		free(target);
@@ -679,8 +694,6 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (recurse_submodules) {
-		if (delete)
-			die(_("deleting branches recursing into submodules not supported"));
 		if (list)
 			die(_("listing branches recursing into submodules not supported"));
 		if (edit_description)
