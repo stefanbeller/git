@@ -55,6 +55,8 @@ enum color_branch {
 	BRANCH_COLOR_UPSTREAM = 5
 };
 
+static int recurse_submodules;
+
 static struct string_list output = STRING_LIST_INIT_DUP;
 static unsigned int colopts;
 
@@ -92,6 +94,10 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 		if (!value)
 			return config_error_nonbool(var);
 		return color_parse(value, branch_colors[slot]);
+	}
+	if (!strcmp(var, "submodule.recurse")) {
+		recurse_submodules = git_config_bool(var, value);
+		return 0;
 	}
 	return git_default_config(var, value, cb);
 }
@@ -607,6 +613,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('l', "create-reflog", &reflog, N_("create the branch's reflog")),
 		OPT_BOOL(0, "edit-description", &edit_description,
 			 N_("edit the description for the branch")),
+		OPT_BOOL(0, "recurse-submodules", &recurse_submodules,
+			 N_("recurse into submodules")),
 		OPT__FORCE(&force, N_("force creation, move/rename, deletion")),
 		OPT_MERGED(&filter, N_("print only branches that are merged")),
 		OPT_NO_MERGED(&filter, N_("print only branches that are not merged")),
@@ -666,6 +674,23 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (explicitly_enable_column(colopts))
 			die(_("--column and --verbose are incompatible"));
 		colopts = 0;
+	}
+
+	if (recurse_submodules) {
+		if (delete)
+			die(_("deleting branches recursing into submodules not supported"));
+		if (list)
+			die(_("listing branches recursing into submodules not supported"));
+		if (edit_description)
+			die(_("editing branch description and recursing into submodules not supported"));
+		if (copy)
+			die(_("copying branches recursing into submodules not supported"));
+		if (rename)
+			die(_("renaming branches recursing into submodules not supported"));
+		if (new_upstream)
+			die(_("setting upstream branches recursing into submodules not supported"));
+		if (unset_upstream)
+			die(_("unsetting upstream branches recursing into submodules not supported"));
 	}
 
 	if (force) {
