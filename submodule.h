@@ -33,6 +33,17 @@ struct submodule_update_strategy {
 };
 #define SUBMODULE_UPDATE_STRATEGY_INIT {SM_UPDATE_UNSPECIFIED, NULL}
 
+struct submodule_list {
+	const struct cache_entry **entries;
+	int alloc, nr;
+};
+#define SUBMODULE_LIST_INIT { NULL, 0, 0 }
+
+extern int module_list_compute(int argc, const char **argv,
+			       const char *prefix,
+			       struct pathspec *pathspec,
+			       struct submodule_list *list);
+
 extern int is_gitmodules_unmerged(const struct index_state *istate);
 extern int is_staging_gitmodules_ok(const struct index_state *istate);
 extern int update_path_in_gitmodules(const char *oldpath, const char *newpath);

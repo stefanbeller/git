@@ -219,60 +219,10 @@ static int resolve_relative_url_test(int argc, const char **argv, const char *pr
 	return 0;
 }
 
-struct module_list {
-	const struct cache_entry **entries;
-	int alloc, nr;
-};
-#define MODULE_LIST_INIT { NULL, 0, 0 }
-
-static int module_list_compute(int argc, const char **argv,
-			       const char *prefix,
-			       struct pathspec *pathspec,
-			       struct module_list *list)
-{
-	int i, result = 0;
-	char *ps_matched = NULL;
-	parse_pathspec(pathspec, 0,
-		       PATHSPEC_PREFER_FULL,
-		       prefix, argv);
-
-	if (pathspec->nr)
-		ps_matched = xcalloc(pathspec->nr, 1);
-
-	if (read_cache() < 0)
-		die(_("index file corrupt"));
-
-	for (i = 0; i < active_nr; i++) {
-		const struct cache_entry *ce = active_cache[i];
-
-		if (!match_pathspec(pathspec, ce->name, ce_namelen(ce),
-				    0, ps_matched, 1) ||
-		    !S_ISGITLINK(ce->ce_mode))
-			continue;
-
-		ALLOC_GROW(list->entries, list->nr + 1, list->alloc);
-		list->entries[list->nr++] = ce;
-		while (i + 1 < active_nr &&
-		       !strcmp(ce->name, active_cache[i + 1]->name))
-			/*
-			 * Skip entries with the same name in different stages
-			 * to make sure an entry is returned only once.
-			 */
-			i++;
-	}
-
-	if (ps_matched && report_path_error(ps_matched, pathspec, prefix))
-		result = -1;
-
-	free(ps_matched);
-
-	return result;
-}
-
-static void module_list_active(struct module_list *list)
+static void module_list_active(struct submodule_list *list)
 {
 	int i;
-	struct module_list active_modules = MODULE_LIST_INIT;
+	struct submodule_list active_modules = SUBMODULE_LIST_INIT;
 
 	for (i = 0; i < list->nr; i++) {
 		const struct cache_entry *ce = list->entries[i];
@@ -294,7 +244,7 @@ static int module_list(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct pathspec pathspec;
-	struct module_list list = MODULE_LIST_INIT;
+	struct submodule_list list = SUBMODULE_LIST_INIT;
 
 	struct option module_list_options[] = {
 		OPT_STRING(0, "prefix", &prefix,
@@ -429,7 +379,7 @@ static void init_submodule(const char *path, const char *prefix, int quiet)
 static int module_init(int argc, const char **argv, const char *prefix)
 {
 	struct pathspec pathspec;
-	struct module_list list = MODULE_LIST_INIT;
+	struct submodule_list list = SUBMODULE_LIST_INIT;
 	int quiet = 0;
 	int i;
 
@@ -714,7 +664,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 struct submodule_update_clone {
 	/* index into 'list', the list of submodules to look into for cloning */
 	int current;
-	struct module_list list;
+	struct submodule_list list;
 	unsigned warn_if_uninitialized : 1;
 
 	/* update parameter passed via commandline */
@@ -739,7 +689,7 @@ struct submodule_update_clone {
 	const struct cache_entry **failed_clones;
 	int failed_clones_nr, failed_clones_alloc;
 };
-#define SUBMODULE_UPDATE_CLONE_INIT {0, MODULE_LIST_INIT, 0, \
+#define SUBMODULE_UPDATE_CLONE_INIT {0, SUBMODULE_LIST_INIT, 0, \
 	SUBMODULE_UPDATE_STRATEGY_INIT, 0, 0, -1, STRING_LIST_INIT_DUP, \
 	NULL, NULL, NULL, \
 	STRING_LIST_INIT_DUP, 0, NULL, 0, 0}
@@ -1204,7 +1154,7 @@ static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct pathspec pathspec;
-	struct module_list list = MODULE_LIST_INIT;
+	struct submodule_list list = SUBMODULE_LIST_INIT;
 	unsigned flags = ABSORB_GITDIR_RECURSE_SUBMODULES;
 
 	struct option embed_gitdir_options[] = {
