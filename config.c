@@ -2754,7 +2754,6 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 				      const char *old_name, const char *new_name, int copy)
 {
 	int ret = 0, remove = 0;
-	char *filename_buf = NULL;
 	struct lock_file *lock;
 	int out_fd;
 	char buf[1024];
@@ -2766,9 +2765,6 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 		ret = error("invalid section name: %s", new_name);
 		goto out_no_rollback;
 	}
-
-	if (!config_filename)
-		config_filename = filename_buf = git_pathdup("config");
 
 	lock = xcalloc(1, sizeof(struct lock_file));
 	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
@@ -2895,27 +2891,48 @@ out:
 		fclose(config_file);
 	rollback_lock_file(lock);
 out_no_rollback:
-	free(filename_buf);
 	return ret;
 }
 
 int git_config_rename_section_in_file(const char *config_filename,
 				      const char *old_name, const char *new_name)
 {
-	return git_config_copy_or_rename_section_in_file(config_filename,
-					 old_name, new_name, 0);
+	int ret;
+	char *filename_buf = NULL;
+
+	if (!config_filename)
+		config_filename = filename_buf =
+			repo_git_path(the_repository, "config");
+
+	ret = git_config_copy_or_rename_section_in_file(config_filename,
+							old_name, new_name, 0);
+
+	free(filename_buf);
+	return ret;
 }
 
 int git_config_rename_section(const char *old_name, const char *new_name)
 {
-	return git_config_rename_section_in_file(NULL, old_name, new_name);
+	int ret;
+	char *config_filename = repo_git_path(the_repository, "config");
+
+	ret = git_config_copy_or_rename_section_in_file(config_filename,
+							old_name, new_name, 0);
+
+	free(config_filename);
+	return ret;
 }
 
 int git_config_copy_section(const char *old_name, const char *new_name)
 {
-	return git_config_copy_or_rename_section_in_file(NULL,
-							 old_name,
-							 new_name, 1);
+	int ret;
+	char *config_filename = repo_git_path(the_repository, "config");
+
+	ret = git_config_copy_or_rename_section_in_file(config_filename,
+							old_name, new_name, 1);
+
+	free(config_filename);
+	return ret;
 }
 
 /*
