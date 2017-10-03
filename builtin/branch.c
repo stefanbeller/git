@@ -234,9 +234,6 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			die(_("could not compute all submodules"));
 	}
 
-	for (refs = get_main_ref_store(), k = 0;
-	     refs != NULL && k < sub_list.nr;
-	     refs = get_submodule_ref_store(sub_list.entries[k]->name), k++)
 	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
 		char *target = NULL;
 		int flags = 0;
@@ -244,6 +241,10 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		/* TODO */strbuf_branchname(&bname, argv[i], allowed_interpret);
 		free(name);
 		name = mkpathdup(fmt, bname.buf);
+
+		for (refs = get_main_ref_store(), k = 0;
+			refs != NULL && k < sub_list.nr;
+			refs = get_submodule_ref_store(sub_list.entries[k]->name), k++)
 
 		if (kinds == FILTER_REFS_BRANCHES) {
 			const struct worktree *wt =
