@@ -2911,10 +2911,12 @@ int git_config_rename_section_in_file(const char *config_filename,
 	return ret;
 }
 
-int git_config_rename_section(const char *old_name, const char *new_name)
+int git_config_rename_section(struct repository *r,
+			      const char *old_name,
+			      const char *new_name)
 {
 	int ret;
-	char *config_filename = repo_git_path(the_repository, "config");
+	char *config_filename = repo_git_path(r, "config");
 
 	ret = git_config_copy_or_rename_section_in_file(config_filename,
 							old_name, new_name, 0);
@@ -2923,10 +2925,12 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	return ret;
 }
 
-int git_config_copy_section(const char *old_name, const char *new_name)
+int git_config_copy_section(struct repository *r,
+			    const char *old_name,
+			    const char *new_name)
 {
 	int ret;
-	char *config_filename = repo_git_path(the_repository, "config");
+	char *config_filename = repo_git_path(r, "config");
 
 	ret = git_config_copy_or_rename_section_in_file(config_filename,
 							old_name, new_name, 1);

@@ -11,6 +11,7 @@
 #include "refs.h"
 #include "commit.h"
 #include "builtin.h"
+#include "repository.h"
 #include "remote.h"
 #include "parse-options.h"
 #include "branch.h"
@@ -183,7 +184,7 @@ static void delete_branch_config(const char *branchname)
 {
 	struct strbuf buf = STRBUF_INIT;
 	strbuf_addf(&buf, "branch.%s", branchname);
-	if (git_config_rename_section(buf.buf, NULL) < 0)
+	if (git_config_rename_section(the_repository, buf.buf, NULL) < 0)
 		warning(_("Update of config-file failed"));
 	strbuf_release(&buf);
 }
@@ -529,9 +530,10 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	strbuf_release(&oldref);
 	strbuf_addf(&newsection, "branch.%s", newref.buf + 11);
 	strbuf_release(&newref);
-	if (!copy && git_config_rename_section(oldsection.buf, newsection.buf) < 0)
+	if (!copy && git_config_rename_section(the_repository, oldsection.buf, newsection.buf) < 0)
 		die(_("Branch is renamed, but update of config-file failed"));
-	if (copy && strcmp(oldname, newname) && git_config_copy_section(oldsection.buf, newsection.buf) < 0)
+	if (copy && strcmp(oldname, newname) &&
+	    git_config_copy_section(the_repository, oldsection.buf, newsection.buf) < 0)
 		die(_("Branch is copied, but update of config-file failed"));
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);

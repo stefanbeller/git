@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "config.h"
+#include "repository.h"
 #include "parse-options.h"
 #include "transport.h"
 #include "remote.h"
@@ -637,7 +638,7 @@ static int mv(int argc, const char **argv)
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s", rename.old);
 	strbuf_addf(&buf2, "remote.%s", rename.new);
-	if (git_config_rename_section(buf.buf, buf2.buf) < 1)
+	if (git_config_rename_section(the_repository, buf.buf, buf2.buf) < 1)
 		return error(_("Could not rename config section '%s' to '%s'"),
 				buf.buf, buf2.buf);
 
@@ -806,7 +807,7 @@ static int rm(int argc, const char **argv)
 
 	if (!result) {
 		strbuf_addf(&buf, "remote.%s", remote->name);
-		if (git_config_rename_section(buf.buf, NULL) < 1)
+		if (git_config_rename_section(the_repository, buf.buf, NULL) < 1)
 			return error(_("Could not remove config section '%s'"), buf.buf);
 	}
 
