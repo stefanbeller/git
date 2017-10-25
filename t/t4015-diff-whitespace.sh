@@ -1441,7 +1441,10 @@ test_expect_success 'move detection ignoring whitespace ' '
 	line 4
 	line 5
 	EOF
-	git diff HEAD --no-renames --color-moved --color |
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-no-ignore-all-space \
+		--color-moved-no-ignore-space-change \
+		--color-moved-no-ignore-space-at-eol |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1465,7 +1468,10 @@ test_expect_success 'move detection ignoring whitespace ' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames -w --color-moved --color |
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-ignore-all-space \
+		--color-moved-no-ignore-space-change \
+		--color-moved-no-ignore-space-at-eol |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1505,7 +1511,10 @@ test_expect_success 'move detection ignoring whitespace changes' '
 	line 5
 	EOF
 
-	git diff HEAD --no-renames --color-moved --color |
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-no-ignore-all-space \
+		--color-moved-no-ignore-space-change \
+		--color-moved-no-ignore-space-at-eol |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1529,7 +1538,10 @@ test_expect_success 'move detection ignoring whitespace changes' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames -b --color-moved --color |
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-no-ignore-all-space \
+		--color-moved-no-ignore-space-at-eol \
+		--color-moved-ignore-space-change |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1572,7 +1584,10 @@ test_expect_success 'move detection ignoring whitespace at eol' '
 	# avoid cluttering the output with complaints about our eol whitespace
 	test_config core.whitespace -blank-at-eol &&
 
-	git diff HEAD --no-renames --color-moved --color |
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-no-ignore-all-space \
+		--color-moved-no-ignore-space-change \
+		--color-moved-no-ignore-space-at-eol |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1596,7 +1611,10 @@ test_expect_success 'move detection ignoring whitespace at eol' '
 	EOF
 	test_cmp expected actual &&
 
-	git diff HEAD --no-renames --ignore-space-at-eol --color-moved --color |
+	git diff HEAD --no-renames --color-moved --color \
+		--color-moved-no-ignore-all-space \
+		--color-moved-no-ignore-space-change \
+		--color-moved-ignore-space-at-eol |
 		grep -v "index" |
 		test_decode_color >actual &&
 	cat <<-\EOF >expected &&
@@ -1768,7 +1786,125 @@ test_expect_success 'move detection with submodules' '
 
 	# nor did we mess with it another way
 	git diff --submodule=diff --color | test_decode_color >expect &&
-	test_cmp expect decoded_actual
+	test_cmp expect decoded_actual &&
+	rm -rf bananas &&
+	git submodule deinit bananas
+'
+
+test_expect_success 'move detection only ignores white spaces' '
+	git reset --hard &&
+	q_to_tab <<-\EOF >function.c &&
+	int func()
+	{
+	Qif (foo) {
+	QQ// this part of the function
+	QQ// function will be very long
+	QQ// indeed. We must exceed both
+	QQ// per-line and number of line
+	QQ// minimums
+	QQ;
+	Q}
+	Qbaz();
+	Qbar();
+	Q// more unrelated stuff
+	}
+	EOF
+	git add function.c &&
+	git commit -m "add function.c" &&
+	q_to_tab <<-\EOF >function.c &&
+	int do_foo()
+	{
+	Q// this part of the function
+	Q// function will be very long
+	Q// indeed. We must exceed both
+	Q// per-line and number of line
+	Q// minimums
+	Q;
+	}
+
+	int func()
+	{
+	Qif (foo)
+	QQdo_foo();
+	Qbaz();
+	Qbar();
+	Q// more unrelated stuff
+	}
+	EOF
+
+	# Make sure we get a different diff using -w ("moved function header")
+	git diff --color --color-moved -w \
+		--color-moved-no-ignore-all-space \
+		--color-moved-no-ignore-space-change \
+		--color-moved-no-ignore-space-at-eol |
+		grep -v "index" |
+		test_decode_color >actual &&
+	q_to_tab <<-\EOF >expected &&
+	<BOLD>diff --git a/function.c b/function.c<RESET>
+	<BOLD>--- a/function.c<RESET>
+	<BOLD>+++ b/function.c<RESET>
+	<CYAN>@@ -1,6 +1,5 @@<RESET>
+	<BOLD;MAGENTA>-int func()<RESET>
+	<GREEN>+<RESET><GREEN>int do_foo()<RESET>
+	 {<RESET>
+	<RED>-	if (foo) {<RESET>
+	 Q// this part of the function<RESET>
+	 Q// function will be very long<RESET>
+	 Q// indeed. We must exceed both<RESET>
+	<CYAN>@@ -8,6 +7,11 @@<RESET> <RESET>int func()<RESET>
+	 Q// minimums<RESET>
+	 Q;<RESET>
+	 }<RESET>
+	<GREEN>+<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>int func()<RESET>
+	<GREEN>+<RESET><GREEN>{<RESET>
+	<GREEN>+<RESET>Q<GREEN>if (foo)<RESET>
+	<GREEN>+<RESET>QQ<GREEN>do_foo();<RESET>
+	 Qbaz();<RESET>
+	 Qbar();<RESET>
+	 Q// more unrelated stuff<RESET>
+	EOF
+	test_cmp expected actual &&
+
+	# And now ignoring white space only in the move detection
+	git diff --color --color-moved \
+		--color-moved-ignore-all-space \
+		--color-moved-ignore-space-change \
+		--color-moved-ignore-space-at-eol |
+		grep -v "index" |
+		test_decode_color >actual &&
+	q_to_tab <<-\EOF >expected &&
+	<BOLD>diff --git a/function.c b/function.c<RESET>
+	<BOLD>--- a/function.c<RESET>
+	<BOLD>+++ b/function.c<RESET>
+	<CYAN>@@ -1,13 +1,17 @@<RESET>
+	<GREEN>+<RESET><GREEN>int do_foo()<RESET>
+	<GREEN>+<RESET><GREEN>{<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>// this part of the function<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>// function will be very long<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>// indeed. We must exceed both<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>// per-line and number of line<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>// minimums<RESET>
+	<BOLD;CYAN>+<RESET>Q<BOLD;CYAN>;<RESET>
+	<BOLD;CYAN>+<RESET><BOLD;CYAN>}<RESET>
+	<GREEN>+<RESET>
+	 int func()<RESET>
+	 {<RESET>
+	<RED>-Qif (foo) {<RESET>
+	<BOLD;MAGENTA>-QQ// this part of the function<RESET>
+	<BOLD;MAGENTA>-QQ// function will be very long<RESET>
+	<BOLD;MAGENTA>-QQ// indeed. We must exceed both<RESET>
+	<BOLD;MAGENTA>-QQ// per-line and number of line<RESET>
+	<BOLD;MAGENTA>-QQ// minimums<RESET>
+	<BOLD;MAGENTA>-QQ;<RESET>
+	<BOLD;MAGENTA>-Q}<RESET>
+	<GREEN>+<RESET>Q<GREEN>if (foo)<RESET>
+	<GREEN>+<RESET>QQ<GREEN>do_foo();<RESET>
+	 Qbaz();<RESET>
+	 Qbar();<RESET>
+	 Q// more unrelated stuff<RESET>
+	EOF
+	test_cmp expected actual
 '
 
 test_done
