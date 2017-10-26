@@ -78,6 +78,14 @@ expression E;
 expression E;
 expression F;
 @@
+ clear_commit_marks_for_object_array(
++ the_repository,
+ E, F)
+
+@@
+expression E;
+expression F;
+@@
  parse_object_or_die(
 + the_repository,
  E, F)

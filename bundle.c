@@ -184,7 +184,8 @@ int verify_bundle(struct bundle_header *header, int verbose)
 		}
 
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_for_object_array(&refs, ALL_REV_FLAGS);
+	clear_commit_marks_for_object_array(the_repository, &refs,
+					    ALL_REV_FLAGS);
 
 	object_array_clear(&refs);
 

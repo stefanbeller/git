@@ -149,7 +149,9 @@ struct commit *pop_commit(struct commit_list **stack);
 
 void clear_commit_marks(struct commit *commit, unsigned int mark);
 void clear_commit_marks_many(int nr, struct commit **commit, unsigned int mark);
-void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark);
+#define clear_commit_marks_for_object_array(r, a, m) \
+	clear_commit_marks_for_object_array_##r(a, m)
+void clear_commit_marks_for_object_array_the_repository(struct object_array *a, unsigned mark);
 
 
 enum rev_sort_order {
