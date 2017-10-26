@@ -7,6 +7,7 @@
 #include "diff.h"
 #include "refs.h"
 #include "revision.h"
+#include "repository.h"
 #include "graph.h"
 #include "grep.h"
 #include "reflog-walk.h"
