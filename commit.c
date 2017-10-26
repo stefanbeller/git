@@ -568,7 +568,7 @@ void clear_commit_marks(struct commit *commit, unsigned int mark)
 	clear_commit_marks_many(1, &commit, mark);
 }
 
-void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark)
+void clear_commit_marks_for_object_array_the_repository(struct object_array *a, unsigned mark)
 {
 	struct object *object;
 	struct commit *commit;
