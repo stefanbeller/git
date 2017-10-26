@@ -837,7 +837,8 @@ static int check_ancestors(const char *prefix)
 	res = (revs.commits != NULL);
 
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_for_object_array(&pending_copy, ALL_REV_FLAGS);
+	clear_commit_marks_for_object_array(the_repository, &pending_copy,
+					    ALL_REV_FLAGS);
 
 	object_array_clear(&pending_copy);
 
