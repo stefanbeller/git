@@ -324,4 +324,11 @@ extern int rewrite_parents(struct rev_info *revs, struct commit *commit,
  */
 extern struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit);
 
+/*
+ * Compute the number of commits between 'one' and 'two' storing the number
+ * of commits in their parent DAG  ncluded in each but not the other.
+ */
+extern void compare_commits(struct commit *one, struct commit *two,
+			    int *num_one, int *num_two);
+
 #endif

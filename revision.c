@@ -1159,6 +1159,51 @@ int ref_excluded(struct string_list *ref_excludes, const char *path)
 	return 0;
 }
 
+void compare_commits(struct commit *ours, struct commit *theirs,
+		    int *num_ours, int *num_theirs)
+{
+	struct rev_info revs;
+	struct argv_array argv = ARGV_ARRAY_INIT;
+
+	/* are we the same? */
+	if (theirs == ours) {
+		*num_theirs = *num_ours = 0;
+		return;
+	}
+
+	/* Run "rev-list --left-right ours...theirs" internally... */
+	argv_array_push(&argv, ""); /* ignored */
+	argv_array_push(&argv, "--left-right");
+	argv_array_pushf(&argv, "%s...%s",
+			 oid_to_hex(&ours->object.oid),
+			 oid_to_hex(&theirs->object.oid));
+	argv_array_push(&argv, "--");
+
+	init_revisions(&revs, NULL);
+	setup_revisions(argv.argc, argv.argv, &revs, NULL);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
+
+	/* ... and count the commits on each side. */
+	*num_ours = 0;
+	*num_theirs = 0;
+	while (1) {
+		struct commit *c = get_revision(&revs);
+		if (!c)
+			break;
+		if (c->object.flags & SYMMETRIC_LEFT)
+			(*num_ours)++;
+		else
+			(*num_theirs)++;
+	}
+
+	/* clear object flags smudged by the above traversal */
+	clear_commit_marks(ours, ALL_REV_FLAGS);
+	clear_commit_marks(theirs, ALL_REV_FLAGS);
+
+	argv_array_clear(&argv);
+}
+
 static int handle_one_ref(const char *path, const struct object_id *oid,
 			  int flag, void *cb_data)
 {

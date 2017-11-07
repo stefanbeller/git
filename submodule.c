@@ -2074,6 +2074,14 @@ const char *get_superproject_working_tree(void)
 	return ret;
 }
 
+const char *get_superproject_gitlink(struct object_id *oid)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+	struct strbuf sb = STRBUF_INIT;
+	if (start_ls_files_dot_dot(&cp, &sb))
+		return NULL;
+}
+
 /*
  * Put the gitdir for a submodule (given relative to the main
  * repository worktree) into `buf`, or return -1 on error.
