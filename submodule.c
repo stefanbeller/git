@@ -2074,12 +2074,31 @@ const char *get_superproject_working_tree(void)
 	return ret;
 }
 
-const char *get_superproject_gitlink(struct object_id *oid)
+/*
+ * Returns 0 when the gitlink is found in the superprojects index,
+ * the value will be found in `oid`. Otherwise return -1.
+ */
+int get_superproject_gitlink(struct object_id *oid)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
+	const char *hash;
+
 	if (start_ls_files_dot_dot(&cp, &sb))
-		return NULL;
+		return -1;
+
+	if (!skip_prefix(sb.buf, "160000 ", &hash))
+		/*
+		 * superproject doesn't have a gitlink at submodule position or
+		 * output is gibberish
+		 */
+		return -1;
+
+	if (get_oid_hex(hash, oid))
+		/* could not parse the object name */
+		return -1;
+
+	return 0;
 }
 
 /*

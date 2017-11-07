@@ -137,4 +137,10 @@ extern void absorb_git_dir_into_superproject(const char *prefix,
  */
 extern const char *get_superproject_working_tree(void);
 
+/*
+ * Returns 0 when the gitlink is found in the superprojects index,
+ * the value will be found in `oid`. Otherwise return -1.
+ */
+extern int get_superproject_gitlink(struct object_id *oid);
+
 #endif
