@@ -1286,6 +1286,8 @@ static int git_status_config(const char *k, const char *v, void *cb)
 			s->submodule_summary = -1;
 		return 0;
 	}
+	if (!strcmp(k, "status.superprojectsummary"))
+		s->superproject_info = git_config_bool(k, v);
 	if (!strcmp(k, "status.short")) {
 		if (git_config_bool(k, v))
 			status_deferred_config.status_format = STATUS_FORMAT_SHORT;

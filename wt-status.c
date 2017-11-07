@@ -1027,6 +1027,34 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 	strbuf_release(&sb);
 }
 
+static void wt_longstatus_print_superproject_relation(struct wt_status *s)
+{
+	struct object_id oid;
+	struct commit *in_gitlink, *head;
+	int head_nr, gitlink_nr;
+
+	if (get_superproject_gitlink(&oid))
+		return;
+
+	in_gitlink = lookup_commit(&oid);
+
+	read_ref("HEAD", &oid);
+	head = lookup_commit(&oid);
+
+
+	compare_commits(head, in_gitlink, &head_nr, &gitlink_nr);
+
+	if (!head_nr && !gitlink_nr)
+		printf(_("superproject points at HEAD\n"));
+	else if (!head_nr)
+		printf(_("superproject is ahead of HEAD by %d commits\n"), gitlink_nr);
+	else if (!gitlink_nr)
+		printf(_("superproject is %d commits behind HEAD\n"), head_nr);
+	else
+		printf("Superproject is %d commits ahead of HEAD and %d behind.",
+			gitlink_nr, head_nr);
+}
+
 static int has_unmerged(struct wt_status *s)
 {
 	int i;
@@ -1590,8 +1618,11 @@ static void wt_longstatus_print(struct wt_status *s)
 		status_printf(s, color(WT_STATUS_HEADER, s), "%s", "");
 		status_printf_more(s, branch_status_color, "%s", on_what);
 		status_printf_more(s, branch_color, "%s\n", branch_name);
-		if (!s->is_initial)
+		if (!s->is_initial) {
 			wt_longstatus_print_tracking(s);
+			if (s->superproject_info)
+				wt_longstatus_print_superproject_relation(s);
+		}
 	}
 
 	wt_longstatus_print_state(s, &state);
