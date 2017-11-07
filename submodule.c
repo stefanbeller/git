@@ -1977,15 +1977,13 @@ void absorb_git_dir_into_superproject(const char *prefix,
 	}
 }
 
-const char *get_superproject_working_tree(void)
+/* Starts a child process `ls-files` one directory above the root of the repo. */
+static int start_ls_files_dot_dot(struct child_process *cp, struct strbuf *out)
 {
-	struct child_process cp = CHILD_PROCESS_INIT;
-	struct strbuf sb = STRBUF_INIT;
 	const char *one_up = real_path_if_valid("../");
-	const char *cwd = xgetcwd();
-	const char *ret = NULL;
 	const char *subpath;
-	int code;
+	char *cwd = xgetcwd();
+	struct strbuf sb = STRBUF_INIT;
 	ssize_t len;
 
 	if (!is_inside_work_tree())
@@ -1994,31 +1992,48 @@ const char *get_superproject_working_tree(void)
 		 * We might have a superproject, but it is harder
 		 * to determine.
 		 */
-		return NULL;
+		return -1;
 
 	if (!one_up)
-		return NULL;
+		return -1;
 
 	subpath = relative_path(cwd, one_up, &sb);
 
-	prepare_submodule_repo_env(&cp.env_array);
-	argv_array_pop(&cp.env_array);
+	prepare_submodule_repo_env(&cp->env_array);
+	argv_array_pop(&cp->env_array);
 
-	argv_array_pushl(&cp.args, "--literal-pathspecs", "-C", "..",
+	argv_array_pushl(&cp->args, "--literal-pathspecs", "-C", "..",
 			"ls-files", "-z", "--stage", "--full-name", "--",
 			subpath, NULL);
-	strbuf_reset(&sb);
 
-	cp.no_stdin = 1;
-	cp.no_stderr = 1;
-	cp.out = -1;
-	cp.git_cmd = 1;
+	cp->no_stdin = 1;
+	cp->no_stderr = 1;
+	cp->out = -1;
+	cp->git_cmd = 1;
 
-	if (start_command(&cp))
+	if (start_command(cp))
 		die(_("could not start ls-files in .."));
 
-	len = strbuf_read(&sb, cp.out, PATH_MAX);
-	close(cp.out);
+	len = strbuf_read(out, cp->out, PATH_MAX);
+	close(cp->out);
+
+	strbuf_release(&sb);
+	free(cwd);
+	return len;
+}
+
+const char *get_superproject_working_tree(void)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+	struct strbuf sb = STRBUF_INIT;
+	const char *cwd = xgetcwd();
+	const char *ret = NULL;
+	int code;
+	ssize_t len;
+
+	len = start_ls_files_dot_dot(&cp, &sb);
+	if (len < 0)
+		return NULL;
 
 	if (starts_with(sb.buf, "160000")) {
 		int super_sub_len;
