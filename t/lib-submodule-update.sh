@@ -657,7 +657,16 @@ test_submodule_recursing_with_args_common() {
 			test_submodule_content sub1 origin/add_sub1
 		)
 	'
-	test_expect_success "$command: submodule branch is not changed, detach HEAD instead" '
+
+	if test "$KNOWN_FAILURE_SUBMODULE_REFS_NOT_UPDATED" = 1
+	then
+		RESULT=failure
+	else
+		RESULT=success
+	fi
+	if test "$KNOWN_DIFFERENCE_SUBMODULE_REFS_NOT_UPDATED" = "read-tree"
+	then
+	test_expect_$RESULT "$command: submodule branch is not changed, detach HEAD" '
 		prolog &&
 		reset_work_tree_to_interested add_sub1 &&
 		(
@@ -670,9 +679,82 @@ test_submodule_recursing_with_args_common() {
 			test_submodule_content sub1 origin/modify_sub1 &&
 			git -C sub1 rev-parse keep_branch >actual &&
 			test_cmp expect actual &&
-			test_must_fail git -C sub1 symbolic-ref HEAD
+			test_must_fail git -C sub1 symbolic-ref HEAD >actual
 		)
 	'
+	elif test "$KNOWN_DIFFERENCE_SUBMODULE_REFS_NOT_UPDATED" = "checkout -B current"
+	then
+	test_expect_$RESULT "$command: submodule branch is changed to 'current'" '
+		prolog &&
+		reset_work_tree_to_interested add_sub1 &&
+		(
+			cd submodule_update &&
+			git -C sub1 checkout -b keep_branch &&
+			git -C sub1 rev-parse HEAD >expect &&
+			git branch -t modify_sub1 origin/modify_sub1 &&
+			$command modify_sub1 &&
+			test_superproject_content origin/modify_sub1 &&
+			test_submodule_content sub1 origin/modify_sub1 &&
+			git -C sub1 rev-parse keep_branch >actual &&
+			test_cmp expect actual &&
+			echo refs/heads/current >expect &&
+			git -C sub1 symbolic-ref HEAD >actual &&
+			test_cmp expect actual
+		)
+	'
+	elif test "$KNOWN_DIFFERENCE_SUBMODULE_REFS_NOT_UPDATED" = "reset"
+	then
+	test_expect_$RESULT "$command: submodule branch is changed to superproject, resetting to target" '
+		prolog &&
+		reset_work_tree_to_interested add_sub1 &&
+		(
+			cd submodule_update &&
+			git -C sub1 checkout -b keep_branch &&
+			git -C sub1 rev-parse HEAD >expect &&
+			git branch -t modify_sub1 origin/modify_sub1 &&
+			git checkout -b newbranch &&
+			$command modify_sub1 &&
+
+			# we modified the wt
+			test_superproject_content origin/modify_sub1 &&
+			test_submodule_content sub1 origin/modify_sub1 &&
+
+			# keep_branch does not change
+			git -C sub1 rev-parse keep_branch >actual &&
+			test_cmp expect actual &&
+
+			# the submodule is attached to the same branch as the superproject
+			git -C sub1 symbolic-ref HEAD >actual &&
+			echo refs/heads/newbranch >expect &&
+			test_cmp expect actual
+		)
+	'
+	else
+	test_expect_$RESULT "$command: submodule branch is changed" '
+		prolog &&
+		reset_work_tree_to_interested add_sub1 &&
+		(
+			cd submodule_update &&
+			git -C sub1 checkout -b keep_branch &&
+			git -C sub1 rev-parse HEAD >expect &&
+			git branch -t modify_sub1 origin/modify_sub1 &&
+			$command modify_sub1 &&
+
+			# modified wt
+			test_superproject_content origin/modify_sub1 &&
+			test_submodule_content sub1 origin/modify_sub1 &&
+
+			# unrelated keep_branch is fine
+			git -C sub1 rev-parse keep_branch >actual &&
+			test_cmp expect actual &&
+
+			# submodule ref is checked out
+			git -C sub1 symbolic-ref HEAD >actual &&
+			echo refs/heads/modify_sub1 >expect &&
+			test_cmp expect actual
+		)
+	'
+	fi
 
 	# Replacing a tracked file with a submodule produces a checked out submodule
 	test_expect_success "$command: replace tracked file with submodule checks out submodule" '

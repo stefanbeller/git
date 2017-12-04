@@ -3,6 +3,7 @@
 #include "checkout.h"
 #include "lockfile.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "refs.h"
 #include "commit.h"
 #include "tree.h"
@@ -21,6 +22,7 @@
 #include "ll-merge.h"
 #include "resolve-undo.h"
 #include "submodule-config.h"
+#include "submodule-move-head.h"
 #include "submodule.h"
 
 static const char * const checkout_usage[] = {
@@ -413,11 +415,24 @@ static void describe_detached_head(const char *msg, struct commit *commit)
 	strbuf_release(&sb);
 }
 
-static int reset_tree(struct tree *tree, const struct checkout_opts *o,
+struct branch_info {
+	const char *name; /* The short name used */
+	const char *path; /* The full name of a real branch */
+	struct commit *commit; /* The named commit */
+	/*
+	 * if not null the branch is detached because it's already
+	 * checked out in this checkout
+	 */
+	char *checkout;
+};
+
+static int reset_tree(struct branch_info *b, const struct checkout_opts *o,
 		      int worktree, int *writeout_error)
 {
 	struct unpack_trees_options opts;
+	struct submodule_move_head_options move_head_opts;
 	struct tree_desc tree_desc;
+	struct tree *tree = get_commit_tree(b->commit);
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = -1;
@@ -429,6 +444,14 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.verbose_update = o->show_progress;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
+
+	opts.move_head = unpack_trees_move_head;
+	memset(&move_head_opts, 0, sizeof(move_head_opts));
+	move_head_opts.force = 1;
+	move_head_opts.new_ref = b->path;
+	move_head_opts.target_ref = o->force_detach ? NULL : b->path;
+	opts.unpack_data = &move_head_opts;
+
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
 	switch (unpack_trees(1, &tree_desc, &opts)) {
@@ -447,17 +470,6 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 		return 128;
 	}
 }
-
-struct branch_info {
-	const char *name; /* The short name used */
-	const char *path; /* The full name of a real branch */
-	struct commit *commit; /* The named commit */
-	/*
-	 * if not null the branch is detached because it's already
-	 * checked out in this checkout
-	 */
-	char *checkout;
-};
 
 static void setup_branch_path(struct branch_info *branch)
 {
@@ -484,7 +496,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 
 	resolve_undo_clear();
 	if (opts->force) {
-		ret = reset_tree(get_commit_tree(new_branch_info->commit),
+		ret = reset_tree(new_branch_info,
 				 opts, 1, writeout_error);
 		if (ret)
 			return ret;
@@ -492,6 +504,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		struct tree_desc trees[2];
 		struct tree *tree;
 		struct unpack_trees_options topts;
+		struct submodule_move_head_options mopts;
 
 		memset(&topts, 0, sizeof(topts));
 		topts.head_idx = -1;
@@ -506,6 +519,14 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			error(_("you need to resolve your current index first"));
 			return 1;
 		}
+
+		topts.move_head = unpack_trees_move_head;
+		memset(&mopts, 0, sizeof(mopts));
+		mopts.old_ref = old_branch_info->path;
+		mopts.new_ref = new_branch_info->path;
+		mopts.target_ref = opts->force_detach
+				? NULL : new_branch_info->path;
+		topts.unpack_data = &mopts;
 
 		/* 2-way merge to the new branch */
 		topts.initial_checkout = is_cache_unborn();
@@ -572,7 +593,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			o.verbosity = 0;
 			work = write_tree_from_memory(&o);
 
-			ret = reset_tree(get_commit_tree(new_branch_info->commit),
+			ret = reset_tree(new_branch_info,
 					 opts, 1,
 					 writeout_error);
 			if (ret)
@@ -587,7 +608,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 					  &result);
 			if (ret < 0)
 				exit(128);
-			ret = reset_tree(get_commit_tree(new_branch_info->commit),
+			ret = reset_tree(new_branch_info,
 					 opts, 0,
 					 writeout_error);
 			strbuf_release(&o.obuf);
@@ -622,6 +643,18 @@ static void report_tracking(struct branch_info *new_branch_info)
 	strbuf_release(&sb);
 }
 
+static void create_symref_in_submodules(const char *symref, const char *target, const char *logmsg)
+{
+	int i = 0;
+	for (i = 0; i < active_nr; i++) {
+		const struct cache_entry *ce = active_cache[i];
+		if (!S_ISGITLINK(ce->ce_mode) || !is_submodule_active(the_repository, ce->name))
+			continue;
+
+		create_symref_in_submodule(ce->name, symref, target, logmsg);
+	}
+}
+
 static void update_refs_for_switch(const struct checkout_opts *opts,
 				   struct branch_info *old_branch_info,
 				   struct branch_info *new_branch_info)
@@ -631,6 +664,9 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	if (opts->new_branch) {
 		if (opts->new_orphan_branch) {
 			char *refname;
+
+			if (should_update_submodules())
+				die("--orphan --recurse-submodules is not implemented");
 
 			refname = mkpathdup("refs/heads/%s", opts->new_orphan_branch);
 			if (opts->new_branch_log &&
@@ -684,6 +720,12 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 			describe_detached_head(_("HEAD is now at"), new_branch_info->commit);
 		}
 	} else if (new_branch_info->path) {	/* Switch branches. */
+		/*
+		 * NEEDSWORK: We don't handle attachment on checkout <branch>
+		 * yet.
+		 */
+		if (opts->new_branch && should_update_submodules())
+			create_symref_in_submodules("HEAD", new_branch_info->path, msg.buf);
 		if (create_symref("HEAD", new_branch_info->path, msg.buf) < 0)
 			die(_("unable to update HEAD"));
 		if (!opts->quiet) {

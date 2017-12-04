@@ -1,9 +1,13 @@
 #include "git-compat-util.h"
 #include "cache.h"
 #include "config.h"
+#include "repository.h"
+#include "submodule.h"
 #include "branch.h"
 #include "refs.h"
 #include "refspec.h"
+#include "tree-walk.h"
+#include "run-command.h"
 #include "remote.h"
 #include "commit.h"
 #include "worktree.h"
@@ -244,6 +248,76 @@ N_("\n"
 "will track its remote counterpart, you may want to use\n"
 "\"git push -u\" to set the upstream config as you push.");
 
+static void create_branch_in_submodule(const char *name, const char *start_name,
+		   const char *start_ref, const struct object_id *start_oid,
+		   int force, int reflog, int clobber_head,
+		   int quiet, enum branch_track track,
+		   int checking_out_branch,
+		   const char *sub_path, const struct object_id *entry_oid)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	trace_printf("create_branch_in_submodule %s", sub_path);
+
+	prepare_submodule_repo_env(&cp.env_array);
+	cp.git_cmd = 1;
+	cp.dir = sub_path;
+	argv_array_push(&cp.args, "branch--helper");
+	argv_array_pushf(&cp.args, "--name=%s", name);
+	if (checking_out_branch) {
+		argv_array_pushf(&cp.args, "--start_name=%s",
+				 start_ref);
+	} else {
+		argv_array_pushf(&cp.args, "--start_name=%s",
+				 oid_to_hex(entry_oid));
+	}
+	argv_array_pushf(&cp.args, "--force=%d", force);
+	argv_array_pushf(&cp.args, "--reflog=%d", reflog);
+	argv_array_pushf(&cp.args, "--clobber_head=%d", clobber_head);
+	argv_array_pushf(&cp.args, "--quiet=%d", quiet);
+	argv_array_pushf(&cp.args, "--track=%d", track);
+
+	if (run_command(&cp))
+		fprintf(stderr, "process for submodule '%s' failed", sub_path);
+	child_process_clear(&cp);
+}
+
+static void create_branch_in_submodules(const char *name, const char *start_name,
+		   const char *start_ref, const struct object_id *start_oid,
+		   int force, int reflog, int clobber_head,
+		   int quiet, enum branch_track track, struct strbuf *rec_path)
+{
+
+	int checking_out_branch = start_ref && starts_with(start_ref, "refs/heads/");
+	void *buf;
+	struct tree_desc tree;
+	struct name_entry entry;
+	int rec_path_len = rec_path->len;
+
+	buf = fill_tree_descriptor(&tree, start_oid);
+	if (!buf)
+		die("could not read %s for checkout", start_name);
+
+	while (tree_entry(&tree, &entry)) {
+
+		if (rec_path->len > 0)
+			strbuf_addch(rec_path, '/');
+		strbuf_addstr(rec_path, entry.path);
+
+		trace_printf("create_branch_in_submodules %s %o", rec_path->buf, entry.mode);
+
+		if (S_ISGITLINK(entry.mode) && is_submodule_active(the_repository, rec_path->buf))
+			create_branch_in_submodule(name, start_name, start_ref,
+						start_oid, force, reflog, clobber_head,
+						quiet, track, checking_out_branch, rec_path->buf, entry.oid);
+		else if (S_ISDIR(entry.mode)) {
+			create_branch_in_submodules(name, start_name, start_ref, entry.oid, force, reflog, clobber_head, quiet, track, rec_path);
+		}
+		strbuf_setlen(rec_path, rec_path_len);
+	}
+	free(buf);
+}
+
 void create_branch(const char *name, const char *start_name,
 		   int force, int clobber_head_ok, int reflog,
 		   int quiet, enum branch_track track)
@@ -252,6 +326,7 @@ void create_branch(const char *name, const char *start_name,
 	struct object_id oid;
 	char *real_ref;
 	struct strbuf ref = STRBUF_INIT;
+	struct strbuf sub_path = STRBUF_INIT;
 	int forcing = 0;
 	int dont_change_ref = 0;
 	int explicit_tracking = 0;
@@ -309,6 +384,14 @@ void create_branch(const char *name, const char *start_name,
 	if (reflog)
 		log_all_ref_updates = LOG_REFS_NORMAL;
 
+	/*
+	 * NEEDSWORK: Doesn't handle errors part-way through very well.
+	 */
+	trace_printf("create_branch need to update subs: %d", should_update_submodules());
+	if (should_update_submodules())
+		create_branch_in_submodules(name, start_name, real_ref, &oid,
+					    force, reflog, clobber_head_ok, quiet, track, &sub_path);
+
 	if (!dont_change_ref) {
 		struct ref_transaction *transaction;
 		struct strbuf err = STRBUF_INIT;
@@ -335,6 +418,7 @@ void create_branch(const char *name, const char *start_name,
 		setup_tracking(ref.buf + 11, real_ref, track, quiet);
 
 	strbuf_release(&ref);
+	strbuf_release(&sub_path);
 	free(real_ref);
 }
 

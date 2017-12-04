@@ -114,8 +114,11 @@ extern int push_unpushed_submodules(struct oid_array *commits,
  */
 int submodule_to_gitdir(struct strbuf *buf, const char *submodule);
 
-#define SUBMODULE_MOVE_HEAD_DRY_RUN (1<<0)
-#define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
+#define SUBMODULE_MOVE_HEAD_DRY_RUN             (1<<0)
+#define SUBMODULE_MOVE_HEAD_FORCE               (1<<1)
+#define SUBMODULE_MOVE_HEAD_SKIP_REF_UPDATE     (1<<2)
+
+/* NULL values for old or new represent the "missing" state. */
 extern int submodule_move_head(const char *path,
 			       const char *old,
 			       const char *new_head,

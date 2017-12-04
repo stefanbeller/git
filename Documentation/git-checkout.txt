@@ -259,13 +259,12 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 	worktree.
 
 --[no-]recurse-submodules::
-	Using --recurse-submodules will update the content of all initialized
-	submodules according to the commit recorded in the superproject. If
-	local modifications in a submodule would be overwritten the checkout
-	will fail unless `-f` is used. If nothing (or --no-recurse-submodules)
-	is used, the work trees of submodules will not be updated.
-	Just like linkgit:git-submodule[1], this will detach the
-	submodules HEAD.
+	Using --recurse-submodules will update the content and current
+	branch of all initialized submodules in addition to the
+	superproject. If local modifications in a submodule would be
+	overwritten, the checkout will fail unless `-f` is used. If
+	nothing (or --no-recurse-submodules) is used, the work trees of
+	submodules will not be updated.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,

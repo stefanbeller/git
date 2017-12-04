@@ -24,6 +24,7 @@
 #include "cache-tree.h"
 #include "submodule.h"
 #include "submodule-config.h"
+#include "submodule-move-head.h"
 
 static const char * const git_reset_usage[] = {
 	N_("git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"),
@@ -42,12 +43,16 @@ static inline int is_merge(void)
 	return !access(git_path_merge_head(), F_OK);
 }
 
-static int reset_index(const struct object_id *oid, int reset_type, int quiet)
+static int reset_index(const char *rev, const struct object_id *oid, int reset_type, int quiet)
 {
-	int i, nr = 0;
+	int i, nr = 0, flags = 0;
 	struct tree_desc desc[2];
 	struct tree *tree;
 	struct unpack_trees_options opts;
+	struct submodule_move_head_options mopts;
+	char *current_branch = NULL;
+	struct object_id discard;
+	char *new_ref = NULL;
 	int ret = -1;
 
 	memset(&opts, 0, sizeof(opts));
@@ -65,6 +70,29 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 		break;
 	case HARD:
 		opts.update = 1;
+
+		/*
+		 * Submodule handling:
+		 * - unless we are detached, attach HEAD in submodules
+		 * - if rev is a branch name, use that branch instead of oid in
+		 *   submodules.
+		 */
+		current_branch = resolve_refdup("HEAD", 0, NULL, &flags);
+		if (!(flags & REF_ISSYMREF))
+			current_branch = NULL;
+		if (dwim_ref(rev, strlen(rev), &discard, &new_ref) != 1 ||
+		    !starts_with(new_ref, "refs/heads/")) {
+			free(new_ref);
+			new_ref = NULL;
+		}
+
+		opts.move_head = unpack_trees_move_head;
+
+		memset(&mopts, 0, sizeof(mopts));
+		mopts.force = 1;
+		mopts.new_ref = new_ref;
+		mopts.target_ref = current_branch;
+		opts.unpack_data = &mopts;
 		/* fallthrough */
 	default:
 		opts.reset = 1;
@@ -101,6 +129,8 @@ static int reset_index(const struct object_id *oid, int reset_type, int quiet)
 out:
 	for (i = 0; i < nr; i++)
 		free((void *)desc[i].buffer);
+	free(current_branch);
+	free(new_ref);
 	return ret;
 }
 
@@ -317,6 +347,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		oidcpy(&oid, the_hash_algo->empty_tree);
 	} else if (!pathspec.nr) {
 		struct commit *commit;
+
 		if (get_oid_committish(rev, &oid))
 			die(_("Failed to resolve '%s' as a valid revision."), rev);
 		commit = lookup_commit_reference(&oid);
@@ -379,9 +410,9 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				refresh_index(&the_index, flags, NULL, NULL,
 					      _("Unstaged changes after reset:"));
 		} else {
-			int err = reset_index(&oid, reset_type, quiet);
+			int err = reset_index(rev, &oid, reset_type, quiet);
 			if (reset_type == KEEP && !err)
-				err = reset_index(&oid, MIXED, quiet);
+				err = reset_index(rev, &oid, MIXED, quiet);
 			if (err)
 				die(_("Could not reset index file to revision '%s'."), rev);
 		}

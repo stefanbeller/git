@@ -66,6 +66,10 @@ test_expect_success '"checkout <submodule>" honors submodule.*.ignore from .git/
 KNOWN_FAILURE_DIRECTORY_SUBMODULE_CONFLICTS=1
 test_submodule_switch_recursing_with_args "checkout"
 
+KNOWN_DIFFERENCE_SUBMODULE_REFS_NOT_UPDATED="checkout -B current"
+test_submodule_switch_recursing_with_args "checkout -B current"
+unset KNOWN_DIFFERENCE_SUBMODULE_REFS_NOT_UPDATED
+
 test_submodule_forced_switch_recursing_with_args "checkout -f"
 
 test_submodule_switch "git checkout"

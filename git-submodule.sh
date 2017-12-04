@@ -462,6 +462,18 @@ fetch_in_submodule () (
 	esac
 )
 
+# usage: checkout_in_submoodule "$sm_path" "$command" "${branch:-}" "$rev"
+checkout_in_submodule () (
+	sanitize_submodule_env &&
+	cd "$1" &&
+	if test -n "$3"
+	then
+		$2 -B "$3" "$4"
+	else
+		$2 "$4"
+	fi
+)
+
 #
 # Update each submodule path to correct revision, using clone and checkout as needed
 #
@@ -510,6 +522,11 @@ cmd_update()
 			;;
 		--recursive)
 			recursive=1
+			;;
+		--checkout-branch)
+			update="checkout"
+			checkout_dest=$2
+			shift
 			;;
 		--checkout)
 			update="checkout"
@@ -639,6 +656,11 @@ cmd_update()
 				die "$(eval_gettext "Fetched in submodule path '\$displaypath', but it did not contain \$sha1. Direct fetching of that commit failed.")"
 			fi
 
+			if test -n "$checkout_dest" && test "$update_module" != checkout
+			then
+				die "Cannot use --checkout-branch with update mode '$update_module'"
+			fi
+
 			must_die_on_failure=
 			case "$update_module" in
 			checkout)
@@ -668,7 +690,7 @@ cmd_update()
 				die "$(eval_gettext "Invalid update mode '$update_module' for submodule '$name'")"
 			esac
 
-			if (sanitize_submodule_env; cd "$sm_path" && $command "$sha1")
+			if checkout_in_submodule "$sm_path" "$command" "$checkout_dest" "$sha1"
 			then
 				say "$say_msg"
 			elif test -n "$must_die_on_failure"
