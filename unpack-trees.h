@@ -5,11 +5,14 @@
 
 #define MAX_UNPACK_TREES 8
 
+struct tree_desc;
 struct unpack_trees_options;
 struct exclude_list;
 
 typedef int (*merge_fn_t)(const struct cache_entry * const *src,
 		struct unpack_trees_options *options);
+
+typedef int (*submodule_move_head_fn)(const struct unpack_trees_options *o, const char *path, const char *old, const char *new, unsigned flags);
 
 enum unpack_trees_error_types {
 	ERROR_WOULD_OVERWRITE = 0,
@@ -55,6 +58,7 @@ struct unpack_trees_options {
 	struct dir_struct *dir;
 	struct pathspec *pathspec;
 	merge_fn_t fn;
+	submodule_move_head_fn move_head;
 	const char *msgs[NB_UNPACK_TREES_ERROR_TYPES];
 	/*
 	 * Store error messages in an array, each case
@@ -74,6 +78,9 @@ struct unpack_trees_options {
 
 	struct exclude_list *el; /* for internal use */
 };
+
+/* defined in entry.c, for internal use */
+extern int unpack_trees_checkout_entry(struct unpack_trees_options *o, struct cache_entry *ce, const struct checkout *state, char *topath);
 
 extern int unpack_trees(unsigned n, struct tree_desc *t,
 		struct unpack_trees_options *options);

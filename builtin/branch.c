@@ -34,6 +34,11 @@ static const char * const builtin_branch_usage[] = {
 	NULL
 };
 
+static const char * const builtin_branch_helper_usage[] = {
+	N_("git branch--helper"),
+	NULL
+};
+
 static const char *head;
 static struct object_id head_oid;
 
@@ -560,6 +565,36 @@ static int edit_branch_description(const char *branch_name)
 	strbuf_release(&name);
 	strbuf_release(&buf);
 
+	return 0;
+}
+
+int cmd_branch_helper(int argc, const char **argv, const char *prefix)
+{
+	const char *name = NULL, *start_name = NULL;
+	int force = 0, reflog = 0, clobber_head = 0, quiet = 0;
+	enum branch_track track = BRANCH_TRACK_NEVER;
+
+	struct option options[] = {
+		OPT_STRING(0, "name", &name, N_(""), N_("")),
+		OPT_STRING(0, "start_name", &start_name, N_(""), N_("")),
+
+		OPT_SET_INT(0, "force", &force, N_(""), 0),
+		OPT_SET_INT(0, "reflog", &reflog, N_(""), 0),
+		OPT_SET_INT(0, "clobber_head", &reflog, N_(""), 0),
+		OPT_SET_INT(0, "quiet", &reflog, N_(""), 0),
+
+		/* implicit int -> enum conversion */
+		OPT_SET_INT(0, "track", &track, N_(""), 0),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_branch_helper_usage, 0);
+	if (argc > 0)
+		die (_("branchhelper doesn't know about %s"), argv[0]);
+
+	create_branch(name, start_name, force, reflog, clobber_head,
+		      quiet, track);
 	return 0;
 }
 

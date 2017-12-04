@@ -249,6 +249,13 @@ static void display_error_msgs(struct unpack_trees_options *o)
 		fprintf(stderr, _("Aborting\n"));
 }
 
+static int move_head(const struct unpack_trees_options *o, const char *path, const char *old, const char *new, unsigned flags)
+{
+	if (!o->move_head)
+		return submodule_move_head(path, old, new, flags);
+	return o->move_head(o, path, old, new, flags);
+}
+
 static int check_submodule_move_head(const struct cache_entry *ce,
 				     const char *old_id,
 				     const char *new_id,
@@ -263,7 +270,7 @@ static int check_submodule_move_head(const struct cache_entry *ce,
 	if (o->reset)
 		flags |= SUBMODULE_MOVE_HEAD_FORCE;
 
-	if (submodule_move_head(ce->name, old_id, new_id, flags))
+	if (move_head(o, ce->name, old_id, new_id, flags))
 		return o->gently ? -1 :
 				   add_rejected_path(o, ERROR_WOULD_LOSE_SUBMODULE, ce->name);
 	return 0;
@@ -299,12 +306,12 @@ static void load_gitmodules_file(struct index_state *index,
  * Unlink the last component and schedule the leading directories for
  * removal, such that empty directories get removed.
  */
-static void unlink_entry(const struct cache_entry *ce)
+static void unlink_entry(const struct unpack_trees_options *o, const struct cache_entry *ce)
 {
 	const struct submodule *sub = submodule_from_ce(ce);
 	if (sub) {
 		/* state.force is set at the caller. */
-		submodule_move_head(ce->name, "HEAD", NULL,
+		move_head(o, ce->name, "HEAD", NULL,
 				    SUBMODULE_MOVE_HEAD_FORCE);
 	}
 	if (!check_leading_path(ce->name, ce_namelen(ce)))
@@ -359,7 +366,7 @@ static int check_updates(struct unpack_trees_options *o)
 		if (ce->ce_flags & CE_WT_REMOVE) {
 			display_progress(progress, ++cnt);
 			if (o->update && !o->dry_run)
-				unlink_entry(ce);
+				unlink_entry(o, ce);
 		}
 	}
 	remove_marked_cache_entries(index);
@@ -379,7 +386,7 @@ static int check_updates(struct unpack_trees_options *o)
 			display_progress(progress, ++cnt);
 			ce->ce_flags &= ~CE_UPDATE;
 			if (o->update && !o->dry_run) {
-				errs |= checkout_entry(ce, &state, NULL);
+				errs |= unpack_trees_checkout_entry(o, ce, &state, NULL);
 			}
 		}
 	}

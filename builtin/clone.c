@@ -728,7 +728,6 @@ static int checkout(int submodule_progress)
 		if (!starts_with(head, "refs/heads/"))
 			die(_("HEAD not found below refs/heads!"));
 	}
-	free(head);
 
 	/* We need to be in the new work tree for the checkout */
 	setup_work_tree();
@@ -756,8 +755,15 @@ static int checkout(int submodule_progress)
 			   oid_to_hex(&oid), "1", NULL);
 
 	if (!err && (option_recurse_submodules.nr > 0)) {
+		const char *branch;
 		struct argv_array args = ARGV_ARRAY_INIT;
 		argv_array_pushl(&args, "submodule", "update", "--init", "--recursive", NULL);
+		if (!strcmp(head, "HEAD"))
+			; /* detach HEAD in submodules, too. */
+		else if (skip_prefix(head, "refs/heads/", &branch))
+			argv_array_pushl(&args, "--checkout-branch", branch, NULL);
+		else
+			BUG("HEAD not found below refs/heads!");
 
 		if (option_shallow_submodules == 1)
 			argv_array_push(&args, "--depth=1");
@@ -775,6 +781,7 @@ static int checkout(int submodule_progress)
 		argv_array_clear(&args);
 	}
 
+	free(head);
 	return err;
 }
 

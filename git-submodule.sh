@@ -549,6 +549,11 @@ cmd_update()
 		--recursive)
 			recursive=1
 			;;
+		--checkout-branch)
+			update="checkout"
+			checkout_dest=$2
+			shift
+			;;
 		--checkout)
 			update="checkout"
 			;;
@@ -705,7 +710,14 @@ cmd_update()
 				die "$(eval_gettext "Invalid update mode '$update_module' for submodule '$name'")"
 			esac
 
-			if (sanitize_submodule_env; cd "$sm_path" && $command "$sha1")
+			if test -n "$checkout_dest"
+			then
+				dst="$checkout_dest"
+			else
+				dst="$sha1"
+			fi
+
+			if (sanitize_submodule_env; cd "$sm_path" && $command "$dst")
 			then
 				say "$say_msg"
 			elif test -n "$must_die_on_failure"
@@ -714,6 +726,15 @@ cmd_update()
 			else
 				err="${err};$die_msg"
 				continue
+			fi
+
+			if test -n "$checkout_dest"
+			then
+				d=$(sanitize_submodule_env; cd "$sm_path" && git rev-parse --verify $checkout_dest)
+				if test "$d" != "$sha1"
+				then
+					echo "mismatch between branch name and sha1"
+				fi
 			fi
 		fi
 

@@ -1,9 +1,18 @@
 #include "cache.h"
 #include "blob.h"
 #include "dir.h"
+#include "unpack-trees.h"
 #include "streaming.h"
 #include "submodule.h"
 #include "progress.h"
+
+/* NEEDSWORK: share code with unpack-trees.c */
+static int move_head(const struct unpack_trees_options *o, const char *path, const char *old, const char *new, unsigned flags)
+{
+	if (!o || !o->move_head)
+		return submodule_move_head(path, old, new, flags);
+	return o->move_head(o, path, old, new, flags);
+}
 
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
@@ -249,7 +258,7 @@ int finish_delayed_checkout(struct checkout *state)
 	return errs;
 }
 
-static int write_entry(struct cache_entry *ce,
+static int write_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 		       char *path, const struct checkout *state, int to_tempfile)
 {
 	unsigned int ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
@@ -355,7 +364,7 @@ static int write_entry(struct cache_entry *ce,
 			return error("cannot create submodule directory %s", path);
 		sub = submodule_from_ce(ce);
 		if (sub)
-			return submodule_move_head(ce->name,
+			return move_head(o, ce->name,
 				NULL, oid_to_hex(&ce->oid),
 				state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		break;
@@ -396,22 +405,15 @@ static int check_path(const char *path, int len, struct stat *st, int skiplen)
 	return lstat(path, st);
 }
 
-/*
- * Write the contents from ce out to the working tree.
- *
- * When topath[] is not NULL, instead of writing to the working tree
- * file named by ce, a temporary file is created by this function and
- * its name is returned in topath[], which must be able to hold at
- * least TEMPORARY_FILENAME_LENGTH bytes long.
- */
-int checkout_entry(struct cache_entry *ce,
+int unpack_trees_checkout_entry(struct unpack_trees_options *o,
+				struct cache_entry *ce,
 		   const struct checkout *state, char *topath)
 {
 	static struct strbuf path = STRBUF_INIT;
 	struct stat st;
 
 	if (topath)
-		return write_entry(ce, topath, state, 1);
+		return write_entry(o, ce, topath, state, 1);
 
 	strbuf_reset(&path);
 	strbuf_add(&path, state->base_dir, state->base_dir_len);
@@ -434,10 +436,10 @@ int checkout_entry(struct cache_entry *ce,
 				if (!(st.st_mode & S_IFDIR))
 					unlink_or_warn(ce->name);
 
-				return submodule_move_head(ce->name,
+				return move_head(o, ce->name,
 					NULL, oid_to_hex(&ce->oid), 0);
 			} else
-				return submodule_move_head(ce->name,
+				return move_head(o, ce->name,
 					"HEAD", oid_to_hex(&ce->oid),
 					state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		}
@@ -471,5 +473,19 @@ int checkout_entry(struct cache_entry *ce,
 		return 0;
 
 	create_directories(path.buf, path.len, state);
-	return write_entry(ce, path.buf, state, 0);
+	return write_entry(o, ce, path.buf, state, 0);
+}
+
+/*
+ * Write the contents from ce out to the working tree.
+ *
+ * When topath[] is not NULL, instead of writing to the working tree
+ * file named by ce, a temporary file is created by this function and
+ * its name is returned in topath[], which must be able to hold at
+ * least TEMPORARY_FILENAME_LENGTH bytes long.
+ */
+int checkout_entry(struct cache_entry *ce,
+		   const struct checkout *state, char *topath)
+{
+	return unpack_trees_checkout_entry(NULL, ce, state, topath);
 }

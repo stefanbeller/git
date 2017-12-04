@@ -1663,6 +1663,9 @@ int submodule_move_head(const char *path,
 
 	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN)) {
 		if (new) {
+			if (flags & SUBMODULE_MOVE_HEAD_SKIP_REF_UPDATE)
+				goto out;
+
 			child_process_init(&cp);
 			/* also set the HEAD accordingly */
 			cp.git_cmd = 1;

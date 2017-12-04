@@ -7,6 +7,7 @@ test_description='read-tree can handle submodules'
 
 KNOWN_FAILURE_DIRECTORY_SUBMODULE_CONFLICTS=1
 KNOWN_FAILURE_SUBMODULE_OVERWRITE_IGNORED_UNTRACKED=1
+KNOWN_DIFFERENCE_SUBMODULE_REFS_NOT_UPDATED="read-tree"
 
 test_submodule_switch_recursing_with_args "read-tree -u -m"
 
