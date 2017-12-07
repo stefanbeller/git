@@ -1249,15 +1249,15 @@ static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 	free(ent);
 }
 
-#define cache_or_unpack_entry(r, p, bo, bs, t) cache_or_unpack_entry_##r(p, bo, bs, t)
-static void *cache_or_unpack_entry_the_repository(struct packed_git *p, off_t base_offset,
-	unsigned long *base_size, enum object_type *type)
+static void *cache_or_unpack_entry(struct repository *r, struct packed_git *p,
+				   off_t base_offset, unsigned long *base_size,
+				   enum object_type *type)
 {
 	struct delta_base_cache_entry *ent;
 
 	ent = get_delta_base_cache_entry(p, base_offset);
 	if (!ent)
-		return unpack_entry(the_repository, p, base_offset, type, base_size);
+		return unpack_entry(r, p, base_offset, type, base_size);
 
 	if (type)
 		*type = ent->type;
@@ -1324,7 +1324,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 	 * a "real" type later if the caller is interested.
 	 */
 	if (oi->contentp) {
-		*oi->contentp = cache_or_unpack_entry(the_repository, p, obj_offset, oi->sizep,
+		*oi->contentp = cache_or_unpack_entry(r, p, obj_offset, oi->sizep,
 						      &type);
 		if (!*oi->contentp)
 			type = OBJ_BAD;
@@ -1447,10 +1447,10 @@ struct unpack_entry_stack_ent {
 	unsigned long size;
 };
 
-#define read_object(r, s, t, sz) read_object_##r(s, t, sz)
-static void *read_object_the_repository(const unsigned char *sha1,
-					enum object_type *type,
-					unsigned long *size)
+static void *read_object(struct repository *r,
+			 const unsigned char *sha1,
+			 enum object_type *type,
+			 unsigned long *size)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
 	void *content;
@@ -1458,14 +1458,13 @@ static void *read_object_the_repository(const unsigned char *sha1,
 	oi.sizep = size;
 	oi.contentp = &content;
 
-	if (sha1_object_info_extended(the_repository, sha1, &oi, 0) < 0)
+	if (sha1_object_info_extended(r, sha1, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
 
-void *unpack_entry_the_repository(struct packed_git *p, off_t obj_offset,
-				  enum object_type *final_type,
-				  unsigned long *final_size)
+void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
+		   enum object_type *final_type, unsigned long *final_size)
 {
 	struct pack_window *w_curs = NULL;
 	off_t curpos = obj_offset;
@@ -1595,7 +1594,7 @@ void *unpack_entry_the_repository(struct packed_git *p, off_t obj_offset,
 				      sha1_to_hex(base_sha1), (uintmax_t)obj_offset,
 				      p->pack_name);
 				mark_bad_packed_object(p, base_sha1);
-				base = read_object(the_repository, base_sha1, &type, &base_size);
+				base = read_object(r, base_sha1, &type, &base_size);
 				external_base = base;
 			}
 		}
