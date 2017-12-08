@@ -498,6 +498,7 @@ static struct stream_vtbl incore_vtbl = {
 	read_istream_incore,
 };
 
+/* TODO: FIX read_sha1_file_extended first */
 static open_method_decl(incore)
 {
 	if (r != the_repository)
