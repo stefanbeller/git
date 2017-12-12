@@ -2,6 +2,7 @@
 #include "commit.h"
 #include "refs.h"
 #include "object-store.h"
+#include "repository.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "xdiff-interface.h"
