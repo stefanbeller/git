@@ -4,6 +4,7 @@
 #include "refs.h"
 #include "wildmatch.h"
 #include "object-store.h"
+#include "repository.h"
 #include "commit.h"
 #include "remote.h"
 #include "color.h"
