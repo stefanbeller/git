@@ -2,6 +2,7 @@
 #include "refs.h"
 #include "remote.h"
 #include "object-store.h"
+#include "repository.h"
 #include "strbuf.h"
 #include "url.h"
 #include "exec_cmd.h"
