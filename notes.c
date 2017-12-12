@@ -2,6 +2,7 @@
 #include "config.h"
 #include "notes.h"
 #include "object-store.h"
+#include "repository.h"
 #include "blob.h"
 #include "tree.h"
 #include "utf8.h"
