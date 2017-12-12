@@ -3,6 +3,7 @@
 #include "unpack-trees.h"
 #include "dir.h"
 #include "object-store.h"
+#include "repository.h"
 #include "tree.h"
 #include "pathspec.h"
 
