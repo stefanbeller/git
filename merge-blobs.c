@@ -5,6 +5,7 @@
 #include "blob.h"
 #include "merge-blobs.h"
 #include "object-store.h"
+#include "repository.h"
 
 static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 {
