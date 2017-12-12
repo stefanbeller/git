@@ -1363,7 +1363,8 @@ int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
  * deal with them should arrange to call read_object() and give error
  * messages themselves.
  */
-void *read_sha1_file_extended_the_repository(const unsigned char *sha1,
+void *read_sha1_file_extended(struct repository *r,
+			      const unsigned char *sha1,
 			      enum object_type *type,
 			      unsigned long *size,
 			      int lookup_replace)
@@ -1373,10 +1374,10 @@ void *read_sha1_file_extended_the_repository(const unsigned char *sha1,
 	const char *path;
 	struct stat st;
 	const unsigned char *repl = lookup_replace ?
-		lookup_replace_object(the_repository, sha1) : sha1;
+		lookup_replace_object(r, sha1) : sha1;
 
 	errno = 0;
-	data = read_object(the_repository, repl, type, size);
+	data = read_object(r, repl, type, size);
 	if (data)
 		return data;
 
@@ -1388,11 +1389,11 @@ void *read_sha1_file_extended_the_repository(const unsigned char *sha1,
 		die("replacement %s not found for %s",
 		    sha1_to_hex(repl), sha1_to_hex(sha1));
 
-	if (!stat_sha1_file(the_repository, repl, &st, &path))
+	if (!stat_sha1_file(r, repl, &st, &path))
 		die("loose object %s (stored in %s) is corrupt",
 		    sha1_to_hex(repl), path);
 
-	if ((p = has_packed_and_bad(the_repository, repl)) != NULL)
+	if ((p = has_packed_and_bad(r, repl)) != NULL)
 		die("packed object %s (stored in %s) is corrupt",
 		    sha1_to_hex(repl), p->pack_name);
 
