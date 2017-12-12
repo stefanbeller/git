@@ -9,6 +9,7 @@
 #include "config.h"
 #include "builtin.h"
 #include "object-store.h"
+#include "repository.h"
 #include "commit.h"
 #include "run-command.h"
 #include <signal.h>
