@@ -12,6 +12,7 @@
 #include "refs.h"
 #include "dir.h"
 #include "object-store.h"
+#include "repository.h"
 #include "tree.h"
 #include "commit.h"
 #include "blob.h"
