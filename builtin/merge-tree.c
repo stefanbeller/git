@@ -2,6 +2,7 @@
 #include "tree-walk.h"
 #include "xdiff-interface.h"
 #include "object-store.h"
+#include "repository.h"
 #include "blob.h"
 #include "exec_cmd.h"
 #include "merge-blobs.h"
