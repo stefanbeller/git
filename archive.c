@@ -2,6 +2,7 @@
 #include "config.h"
 #include "refs.h"
 #include "object-store.h"
+#include "repository.h"
 #include "commit.h"
 #include "tree-walk.h"
 #include "attr.h"
