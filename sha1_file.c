@@ -1319,9 +1319,8 @@ int sha1_object_info(struct repository *r,
 	return type;
 }
 
-#define read_object(r, s, t, sz) read_object_##r(s, t, sz)
-static void *read_object_the_repository(const unsigned char *sha1, enum object_type *type,
-			 unsigned long *size)
+static void *read_object(struct repository *r, const unsigned char *sha1,
+			 enum object_type *type, unsigned long *size)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
 	void *content;
@@ -1329,7 +1328,7 @@ static void *read_object_the_repository(const unsigned char *sha1, enum object_t
 	oi.sizep = size;
 	oi.contentp = &content;
 
-	if (sha1_object_info_extended(the_repository, sha1, &oi, 0) < 0)
+	if (sha1_object_info_extended(r, sha1, &oi, 0) < 0)
 		return NULL;
 	return content;
 }
