@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "object-store.h"
+#include "repository.h"
 
 static char *create_temp_file(struct object_id *oid)
 {
