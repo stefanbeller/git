@@ -2,6 +2,7 @@
 #include "lockfile.h"
 #include "bundle.h"
 #include "object-store.h"
+#include "repository.h"
 #include "object.h"
 #include "commit.h"
 #include "diff.h"
