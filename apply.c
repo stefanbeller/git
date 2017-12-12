@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "config.h"
 #include "object-store.h"
+#include "repository.h"
 #include "blob.h"
 #include "delta.h"
 #include "diff.h"
