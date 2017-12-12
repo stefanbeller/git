@@ -2,6 +2,7 @@
 #include "string-list.h"
 #include "mailmap.h"
 #include "object-store.h"
+#include "repository.h"
 
 #define DEBUG_MAILMAP 0
 #if DEBUG_MAILMAP
