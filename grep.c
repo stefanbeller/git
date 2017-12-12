@@ -2,6 +2,7 @@
 #include "config.h"
 #include "grep.h"
 #include "object-store.h"
+#include "repository.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
 #include "diff.h"
