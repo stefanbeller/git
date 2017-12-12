@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "object-store.h"
+#include "repository.h"
 #include "xdiff-interface.h"
 #include "xdiff/xtypes.h"
 #include "xdiff/xdiffi.h"
