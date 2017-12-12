@@ -21,6 +21,7 @@
 #include "strbuf.h"
 #include "lockfile.h"
 #include "object-store.h"
+#include "repository.h"
 #include "dir.h"
 
 static char *diff_gui_tool;
