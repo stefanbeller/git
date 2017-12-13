@@ -10,7 +10,7 @@ struct blob *lookup_blob_the_repository(const struct object_id *oid)
 	if (!obj)
 		return create_object(the_repository, oid->hash,
 				     alloc_blob_node());
-	return object_as_type(obj, OBJ_BLOB, 0);
+	return object_as_type(the_repository, obj, OBJ_BLOB, 0);
 }
 
 int parse_blob_buffer(struct blob *item, void *buffer, unsigned long size)
