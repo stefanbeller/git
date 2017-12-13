@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "refs.h"
 #include "notes-utils.h"
+#include "repository.h"
 
 void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
 			 const char *msg, size_t msg_len,
