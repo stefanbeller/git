@@ -15,6 +15,7 @@
 #include "tree.h"
 #include "commit.h"
 #include "tag.h"
+#include "repository.h"
 
 #define BLOCKING 1024
 
@@ -82,17 +83,16 @@ void *alloc_object_node(void)
 
 static struct alloc_state commit_state;
 
-unsigned int alloc_commit_index(void)
+unsigned int alloc_commit_index_the_repository()
 {
-	static unsigned int count;
-	return count++;
+	return the_repository->parsed_objects.commit_count++;
 }
 
 void *alloc_commit_node(void)
 {
 	struct commit *c = alloc_node(&commit_state, sizeof(struct commit));
 	c->object.type = OBJ_COMMIT;
-	c->index = alloc_commit_index();
+	c->index = alloc_commit_index(the_repository);
 	return c;
 }
 

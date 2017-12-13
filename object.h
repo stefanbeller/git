@@ -8,9 +8,11 @@ struct object_parser {
 	/* parent substitutions from .git/info/grafts and .git/shallow */
 	struct commit_graft **grafts;
 	int grafts_alloc, grafts_nr;
+
+	unsigned commit_count;
 };
 
-#define OBJECT_PARSER_INIT { NULL, 0, 0, NULL, 0, 0 }
+#define OBJECT_PARSER_INIT { NULL, 0, 0, NULL, 0, 0, 0 }
 
 struct object_list {
 	struct object *item;
