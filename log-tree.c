@@ -2,6 +2,7 @@
 #include "config.h"
 #include "diff.h"
 #include "object-store.h"
+#include "repository.h"
 #include "commit.h"
 #include "tag.h"
 #include "graph.h"
