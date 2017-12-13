@@ -2,6 +2,7 @@
 #include "tempfile.h"
 #include "lockfile.h"
 #include "object-store.h"
+#include "repository.h"
 #include "commit.h"
 #include "tag.h"
 #include "pkt-line.h"
