@@ -88,7 +88,7 @@ unsigned int alloc_commit_index_the_repository()
 	return the_repository->parsed_objects.commit_count++;
 }
 
-void *alloc_commit_node(void)
+void *alloc_commit_node_the_repository(void)
 {
 	struct commit *c = alloc_node(&commit_state, sizeof(struct commit));
 	c->object.type = OBJ_COMMIT;
