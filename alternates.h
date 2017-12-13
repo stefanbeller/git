@@ -57,8 +57,7 @@ extern void add_to_alternates_file_the_repository(const char *dir);
  * recursive alternates it points to), but do not modify the on-disk alternates
  * file.
  */
-#define add_to_alternates_memory(r, d) add_to_alternates_memory_##r(d)
-extern void add_to_alternates_memory_the_repository(const char *dir);
+extern void add_to_alternates_memory(struct repository *r, const char *dir);
 
 /*
  * Returns a scratch strbuf pre-filled with the alternate object directory,
