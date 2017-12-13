@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "tmp-objdir.h"
 #include "alternates.h"
+#include "repository.h"
 #include "dir.h"
 #include "sigchain.h"
 #include "string-list.h"
