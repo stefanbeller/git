@@ -6,6 +6,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "parse-options.h"
+#include "repository.h"
 
 static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 {
