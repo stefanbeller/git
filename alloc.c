@@ -83,9 +83,9 @@ void *alloc_object_node(void)
 
 static struct alloc_state commit_state;
 
-unsigned int alloc_commit_index_the_repository()
+unsigned int alloc_commit_index(struct repository *r)
 {
-	return the_repository->parsed_objects.commit_count++;
+	return r->parsed_objects.commit_count++;
 }
 
 void *alloc_commit_node_the_repository(void)

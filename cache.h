@@ -1579,9 +1579,7 @@ extern void *alloc_commit_node_the_repository(void);
 extern void *alloc_tag_node(void);
 extern void *alloc_object_node(void);
 extern void alloc_report(void);
-
-#define alloc_commit_index(r) alloc_commit_index_##r()
-extern unsigned int alloc_commit_index_the_repository(void);
+extern unsigned int alloc_commit_index(struct repository *r);
 
 /* pkt-line.c */
 void packet_trace_identity(const char *prog);
