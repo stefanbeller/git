@@ -106,7 +106,8 @@ struct object *lookup_object(struct repository *r, const unsigned char *sha1);
 
 extern void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
 
-void *object_as_type(struct object *obj, enum object_type type, int quiet);
+#define object_as_type(r, o, t, q) object_as_type_##r(o, t, q)
+void *object_as_type_the_repository(struct object *obj, enum object_type type, int quiet);
 
 /*
  * Resolves 'sha1' to an object of the specified type and returns the

@@ -30,7 +30,7 @@ struct commit *lookup_commit_reference_gently_the_repository(
 
 	if (!obj)
 		return NULL;
-	return object_as_type(obj, OBJ_COMMIT, quiet);
+	return object_as_type(the_repository, obj, OBJ_COMMIT, quiet);
 }
 
 struct commit *lookup_commit_reference_the_repository(const struct object_id *oid)
@@ -56,7 +56,7 @@ struct commit *lookup_commit_the_repository(const struct object_id *oid)
 	if (!obj)
 		return create_object(the_repository, oid->hash,
 				     alloc_commit_node());
-	return object_as_type(obj, OBJ_COMMIT, 0);
+	return object_as_type(the_repository, obj, OBJ_COMMIT, 0);
 }
 
 struct commit *lookup_commit_reference_by_name(const char *name)
