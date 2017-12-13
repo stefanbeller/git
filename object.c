@@ -156,7 +156,7 @@ void *create_object_the_repository(const unsigned char *sha1, void *o)
 	return obj;
 }
 
-void *object_as_type(struct object *obj, enum object_type type, int quiet)
+void *object_as_type_the_repository(struct object *obj, enum object_type type, int quiet)
 {
 	if (obj->type == type)
 		return obj;
