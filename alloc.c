@@ -88,11 +88,11 @@ unsigned int alloc_commit_index(struct repository *r)
 	return r->parsed_objects.commit_count++;
 }
 
-void *alloc_commit_node_the_repository(void)
+void *alloc_commit_node(struct repository *r)
 {
 	struct commit *c = alloc_node(&commit_state, sizeof(struct commit));
 	c->object.type = OBJ_COMMIT;
-	c->index = alloc_commit_index(the_repository);
+	c->index = alloc_commit_index(r);
 	return c;
 }
 
