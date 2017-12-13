@@ -5,6 +5,7 @@
 #include "log-tree.h"
 #include "builtin.h"
 #include "submodule.h"
+#include "repository.h"
 
 static struct rev_info log_tree_opt;
 
