@@ -2,6 +2,7 @@
 #define REPOSITORY_H
 
 #include "object-store.h"
+#include "object.h"
 
 struct config_set;
 struct index_state;
@@ -29,9 +30,18 @@ struct repository {
 	char *objectdir;
 
 	/*
-	 * Holds any information related to the object store.
+	 * Holds any information needed to retrieve the raw content
+	 * of objects. The object_parser uses this to get object
+	 * content which it then parses.
 	 */
-	struct object_store objects;
+	struct raw_object_store objects;
+
+	/*
+	 * State for the object parser. This owns all parsed objects
+	 * (struct object) so callers do not have to manage their
+	 * lifetime.
+	 */
+	struct object_parser parsed_objects;
 
 	/*
 	 * The store in which the refs are hold.
