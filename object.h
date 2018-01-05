@@ -43,6 +43,18 @@ struct object_array {
  */
 #define FLAG_BITS  27
 
+/* The length in bytes and in hex digits of an object name (SHA-1 value). */
+#define GIT_SHA1_RAWSZ 20
+#define GIT_SHA1_HEXSZ (2 * GIT_SHA1_RAWSZ)
+
+/* The length in byte and in hex digits of the largest possible hash value. */
+#define GIT_MAX_RAWSZ GIT_SHA1_RAWSZ
+#define GIT_MAX_HEXSZ GIT_SHA1_HEXSZ
+
+struct object_id {
+	unsigned char hash[GIT_MAX_RAWSZ];
+};
+
 /*
  * The object type is stored in 3 bits.
  */
