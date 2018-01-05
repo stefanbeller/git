@@ -5,6 +5,9 @@
 enum object_type;
 struct object_info;
 
+/* in object-store.h */
+struct packed_git;
+
 struct pack_window {
 	struct pack_window *next;
 	unsigned char *base;
