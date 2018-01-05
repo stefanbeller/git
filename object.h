@@ -25,7 +25,24 @@ struct object_array {
 
 #define OBJECT_ARRAY_INIT { 0, 0, NULL }
 
+enum object_type {
+	OBJ_BAD = -1,
+	OBJ_NONE = 0,
+	OBJ_COMMIT = 1,
+	OBJ_TREE = 2,
+	OBJ_BLOB = 3,
+	OBJ_TAG = 4,
+	/* 5 for future expansion */
+	OBJ_OFS_DELTA = 6,
+	OBJ_REF_DELTA = 7,
+	OBJ_ANY,
+	OBJ_MAX
+};
+/*
+ * The object type is stored in 3 bits.
+ */
 #define TYPE_BITS   3
+
 /*
  * object flag allocation:
  * revision.h:               0---------10                                26
@@ -47,15 +64,25 @@ struct object_array {
  */
 #define FLAG_BITS  27
 
-/*
- * The object type is stored in 3 bits.
- */
+/* The length in bytes and in hex digits of an object name (SHA-1 value). */
+#define GIT_SHA1_RAWSZ 20
+#define GIT_SHA1_HEXSZ (2 * GIT_SHA1_RAWSZ)
+
+/* The length in byte and in hex digits of the largest possible hash value. */
+#define GIT_MAX_RAWSZ GIT_SHA1_RAWSZ
+#define GIT_MAX_HEXSZ GIT_SHA1_HEXSZ
+
+struct object_id {
+	unsigned char hash[GIT_MAX_RAWSZ];
+};
+
 struct object {
 	unsigned parsed : 1;
 	unsigned type : TYPE_BITS;
 	unsigned flags : FLAG_BITS;
 	struct object_id oid;
 };
+
 
 extern const char *type_name(unsigned int type);
 extern int type_from_string_gently(const char *str, ssize_t, int gentle);
