@@ -14,6 +14,7 @@
 #include "refs.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "object-store.h"
 #include "tag.h"
 
 static const char * const git_replace_usage[] = {
