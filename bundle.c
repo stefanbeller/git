@@ -228,7 +228,7 @@ static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
 	if (revs->max_age == -1 && revs->min_age == -1)
 		goto out;
 
-	buf = read_sha1_file(tag->oid.hash, &type, &size);
+	buf = read_sha1_file(the_repository, tag->oid.hash, &type, &size);
 	if (!buf)
 		goto out;
 	line = memmem(buf, size, "\ntagger ", 8);

@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "object-store.h"
+#include "repository.h"
 #include "commit.h"
 #include "blob.h"
 #include "diff.h"
@@ -307,7 +308,8 @@ static char *grab_blob(const struct object_id *oid, unsigned int mode,
 		*size = fill_textconv(textconv, df, &blob);
 		free_filespec(df);
 	} else {
-		blob = read_sha1_file(oid->hash, &type, size);
+		blob = read_sha1_file(the_repository, oid->hash, &type,
+				      size);
 		if (type != OBJ_BLOB)
 			die("object '%s' is not a blob!", oid_to_hex(oid));
 	}

@@ -278,7 +278,8 @@ const void *get_commit_buffer(const struct commit *commit, unsigned long *sizep)
 	if (!ret) {
 		enum object_type type;
 		unsigned long size;
-		ret = read_sha1_file(commit->object.oid.hash, &type, &size);
+		ret = read_sha1_file(the_repository, commit->object.oid.hash,
+				     &type, &size);
 		if (!ret)
 			die("cannot read commit object %s",
 			    oid_to_hex(&commit->object.oid));
@@ -396,7 +397,8 @@ int parse_commit_gently(struct commit *item, int quiet_on_missing)
 		return -1;
 	if (item->object.parsed)
 		return 0;
-	buffer = read_sha1_file(item->object.oid.hash, &type, &size);
+	buffer = read_sha1_file(the_repository, item->object.oid.hash, &type,
+				&size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",
@@ -1235,7 +1237,8 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	desc = merge_remote_util(parent);
 	if (!desc || !desc->obj)
 		return;
-	buf = read_sha1_file(desc->obj->oid.hash, &type, &size);
+	buf = read_sha1_file(the_repository, desc->obj->oid.hash, &type,
+			     &size);
 	if (!buf || type != OBJ_TAG)
 		goto free_return;
 	len = parse_signature(buf, size);

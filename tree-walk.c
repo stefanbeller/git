@@ -3,6 +3,7 @@
 #include "unpack-trees.h"
 #include "dir.h"
 #include "object-store.h"
+#include "repository.h"
 #include "tree.h"
 #include "pathspec.h"
 
@@ -715,7 +716,8 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 			 */
 			retval = DANGLING_SYMLINK;
 
-			contents = read_sha1_file(current_tree_sha1, &type,
+			contents = read_sha1_file(the_repository,
+						  current_tree_sha1, &type,
 						  &link_len);
 
 			if (!contents)

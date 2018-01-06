@@ -2,6 +2,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "object-store.h"
+#include "repository.h"
 
 static int score_missing(unsigned mode, const char *path)
 {
@@ -55,7 +56,7 @@ static void *fill_tree_desc_strict(struct tree_desc *desc,
 	enum object_type type;
 	unsigned long size;
 
-	buffer = read_sha1_file(hash->hash, &type, &size);
+	buffer = read_sha1_file(the_repository, hash->hash, &type, &size);
 	if (!buffer)
 		die("unable to read tree (%s)", oid_to_hex(hash));
 	if (type != OBJ_TREE)
@@ -183,7 +184,7 @@ static int splice_tree(const unsigned char *hash1,
 	if (*subpath)
 		subpath++;
 
-	buf = read_sha1_file(hash1, &type, &sz);
+	buf = read_sha1_file(the_repository, hash1, &type, &sz);
 	if (!buf)
 		die("cannot read tree %s", sha1_to_hex(hash1));
 	init_tree_desc(&desc, buf, sz);
