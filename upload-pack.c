@@ -145,7 +145,8 @@ static void create_pack_file(void)
 	pipe_fd = xfdopen(pack_objects.in, "w");
 
 	if (shallow_nr)
-		for_each_commit_graft(write_one_shallow, pipe_fd);
+		for_each_commit_graft(the_repository, write_one_shallow,
+				      pipe_fd);
 
 	for (i = 0; i < want_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",

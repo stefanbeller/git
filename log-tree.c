@@ -170,7 +170,7 @@ void load_ref_decorations(struct decoration_filter *filter, int flags)
 		decoration_flags = flags;
 		for_each_ref(add_ref_decoration, filter);
 		head_ref(add_ref_decoration, filter);
-		for_each_commit_graft(add_graft_decoration, filter);
+		for_each_commit_graft(the_repository, add_graft_decoration, filter);
 	}
 }
 
