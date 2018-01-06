@@ -51,7 +51,7 @@ int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 				find_unique_abbrev(oid->hash, DEFAULT_ABBREV),
 				typename(type));
 
-	buf = read_sha1_file(oid->hash, &type, &size);
+	buf = read_sha1_file(the_repository, oid->hash, &type, &size);
 	if (!buf)
 		return error("%s: unable to read file.",
 				name_to_report ?
@@ -186,7 +186,8 @@ int parse_tag(struct tag *item)
 
 	if (item->object.parsed)
 		return 0;
-	data = read_sha1_file(item->object.oid.hash, &type, &size);
+	data = read_sha1_file(the_repository, item->object.oid.hash, &type,
+			      &size);
 	if (!data)
 		return error("Could not read %s",
 			     oid_to_hex(&item->object.oid));

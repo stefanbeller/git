@@ -47,7 +47,7 @@ static int verify_commit(const char *name, unsigned flags)
 	if (get_oid(name, &oid))
 		return error("commit '%s' not found.", name);
 
-	buf = read_sha1_file(oid.hash, &type, &size);
+	buf = read_sha1_file(the_repository, oid.hash, &type, &size);
 	if (!buf)
 		return error("%s: unable to read file.", name);
 	if (type != OBJ_COMMIT)

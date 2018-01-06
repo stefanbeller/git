@@ -492,7 +492,8 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 		unsigned char *sha1 = origins.items[i].util;
 		enum object_type type;
 		unsigned long size, len;
-		char *buf = read_sha1_file(sha1, &type, &size);
+		char *buf = read_sha1_file(the_repository, sha1, &type,
+					   &size);
 		struct strbuf sig = STRBUF_INIT;
 
 		if (!buf || type != OBJ_TAG)

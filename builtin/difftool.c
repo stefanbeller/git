@@ -21,6 +21,7 @@
 #include "strbuf.h"
 #include "lockfile.h"
 #include "object-store.h"
+#include "repository.h"
 #include "dir.h"
 
 static char *diff_gui_tool;
@@ -307,7 +308,8 @@ static char *get_symlink(const struct object_id *oid, const char *path)
 	} else {
 		enum object_type type;
 		unsigned long size;
-		data = read_sha1_file(oid->hash, &type, &size);
+		data = read_sha1_file(the_repository, oid->hash, &type,
+				      &size);
 		if (!data)
 			die(_("could not read object %s for symlink %s"),
 				oid_to_hex(oid), path);

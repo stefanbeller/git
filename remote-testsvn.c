@@ -2,6 +2,7 @@
 #include "refs.h"
 #include "remote.h"
 #include "object-store.h"
+#include "repository.h"
 #include "strbuf.h"
 #include "url.h"
 #include "exec_cmd.h"
@@ -62,7 +63,7 @@ static char *read_ref_note(const struct object_id *oid)
 	init_notes(NULL, notes_ref, NULL, 0);
 	if (!(note_oid = get_note(NULL, oid)))
 		return NULL;	/* note tree not found */
-	if (!(msg = read_sha1_file(note_oid->hash, &type, &msglen)))
+	if (!(msg = read_sha1_file(the_repository, note_oid->hash, &type, &msglen)))
 		error("Empty notes tree. %s", notes_ref);
 	else if (!msglen || type != OBJ_BLOB) {
 		error("Note contains unusable content. "
@@ -109,7 +110,7 @@ static int note2mark_cb(const struct object_id *object_oid,
 	enum object_type type;
 	struct rev_note note;
 
-	if (!(msg = read_sha1_file(note_oid->hash, &type, &msglen)) ||
+	if (!(msg = read_sha1_file(the_repository, note_oid->hash, &type, &msglen)) ||
 			!msglen || type != OBJ_BLOB) {
 		free(msg);
 		return 1;
