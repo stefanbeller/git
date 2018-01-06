@@ -11,6 +11,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "lockfile.h"
+#include "repository.h"
 #include "alternates.h"
 #include "parse-options.h"
 #include "fetch-pack.h"
@@ -330,7 +331,7 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 	} else {
 		struct strbuf sb = STRBUF_INIT;
 		strbuf_addf(&sb, "%s/objects", ref_git);
-		add_to_alternates_file(sb.buf);
+		add_to_alternates_file(the_repository, sb.buf);
 		strbuf_release(&sb);
 	}
 
@@ -372,12 +373,12 @@ static void copy_alternates(struct strbuf *src, struct strbuf *dst,
 		if (!line.len || line.buf[0] == '#')
 			continue;
 		if (is_absolute_path(line.buf)) {
-			add_to_alternates_file(line.buf);
+			add_to_alternates_file(the_repository, line.buf);
 			continue;
 		}
 		abs_path = mkpathdup("%s/objects/%s", src_repo, line.buf);
 		if (!normalize_path_copy(abs_path, abs_path))
-			add_to_alternates_file(abs_path);
+			add_to_alternates_file(the_repository, abs_path);
 		else
 			warning("skipping invalid relative alternate: %s/%s",
 				src_repo, line.buf);
@@ -456,7 +457,7 @@ static void clone_local(const char *src_repo, const char *dest_repo)
 		struct strbuf alt = STRBUF_INIT;
 		get_common_dir(&alt, src_repo);
 		strbuf_addstr(&alt, "/objects");
-		add_to_alternates_file(alt.buf);
+		add_to_alternates_file(the_repository, alt.buf);
 		strbuf_release(&alt);
 	} else {
 		struct strbuf src = STRBUF_INIT;
