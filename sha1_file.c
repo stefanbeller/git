@@ -538,7 +538,7 @@ struct alternate_object_database *alloc_alt_odb(const char *dir)
 	return ent;
 }
 
-void add_to_alternates_file(const char *reference)
+void add_to_alternates_file_the_repository(const char *reference)
 {
 	struct lock_file lock = LOCK_INIT;
 	char *alts = git_pathdup("objects/info/alternates");
