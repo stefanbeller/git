@@ -2927,7 +2927,7 @@ int rearrange_squash(void)
 				i2 = entry->i;
 			else if (!strchr(p, ' ') &&
 				 (commit2 =
-				  lookup_commit_reference_by_name(p)) &&
+				  lookup_commit_reference_by_name(the_repository, p)) &&
 				 commit2->util)
 				/* found by commit name */
 				i2 = (struct todo_item *)commit2->util

@@ -56,7 +56,9 @@ struct commit *lookup_commit_reference_the_repository(const struct object_id *oi
 struct commit *lookup_commit_reference_gently_the_repository(
 					      const struct object_id *oid,
 					      int quiet);
-struct commit *lookup_commit_reference_by_name(const char *name);
+#define lookup_commit_reference_by_name(r, n) \
+		lookup_commit_reference_by_name_##r(n)
+struct commit *lookup_commit_reference_by_name_the_repository(const char *name);
 
 /*
  * Look up object named by "oid", dereference tag as necessary,

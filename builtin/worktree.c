@@ -242,7 +242,7 @@ static int add_worktree(const char *path, const char *refname,
 		if (!opts->force)
 			die_if_checked_out(symref.buf, 0);
 	}
-	commit = lookup_commit_reference_by_name(refname);
+	commit = lookup_commit_reference_by_name(the_repository, refname);
 	if (!commit)
 		die(_("invalid reference: %s"), refname);
 
@@ -426,7 +426,7 @@ static int add(int ac, const char **av, const char *prefix)
 		struct commit *commit;
 		const char *remote;
 
-		commit = lookup_commit_reference_by_name(branch);
+		commit = lookup_commit_reference_by_name(the_repository, branch);
 		if (!commit) {
 			remote = unique_tracking_name(branch, &oid);
 			if (remote) {
