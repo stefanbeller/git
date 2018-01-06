@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "blob.h"
 #include "object-store.h"
+#include "repository.h"
 #include "dir.h"
 #include "streaming.h"
 #include "submodule.h"
@@ -86,7 +87,8 @@ static int create_file(const char *path, unsigned int mode)
 static void *read_blob_entry(const struct cache_entry *ce, unsigned long *size)
 {
 	enum object_type type;
-	void *new = read_sha1_file(ce->oid.hash, &type, size);
+	void *new = read_sha1_file(the_repository, ce->oid.hash, &type,
+				   size);
 
 	if (new) {
 		if (type == OBJ_BLOB)

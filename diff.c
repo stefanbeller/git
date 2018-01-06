@@ -3629,7 +3629,8 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 				return 0;
 			}
 		}
-		s->data = read_sha1_file(s->oid.hash, &type, &s->size);
+		s->data = read_sha1_file(the_repository, s->oid.hash, &type,
+					 &s->size);
 		if (!s->data)
 			die("unable to read %s", oid_to_hex(&s->oid));
 		s->should_free = 1;

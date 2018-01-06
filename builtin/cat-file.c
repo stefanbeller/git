@@ -33,7 +33,7 @@ static int filter_object(const char *path, unsigned mode,
 {
 	enum object_type type;
 
-	*buf = read_sha1_file(oid->hash, &type, size);
+	*buf = read_sha1_file(the_repository, oid->hash, &type, size);
 	if (!*buf)
 		return error(_("cannot read object %s '%s'"),
 			     oid_to_hex(oid), path);
@@ -131,7 +131,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 
 		if (type == OBJ_BLOB)
 			return stream_blob_to_fd(1, &oid, NULL, 0);
-		buf = read_sha1_file(oid.hash, &type, &size);
+		buf = read_sha1_file(the_repository, oid.hash, &type, &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
 
@@ -142,7 +142,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		if (type_from_string(exp_type) == OBJ_BLOB) {
 			struct object_id blob_oid;
 			if (sha1_object_info(the_repository, oid.hash, NULL) == OBJ_TAG) {
-				char *buffer = read_sha1_file(oid.hash, &type, &size);
+				char *buffer = read_sha1_file(the_repository,
+							      oid.hash,
+							      &type, &size);
 				const char *target;
 				if (!skip_prefix(buffer, "object ", &target) ||
 				    get_oid_hex(target, &blob_oid))
@@ -305,7 +307,9 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 				enum object_type type;
 				if (!textconv_object(data->rest, 0100644, oid,
 						     1, &contents, &size))
-					contents = read_sha1_file(oid->hash, &type,
+					contents = read_sha1_file(the_repository,
+								  oid->hash,
+								  &type,
 								  &size);
 				if (!contents)
 					die("could not convert '%s' %s",
@@ -322,7 +326,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		unsigned long size;
 		void *contents;
 
-		contents = read_sha1_file(oid->hash, &type, &size);
+		contents = read_sha1_file(the_repository, oid->hash, &type,
+					  &size);
 		if (!contents)
 			die("object %s disappeared", oid_to_hex(oid));
 		if (type != data->type)

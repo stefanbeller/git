@@ -268,7 +268,7 @@ struct object *parse_object_the_repository(const struct object_id *oid)
 		return lookup_object(the_repository, oid->hash);
 	}
 
-	buffer = read_sha1_file(oid->hash, &type, &size);
+	buffer = read_sha1_file(the_repository, oid->hash, &type, &size);
 	if (buffer) {
 		if (check_sha1_signature(the_repository, repl, buffer, size, typename(type)) < 0) {
 			free(buffer);

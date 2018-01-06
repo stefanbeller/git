@@ -2,6 +2,7 @@
 #include "config.h"
 #include "grep.h"
 #include "object-store.h"
+#include "repository.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
 #include "diff.h"
@@ -2011,7 +2012,8 @@ static int grep_source_load_oid(struct grep_source *gs)
 	enum object_type type;
 
 	grep_read_lock();
-	gs->buf = read_sha1_file(gs->identifier, &type, &gs->size);
+	gs->buf = read_sha1_file(the_repository, gs->identifier, &type,
+				 &gs->size);
 	grep_read_unlock();
 
 	if (!gs->buf)

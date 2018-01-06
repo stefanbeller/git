@@ -76,7 +76,8 @@ static int tree_is_complete(const struct object_id *oid)
 	if (!tree->buffer) {
 		enum object_type type;
 		unsigned long size;
-		void *data = read_sha1_file(oid->hash, &type, &size);
+		void *data = read_sha1_file(the_repository, oid->hash, &type,
+					    &size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;

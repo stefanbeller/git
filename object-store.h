@@ -86,7 +86,8 @@ struct packed_git {
 extern void *read_sha1_file_extended_the_repository(const unsigned char *sha1,
 				     enum object_type *type,
 				     unsigned long *size, int lookup_replace);
-static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
+#define read_sha1_file(r, s, t, sz) read_sha1_file_##r(s, t, sz)
+static inline void *read_sha1_file_the_repository(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
 	return read_sha1_file_extended(the_repository, sha1, type, size, 1);
 }
