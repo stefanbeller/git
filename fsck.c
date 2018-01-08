@@ -393,7 +393,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 	int result;
 	const char *name;
 
-	if (parse_commit(commit))
+	if (parse_commit(the_repository, commit))
 		return -1;
 
 	name = get_object_name(options, &commit->object);

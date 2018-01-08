@@ -1993,7 +1993,7 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 		return 0;
 	new = (struct commit *) o;
 
-	if (parse_commit(new) < 0)
+	if (parse_commit(the_repository, new) < 0)
 		return 0;
 
 	used = list = NULL;
