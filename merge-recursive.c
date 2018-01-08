@@ -233,7 +233,7 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 		strbuf_add_unique_abbrev(&o->obuf, commit->object.oid.hash,
 					 DEFAULT_ABBREV);
 		strbuf_addch(&o->obuf, ' ');
-		if (parse_commit(commit) != 0)
+		if (parse_commit(the_repository, commit) != 0)
 			strbuf_addstr(&o->obuf, _("(bad commit)\n"));
 		else {
 			const char *title;
@@ -2162,7 +2162,7 @@ static struct commit *get_ref(const struct object_id *oid, const char *name)
 		return make_virtual_commit((struct tree*)object, name);
 	if (object->type != OBJ_COMMIT)
 		return NULL;
-	if (parse_commit((struct commit *)object))
+	if (parse_commit(the_repository, (struct commit *)object))
 		return NULL;
 	return (struct commit *)object;
 }
