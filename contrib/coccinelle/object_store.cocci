@@ -44,3 +44,12 @@ expression H;
 open_istream(
 + the_repository,
  E, F, G, H)
+
+@@
+expression E;
+expression F;
+@@
+ parse_commit_gently(
++ the_repository,
+  E, F)
+
