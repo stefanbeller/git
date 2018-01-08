@@ -53,3 +53,10 @@ expression F;
 + the_repository,
   E, F)
 
+@@
+expression E;
+@@
+ parse_commit(
++ the_repository,
+ E)
+

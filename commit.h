@@ -68,7 +68,8 @@ struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref
 int parse_commit_buffer_the_repository(struct commit *item, const void *buffer, unsigned long size);
 #define parse_commit_gently(r, i, q) parse_commit_gently_##r(i, q)
 int parse_commit_gently_the_repository(struct commit *item, int quiet_on_missing);
-static inline int parse_commit(struct commit *item)
+#define parse_commit(r, i) parse_commit_##r(i)
+static inline int parse_commit_the_repository(struct commit *item)
 {
 	return parse_commit_gently(the_repository, item, 0);
 }
