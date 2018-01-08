@@ -813,7 +813,7 @@ static int get_parent(const char *name, int len,
 	if (ret)
 		return ret;
 	commit = lookup_commit_reference(the_repository, &oid);
-	if (parse_commit(commit))
+	if (parse_commit(the_repository, commit))
 		return -1;
 	if (!idx) {
 		oidcpy(result, &commit->object.oid);
@@ -845,7 +845,7 @@ static int get_nth_ancestor(const char *name, int len,
 		return -1;
 
 	while (generation--) {
-		if (parse_commit(commit) || !commit->parents)
+		if (parse_commit(the_repository, commit) || !commit->parents)
 			return -1;
 		commit = commit->parents->item;
 	}

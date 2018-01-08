@@ -114,7 +114,7 @@ static void rev_list_push(struct commit *commit, int mark)
 	if (!(commit->object.flags & mark)) {
 		commit->object.flags |= mark;
 
-		if (parse_commit(commit))
+		if (parse_commit(the_repository, commit))
 			return;
 
 		prio_queue_put(&rev_list, commit);
@@ -178,7 +178,7 @@ static void mark_common(struct commit *commit,
 			if (!ancestors_only && !(o->flags & POPPED))
 				non_common_revs--;
 			if (!o->parsed && !dont_parse)
-				if (parse_commit(commit))
+				if (parse_commit(the_repository, commit))
 					return;
 
 			for (parents = commit->parents;
@@ -205,7 +205,7 @@ static const struct object_id *get_rev(void)
 			return NULL;
 
 		commit = prio_queue_get(&rev_list);
-		parse_commit(commit);
+		parse_commit(the_repository, commit);
 		parents = commit->parents;
 
 		commit->object.flags |= POPPED;
