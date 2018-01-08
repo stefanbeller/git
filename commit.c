@@ -385,7 +385,7 @@ int parse_commit_buffer_the_repository(struct commit *item, const void *buffer, 
 	return 0;
 }
 
-int parse_commit_gently(struct commit *item, int quiet_on_missing)
+int parse_commit_gently_the_repository(struct commit *item, int quiet_on_missing)
 {
 	enum object_type type;
 	void *buffer;
