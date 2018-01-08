@@ -76,8 +76,9 @@ int is_staging_gitmodules_ok(struct index_state *istate)
 static int for_each_remote_ref_submodule(const char *submodule,
 					 each_ref_fn fn, void *cb_data)
 {
-	return refs_for_each_remote_ref(get_submodule_ref_store(submodule),
-					fn, cb_data);
+	return refs_for_each_fullref_in(get_submodule_ref_store(submodule),
+					"refs/remotes/",
+					fn, cb_data, 1);
 }
 
 /*
@@ -923,9 +924,6 @@ static int submodule_needs_pushing(const char *path, struct oid_array *commits)
 		 */
 		return 0;
 
-	/* The submodule odb is needed for access to its refs. */
-	if (add_submodule_odb(path))
-		BUG("submodule '%s' is both present and absent", path);
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		struct strbuf buf = STRBUF_INIT;
@@ -999,9 +997,6 @@ static int push_submodule(const char *path,
 			  const struct string_list *push_options,
 			  int dry_run)
 {
-	if (add_submodule_odb(path))
-		return 1;
-
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		argv_array_push(&cp.args, "push");
