@@ -778,7 +778,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 			parent = parent->next;
 			if (p)
 				p->object.flags |= UNINTERESTING;
-			if (parse_commit_gently(p, 1) < 0)
+			if (parse_commit_gently(the_repository, p, 1) < 0)
 				continue;
 			if (p->parents)
 				mark_parents_uninteresting(p);
@@ -806,7 +806,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 		struct commit *p = parent->item;
 		int gently = revs->ignore_missing_links ||
 			     revs->exclude_promisor_objects;
-		if (parse_commit_gently(p, gently) < 0) {
+		if (parse_commit_gently(the_repository, p, gently) < 0) {
 			if (revs->exclude_promisor_objects &&
 			    is_promisor_object(&p->object.oid)) {
 				if (revs->first_parent_only)
