@@ -108,7 +108,8 @@ void unuse_commit_buffer_the_repository(const struct commit *, const void *buffe
 /*
  * Free any cached object buffer associated with the commit.
  */
-void free_commit_buffer(struct commit *);
+#define free_commit_buffer(r, c) free_commit_buffer_##r(c)
+void free_commit_buffer_the_repository(struct commit *);
 
 /*
  * Disassociate any cached object buffer from the commit, but do not free it.
