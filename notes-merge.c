@@ -722,7 +722,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 
 	create_notes_commit(partial_tree, partial_commit->parents,
 			    msg, strlen(msg), result_oid->hash);
-	unuse_commit_buffer(partial_commit, buffer);
+	unuse_commit_buffer(the_repository, partial_commit, buffer);
 	if (o->verbosity >= 4)
 		printf("Finalized notes merge commit: %s\n",
 			oid_to_hex(result_oid));

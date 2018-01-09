@@ -794,7 +794,7 @@ static int fsck_commit(struct commit *commit, const char *data,
 	const char *buffer = data ?  data : get_commit_buffer(commit, &size);
 	int ret = fsck_commit_buffer(commit, buffer, size, options);
 	if (!data)
-		unuse_commit_buffer(commit, buffer);
+		unuse_commit_buffer(the_repository, commit, buffer);
 	return ret;
 }
 

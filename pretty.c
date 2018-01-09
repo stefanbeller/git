@@ -644,7 +644,7 @@ const char *logmsg_reencode(const struct commit *commit,
 		 */
 		out = reencode_string(msg, output_encoding, use_encoding);
 		if (out)
-			unuse_commit_buffer(commit, msg);
+			unuse_commit_buffer(the_repository, commit, msg);
 	}
 
 	/*
@@ -1545,7 +1545,7 @@ void format_commit_message(const struct commit *commit,
 	}
 
 	free(context.commit_encoding);
-	unuse_commit_buffer(commit, context.message);
+	unuse_commit_buffer(the_repository, commit, context.message);
 }
 
 static void pp_header(struct pretty_print_context *pp,
@@ -1858,7 +1858,7 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	if (cmit_fmt_is_mail(pp->fmt) && sb->len <= beginning_of_body)
 		strbuf_addch(sb, '\n');
 
-	unuse_commit_buffer(commit, reencoded);
+	unuse_commit_buffer(the_repository, commit, reencoded);
 }
 
 void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,

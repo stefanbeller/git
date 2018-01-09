@@ -403,7 +403,7 @@ static int create_graft(int argc, const char **argv, int force)
 
 	buffer = get_commit_buffer(commit, &size);
 	strbuf_add(&buf, buffer, size);
-	unuse_commit_buffer(commit, buffer);
+	unuse_commit_buffer(the_repository, commit, buffer);
 
 	replace_parents(&buf, argc - 1, &argv[1]);
 

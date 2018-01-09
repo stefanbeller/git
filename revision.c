@@ -3037,7 +3037,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 		retval = grep_buffer(&opt->grep_filter,
 				     (char *)message, strlen(message));
 	strbuf_release(&buf);
-	unuse_commit_buffer(commit, message);
+	unuse_commit_buffer(the_repository, commit, message);
 	return opt->invert_grep ? !retval : retval;
 }
 

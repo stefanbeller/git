@@ -618,7 +618,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 			  ? strlen(message) : 0),
 	       reencoded ? reencoded : message ? message : "");
 	free(reencoded);
-	unuse_commit_buffer(commit, commit_buffer);
+	unuse_commit_buffer(the_repository, commit, commit_buffer);
 
 	for (i = 0, p = commit->parents; p; p = p->next) {
 		int mark = get_object_mark(&p->item->object);

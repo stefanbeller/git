@@ -290,7 +290,7 @@ const void *get_commit_buffer(const struct commit *commit, unsigned long *sizep)
 	return ret;
 }
 
-void unuse_commit_buffer(const struct commit *commit, const void *buffer)
+void unuse_commit_buffer_the_repository(const struct commit *commit, const void *buffer)
 {
 	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
 	if (!(v && v->buffer == buffer))
@@ -630,7 +630,7 @@ static void record_author_date(struct author_date_slab *author_date,
 	*(author_date_slab_at(author_date, commit)) = date;
 
 fail_exit:
-	unuse_commit_buffer(commit, buffer);
+	unuse_commit_buffer(the_repository, commit, buffer);
 }
 
 static int compare_commits_by_author_date(const void *a_, const void *b_,
@@ -1186,7 +1186,7 @@ int parse_signed_commit(const struct commit *commit,
 		}
 		line = next;
 	}
-	unuse_commit_buffer(commit, buffer);
+	unuse_commit_buffer(the_repository, commit, buffer);
 	return saw_signature;
 }
 
@@ -1314,7 +1314,7 @@ struct commit_extra_header *read_commit_extra_headers(struct commit *commit,
 	unsigned long size;
 	const char *buffer = get_commit_buffer(commit, &size);
 	extra = read_commit_extra_header_lines(buffer, size, exclude);
-	unuse_commit_buffer(commit, buffer);
+	unuse_commit_buffer(the_repository, commit, buffer);
 	return extra;
 }
 
