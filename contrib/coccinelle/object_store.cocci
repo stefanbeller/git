@@ -60,3 +60,10 @@ expression E;
 + the_repository,
  E)
 
+@@
+expression E;
+expression F;
+@@
+ unuse_commit_buffer(
++the_repository,
+ E, F)

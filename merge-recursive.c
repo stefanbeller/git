@@ -241,7 +241,7 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 			int len = find_commit_subject(msg, &title);
 			if (len)
 				strbuf_addf(&o->obuf, "%.*s\n", len, title);
-			unuse_commit_buffer(commit, msg);
+			unuse_commit_buffer(the_repository, commit, msg);
 		}
 	}
 	flush_output(o);
