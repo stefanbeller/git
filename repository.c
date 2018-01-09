@@ -2,6 +2,7 @@
 #include "repository.h"
 #include "object-store.h"
 #include "config.h"
+#include "commit.h"
 #include "submodule-config.h"
 
 /* The main repository */
@@ -190,6 +191,8 @@ int repo_init(struct repository *repo, const char *gitdir, const char *worktree)
 	ALLOC_GROW(open_repos, open_repos_nr + 1, open_repos_alloc);
 	open_repos[open_repos_nr++] = repo;
 
+	alloc_buffer_slab(repo);
+
 	return 0;
 
 error:
@@ -252,6 +255,9 @@ out:
 void repo_free(struct repository *repo)
 {
 	int i;
+
+	free_commit_slab(repo);
+
 	for (i = 0; i < open_repos_nr; i++) {
 		if (open_repos[i] != repo)
 			continue;
