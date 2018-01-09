@@ -393,7 +393,7 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	return 0;
 }
 
-int parse_commit_gently_the_repository(struct commit *item, int quiet_on_missing)
+int parse_commit_gently(struct repository *r, struct commit *item, int quiet_on_missing)
 {
 	enum object_type type;
 	void *buffer;
@@ -404,7 +404,7 @@ int parse_commit_gently_the_repository(struct commit *item, int quiet_on_missing
 		return -1;
 	if (item->object.parsed)
 		return 0;
-	buffer = read_sha1_file(the_repository, item->object.oid.hash, &type,
+	buffer = read_sha1_file(r, item->object.oid.hash, &type,
 				&size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
@@ -415,9 +415,9 @@ int parse_commit_gently_the_repository(struct commit *item, int quiet_on_missing
 		return error("Object %s not a commit",
 			     oid_to_hex(&item->object.oid));
 	}
-	ret = parse_commit_buffer(the_repository, item, buffer, size);
+	ret = parse_commit_buffer(r, item, buffer, size);
 	if (save_commit_buffer && !ret) {
-		set_commit_buffer(the_repository, item, buffer, size);
+		set_commit_buffer(r, item, buffer, size);
 		return 0;
 	}
 	free(buffer);
