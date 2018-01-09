@@ -260,7 +260,7 @@ static void free_message(struct commit *commit, struct commit_message *msg)
 	free(msg->parent_label);
 	free(msg->label);
 	free(msg->subject);
-	unuse_commit_buffer(commit, msg->message);
+	unuse_commit_buffer(the_repository, commit, msg->message);
 }
 
 static void print_advice(int show_hint, struct replay_opts *opts)
@@ -865,7 +865,8 @@ static int update_squash_messages(enum todo_command command,
 		find_commit_subject(head_message, &body);
 		if (write_message(body, strlen(body),
 				  rebase_path_fixup_msg(), 0)) {
-			unuse_commit_buffer(head_commit, head_message);
+			unuse_commit_buffer(the_repository, head_commit,
+					    head_message);
 			return error(_("cannot write '%s'"),
 				     rebase_path_fixup_msg());
 		}
@@ -879,7 +880,7 @@ static int update_squash_messages(enum todo_command command,
 		strbuf_addstr(&buf, "\n\n");
 		strbuf_addstr(&buf, body);
 
-		unuse_commit_buffer(head_commit, head_message);
+		unuse_commit_buffer(the_repository, head_commit, head_message);
 	}
 
 	if (!(message = get_commit_buffer(commit, NULL)))
@@ -901,7 +902,7 @@ static int update_squash_messages(enum todo_command command,
 		strbuf_add_commented_lines(&buf, body, strlen(body));
 	} else
 		return error(_("unknown command: %d"), command);
-	unuse_commit_buffer(commit, message);
+	unuse_commit_buffer(the_repository, commit, message);
 
 	res = write_message(buf.buf, buf.len, rebase_path_squash_msg(), 0);
 	strbuf_release(&buf);
@@ -1560,7 +1561,7 @@ static int walk_revs_populate_todo(struct todo_list *todo_list,
 		subject_len = find_commit_subject(commit_buffer, &subject);
 		strbuf_addf(&todo_list->buf, "%s %s %.*s\n", command_string,
 			short_commit_name(commit), subject_len, subject);
-		unuse_commit_buffer(commit, commit_buffer);
+		unuse_commit_buffer(the_repository, commit, commit_buffer);
 	}
 	return 0;
 }
@@ -1818,7 +1819,7 @@ static int make_patch(struct commit *commit, struct replay_opts *opts)
 		const char *commit_buffer = get_commit_buffer(commit, NULL);
 		find_commit_subject(commit_buffer, &subject);
 		res |= write_message(subject, strlen(subject), buf.buf, 1);
-		unuse_commit_buffer(commit, commit_buffer);
+		unuse_commit_buffer(the_repository, commit, commit_buffer);
 	}
 	strbuf_release(&buf);
 
@@ -2908,7 +2909,8 @@ int rearrange_squash(void)
 		find_commit_subject(commit_buffer, &subject);
 		format_subject(&buf, subject, " ");
 		subject = subjects[i] = strbuf_detach(&buf, &subject_len);
-		unuse_commit_buffer(item->commit, commit_buffer);
+		unuse_commit_buffer(the_repository, item->commit,
+				    commit_buffer);
 		if ((skip_prefix(subject, "fixup! ", &p) ||
 		     skip_prefix(subject, "squash! ", &p))) {
 			struct commit *commit2;

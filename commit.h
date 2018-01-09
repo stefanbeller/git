@@ -102,7 +102,8 @@ const void *get_commit_buffer(const struct commit *, unsigned long *size);
  * from an earlier call to get_commit_buffer.  The buffer may or may not be
  * freed by this call; callers should not access the memory afterwards.
  */
-void unuse_commit_buffer(const struct commit *, const void *buffer);
+#define unuse_commit_buffer(r, c, b) unuse_commit_buffer_##r(c, b)
+void unuse_commit_buffer_the_repository(const struct commit *, const void *buffer);
 
 /*
  * Free any cached object buffer associated with the commit.

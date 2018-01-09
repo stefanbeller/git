@@ -263,7 +263,7 @@ static void record_person(int which, struct string_list *people,
 {
 	const char *buffer = get_commit_buffer(commit, NULL);
 	record_person_from_buf(which, people, buffer);
-	unuse_commit_buffer(commit, buffer);
+	unuse_commit_buffer(the_repository, commit, buffer);
 }
 
 static int cmp_string_list_util_as_integral(const void *a_, const void *b_)

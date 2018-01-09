@@ -192,7 +192,7 @@ static void get_commit_info(struct commit *commit,
 		    &ret->author_time, &ret->author_tz);
 
 	if (!detailed) {
-		unuse_commit_buffer(commit, message);
+		unuse_commit_buffer(the_repository, commit, message);
 		return;
 	}
 
@@ -206,7 +206,7 @@ static void get_commit_info(struct commit *commit,
 	else
 		strbuf_addf(&ret->summary, "(%s)", oid_to_hex(&commit->object.oid));
 
-	unuse_commit_buffer(commit, message);
+	unuse_commit_buffer(the_repository, commit, message);
 }
 
 /*

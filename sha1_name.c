@@ -1153,7 +1153,7 @@ static int get_oid_oneline(const char *prefix, struct object_id *oid,
 		buf = get_commit_buffer(commit, NULL);
 		p = strstr(buf, "\n\n");
 		matches = negative ^ (p && !regexec(&regex, p + 2, 0, NULL, 0));
-		unuse_commit_buffer(commit, buf);
+		unuse_commit_buffer(the_repository, commit, buf);
 
 		if (matches) {
 			oidcpy(oid, &commit->object.oid);

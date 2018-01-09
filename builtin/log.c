@@ -1025,7 +1025,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 		const char *buf = get_commit_buffer(list[i], NULL);
 		if (has_non_ascii(buf))
 			need_8bit_cte = 1;
-		unuse_commit_buffer(list[i], buf);
+		unuse_commit_buffer(the_repository, list[i], buf);
 	}
 
 	if (!branch_name)
