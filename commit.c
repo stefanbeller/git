@@ -248,18 +248,29 @@ struct commit_buffer {
 	unsigned long size;
 };
 define_commit_slab(buffer_slab, struct commit_buffer);
-static struct buffer_slab buffer_slab = COMMIT_SLAB_INIT(1, buffer_slab);
+struct buffer_slab the_repository_buffer_slab = COMMIT_SLAB_INIT(1, the_repository_buffer_slab);
 
-void set_commit_buffer_the_repository(struct commit *commit, void *buffer, unsigned long size)
+void alloc_buffer_slab(struct repository *r)
 {
-	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
+	r->parsed_objects.buffer_slab = xcalloc(1, sizeof(struct buffer_slab));
+	init_buffer_slab(r->parsed_objects.buffer_slab);
+}
+
+void free_commit_slab(struct repository *r)
+{
+	free(r->parsed_objects.buffer_slab);
+}
+
+void set_commit_buffer(struct repository *r, struct commit *commit, void *buffer, unsigned long size)
+{
+	struct commit_buffer *v = buffer_slab_at(r->parsed_objects.buffer_slab, commit);
 	v->buffer = buffer;
 	v->size = size;
 }
 
-const void *get_cached_commit_buffer_the_repository(const struct commit *commit, unsigned long *sizep)
+const void *get_cached_commit_buffer(struct repository *r, const struct commit *commit, unsigned long *sizep)
 {
-	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
+	struct commit_buffer *v = buffer_slab_peek(r->parsed_objects.buffer_slab, commit);
 	if (!v) {
 		if (sizep)
 			*sizep = 0;
@@ -290,25 +301,25 @@ const void *get_commit_buffer(const struct commit *commit, unsigned long *sizep)
 	return ret;
 }
 
-void unuse_commit_buffer_the_repository(const struct commit *commit, const void *buffer)
+void unuse_commit_buffer(struct repository *r, const struct commit *commit, const void *buffer)
 {
-	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
+	struct commit_buffer *v = buffer_slab_peek(r->parsed_objects.buffer_slab, commit);
 	if (!(v && v->buffer == buffer))
 		free((void *)buffer);
 }
 
-void free_commit_buffer_the_repository(struct commit *commit)
+void free_commit_buffer(struct repository *r, struct commit *commit)
 {
-	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
+	struct commit_buffer *v = buffer_slab_peek(r->parsed_objects.buffer_slab, commit);
 	if (v) {
 		FREE_AND_NULL(v->buffer);
 		v->size = 0;
 	}
 }
 
-const void *detach_commit_buffer(struct commit *commit, unsigned long *sizep)
+const void *detach_commit_buffer(struct repository *r, struct commit *commit, unsigned long *sizep)
 {
-	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
+	struct commit_buffer *v = buffer_slab_peek(r->parsed_objects.buffer_slab, commit);
 	void *ret;
 
 	if (!v) {
