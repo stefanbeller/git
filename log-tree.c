@@ -661,7 +661,7 @@ void show_log(struct rev_info *opt)
 		show_mergetag(opt, commit);
 	}
 
-	if (!get_cached_commit_buffer(commit, NULL))
+	if (!get_cached_commit_buffer(the_repository, commit, NULL))
 		return;
 
 	if (opt->show_notes) {
