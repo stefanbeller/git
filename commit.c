@@ -298,7 +298,7 @@ void unuse_commit_buffer_the_repository(const struct commit *commit, const void 
 		free((void *)buffer);
 }
 
-void free_commit_buffer(struct commit *commit)
+void free_commit_buffer_the_repository(struct commit *commit)
 {
 	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
 	if (v) {

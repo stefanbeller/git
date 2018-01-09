@@ -386,7 +386,7 @@ static int cmd_log_walk(struct rev_info *rev)
 			 * We may show a given commit multiple times when
 			 * walking the reflogs.
 			 */
-			free_commit_buffer(commit);
+			free_commit_buffer(the_repository, commit);
 			free_commit_list(commit->parents);
 			commit->parents = NULL;
 		}
@@ -1815,7 +1815,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		    open_next_file(rev.numbered_files ? NULL : commit, NULL, &rev, quiet))
 			die(_("Failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
-		free_commit_buffer(commit);
+		free_commit_buffer(the_repository, commit);
 
 		/* We put one extra blank line between formatted
 		 * patches and this flag is used by log-tree code
