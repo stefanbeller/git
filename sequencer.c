@@ -274,7 +274,7 @@ static void print_advice(int show_hint, struct replay_opts *opts)
 		 * (typically rebase --interactive) wants to take care
 		 * of the commit itself so remove CHERRY_PICK_HEAD
 		 */
-		unlink(git_path_cherry_pick_head());
+		unlink(git_path_cherry_pick_head(the_repository));
 		return;
 	}
 
@@ -951,7 +951,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		struct replay_opts *opts, int final_fixup)
 {
 	unsigned int flags = opts->edit ? EDIT_MSG : 0;
-	const char *msg_file = opts->edit ? NULL : git_path_merge_msg();
+	const char *msg_file = opts->edit ? NULL : git_path_merge_msg(the_repository);
 	struct object_id head;
 	struct commit *base, *next, *parent;
 	const char *base_label, *next_label;
@@ -1083,12 +1083,12 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 			flags |= CLEANUP_MSG;
 			msg_file = rebase_path_fixup_msg();
 		} else {
-			const char *dest = git_path_squash_msg();
+			const char *dest = git_path_squash_msg(the_repository);
 			unlink(dest);
 			if (copy_file(dest, rebase_path_squash_msg(), 0666))
 				return error(_("could not rename '%s' to '%s'"),
 					     rebase_path_squash_msg(), dest);
-			unlink(git_path_merge_msg());
+			unlink(git_path_merge_msg(the_repository));
 			msg_file = dest;
 			flags |= EDIT_MSG;
 		}
@@ -1102,13 +1102,13 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		if (res < 0)
 			return res;
 		res |= write_message(msgbuf.buf, msgbuf.len,
-				     git_path_merge_msg(), 0);
+				     git_path_merge_msg(the_repository), 0);
 	} else {
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
 
 		res = write_message(msgbuf.buf, msgbuf.len,
-				    git_path_merge_msg(), 0);
+				    git_path_merge_msg(the_repository), 0);
 
 		commit_list_insert(base, &common);
 		commit_list_insert(next, &remotes);
@@ -1644,8 +1644,8 @@ static int rollback_single_pick(void)
 {
 	struct object_id head_oid;
 
-	if (!file_exists(git_path_cherry_pick_head()) &&
-	    !file_exists(git_path_revert_head()))
+	if (!file_exists(git_path_cherry_pick_head(the_repository)) &&
+	    !file_exists(git_path_revert_head(the_repository)))
 		return error(_("no cherry-pick or revert in progress"));
 	if (read_ref_full("HEAD", 0, &head_oid, NULL))
 		return error(_("cannot resolve HEAD"));
@@ -1870,10 +1870,11 @@ static int error_failed_squash(struct commit *commit,
 		return error(_("could not rename '%s' to '%s'"),
 			rebase_path_squash_msg(), rebase_path_message());
 	unlink(rebase_path_fixup_msg());
-	unlink(git_path_merge_msg());
-	if (copy_file(git_path_merge_msg(), rebase_path_message(), 0666))
+	unlink(git_path_merge_msg(the_repository));
+	if (copy_file(git_path_merge_msg(the_repository), rebase_path_message(), 0666))
 		return error(_("could not copy '%s' to '%s'"),
-			     rebase_path_message(), git_path_merge_msg());
+			     rebase_path_message(),
+			     git_path_merge_msg(the_repository));
 	return error_with_patch(commit, subject, subject_len, opts, 1, 0);
 }
 
@@ -2228,8 +2229,8 @@ static int continue_single_pick(void)
 {
 	const char *argv[] = { "commit", NULL };
 
-	if (!file_exists(git_path_cherry_pick_head()) &&
-	    !file_exists(git_path_revert_head()))
+	if (!file_exists(git_path_cherry_pick_head(the_repository)) &&
+	    !file_exists(git_path_revert_head(the_repository)))
 		return error(_("no cherry-pick or revert in progress"));
 	return run_command_v_opt(argv, RUN_GIT_CMD);
 }
@@ -2241,7 +2242,7 @@ static int commit_staged_changes(struct replay_opts *opts)
 	if (has_unstaged_changes(1))
 		return error(_("cannot rebase: You have unstaged changes."));
 	if (!has_uncommitted_changes(0)) {
-		const char *cherry_pick_head = git_path_cherry_pick_head();
+		const char *cherry_pick_head = git_path_cherry_pick_head(the_repository);
 
 		if (file_exists(cherry_pick_head) && unlink(cherry_pick_head))
 			return error(_("could not remove CHERRY_PICK_HEAD"));
@@ -2295,8 +2296,8 @@ int sequencer_continue(struct replay_opts *opts)
 
 	if (!is_rebase_i(opts)) {
 		/* Verify that the conflict has been resolved */
-		if (file_exists(git_path_cherry_pick_head()) ||
-		    file_exists(git_path_revert_head())) {
+		if (file_exists(git_path_cherry_pick_head(the_repository)) ||
+		    file_exists(git_path_revert_head(the_repository))) {
 			res = continue_single_pick();
 			if (res)
 				goto release_todo_list;
