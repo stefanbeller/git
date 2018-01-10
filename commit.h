@@ -201,7 +201,8 @@ extern struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n,
 
 struct oid_array;
 struct ref;
-extern int register_shallow(const struct object_id *oid);
+#define register_shallow(r, o) register_shallow_##r(o);
+extern int register_shallow_the_repository(const struct object_id *oid);
 #define unregister_shallow(r, o) unregister_shallow_##r(o)
 extern int unregister_shallow_the_repository(const struct object_id *oid);
 #define for_each_commit_graft(r, f, c) for_each_commit_graft_##r(f, c)
