@@ -44,6 +44,11 @@ struct repository {
 	struct object_parser parsed_objects;
 
 	/*
+	 * Contains path to often used file names.
+	 */
+	struct path_cache cached_paths;
+
+	/*
 	 * The store in which the refs are hold.
 	 */
 	struct ref_store *main_ref_store;
