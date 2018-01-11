@@ -969,8 +969,8 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 	return filled;
 }
 
-#define get_merge_bases_many_0(r, o, n, t, c) get_merge_bases_many_0_##r(o, n, t, c)
-static struct commit_list *get_merge_bases_many_0_the_repository(struct commit *one,
+static struct commit_list *get_merge_bases_many_0(struct repository *r,
+						  struct commit *one,
 						  int n,
 						  struct commit **twos,
 						  int cleanup)
@@ -980,7 +980,7 @@ static struct commit_list *get_merge_bases_many_0_the_repository(struct commit *
 	struct commit_list *result;
 	int cnt, i;
 
-	result = merge_bases_many(the_repository, one, n, twos);
+	result = merge_bases_many(r, one, n, twos);
 	for (i = 0; i < n; i++) {
 		if (one == twos[i])
 			return result;
@@ -1003,7 +1003,7 @@ static struct commit_list *get_merge_bases_many_0_the_repository(struct commit *
 	clear_commit_marks(one, all_flags);
 	clear_commit_marks_many(n, twos, all_flags);
 
-	cnt = remove_redundant(the_repository, rslt, cnt);
+	cnt = remove_redundant(r, rslt, cnt);
 	result = NULL;
 	for (i = 0; i < cnt; i++)
 		commit_list_insert_by_date(rslt[i], &result);
