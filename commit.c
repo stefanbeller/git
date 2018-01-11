@@ -806,7 +806,8 @@ static int queue_has_nonstale(struct prio_queue *queue)
 }
 
 /* all input commits in one and twos[] must have been parsed! */
-static struct commit_list *paint_down_to_common(struct commit *one, int n, struct commit **twos)
+#define paint_down_to_common(r, o, n, t) paint_down_to_common_##r(o, n, t)
+static struct commit_list *paint_down_to_common_the_repository(struct commit *one, int n, struct commit **twos)
 {
 	struct prio_queue queue = { compare_commits_by_commit_date };
 	struct commit_list *result = NULL;
@@ -878,7 +879,7 @@ static struct commit_list *merge_bases_many_the_repository(struct commit *one, i
 			return NULL;
 	}
 
-	list = paint_down_to_common(one, n, twos);
+	list = paint_down_to_common(the_repository, one, n, twos);
 
 	while (list) {
 		struct commit *commit = pop_commit(&list);
@@ -945,7 +946,7 @@ static int remove_redundant(struct commit **array, int cnt)
 			filled_index[filled] = j;
 			work[filled++] = array[j];
 		}
-		common = paint_down_to_common(array[i], filled, work);
+		common = paint_down_to_common(the_repository, array[i], filled, work);
 		if (array[i]->object.flags & PARENT2)
 			redundant[i] = 1;
 		for (j = 0; j < filled; j++)
@@ -1064,7 +1065,7 @@ int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit *
 		if (parse_commit(the_repository, reference[i]))
 			return ret;
 
-	bases = paint_down_to_common(commit, nr_reference, reference);
+	bases = paint_down_to_common(the_repository, commit, nr_reference, reference);
 	if (commit->object.flags & PARENT2)
 		ret = 1;
 	clear_commit_marks(commit, all_flags);
