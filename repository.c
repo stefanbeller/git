@@ -185,6 +185,10 @@ int repo_init(struct repository *repo, const char *gitdir, const char *worktree)
 	if (worktree)
 		repo_set_worktree(repo, worktree);
 
+	repo->parsed_objects.is_shallow = -1;
+	repo->parsed_objects.shallow_stat = xcalloc(1, sizeof(
+		*repo->parsed_objects.shallow_stat));
+
 	ALLOC_GROW(open_repos, open_repos_nr + 1, open_repos_alloc);
 	open_repos[open_repos_nr++] = repo;
 
