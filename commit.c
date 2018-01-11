@@ -1025,9 +1025,9 @@ struct commit_list *get_merge_bases_many_dirty(struct commit *one,
 	return get_merge_bases_many_0(the_repository, one, n, twos, 0);
 }
 
-struct commit_list *get_merge_bases_the_repository(struct commit *one, struct commit *two)
+struct commit_list *get_merge_bases(struct repository *r, struct commit *one, struct commit *two)
 {
-	return get_merge_bases_many_0(the_repository, one, 1, &two, 1);
+	return get_merge_bases_many_0(r, one, 1, &two, 1);
 }
 
 /*
