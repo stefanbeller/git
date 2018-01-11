@@ -180,7 +180,7 @@ struct object *lookup_unknown_object(struct repository *r,
 	struct object *obj = lookup_object(r, sha1);
 	if (!obj)
 		obj = create_object(r, sha1,
-				    alloc_object_node());
+				    alloc_object_node(the_repository));
 	return obj;
 }
 
