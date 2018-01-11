@@ -11,6 +11,8 @@ struct object_parser {
 	struct commit_graft **grafts;
 	int grafts_alloc, grafts_nr;
 
+	int commit_graft_prepared;
+
 	int is_shallow;
 	struct stat_validity *shallow_stat;
 	char *alternate_shallow_file;
@@ -32,6 +34,7 @@ extern struct alloc_state the_repository_tag_state;
 extern struct alloc_state the_repository_object_state;
 #define OBJECT_PARSER_INIT { NULL, 0, 0, &the_repository_buffer_slab, \
 	NULL, 0, 0, \
+	0, \
 	-1, &the_repository_shallow_stat, NULL, \
 	&the_repository_blob_state, \
 	&the_repository_tree_state, \
