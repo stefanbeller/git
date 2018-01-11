@@ -67,3 +67,8 @@ expression F;
  unuse_commit_buffer(
 +the_repository,
  E, F)
+
+@@ @@
+ is_repository_shallow(
++the_repository
+ )
