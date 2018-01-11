@@ -175,6 +175,12 @@ int repo_init(struct repository *repo, const char *gitdir, const char *worktree)
 
 	repo_set_hash_algo(repo, format.hash_algo);
 
+	repo->parsed_objects.blob_state = allocate_alloc_state();
+	repo->parsed_objects.tree_state = allocate_alloc_state();
+	repo->parsed_objects.commit_state = allocate_alloc_state();
+	repo->parsed_objects.tag_state = allocate_alloc_state();
+	repo->parsed_objects.object_state = allocate_alloc_state();
+
 	if (worktree)
 		repo_set_worktree(repo, worktree);
 

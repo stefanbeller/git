@@ -8,9 +8,27 @@ struct object_parser {
 	/* parent substitutions from .git/info/grafts and .git/shallow */
 	struct commit_graft **grafts;
 	int grafts_alloc, grafts_nr;
+
+	struct alloc_state *blob_state;
+	struct alloc_state *tree_state;
+	struct alloc_state *commit_state;
+	struct alloc_state *tag_state;
+	struct alloc_state *object_state;
+	unsigned commit_count;
 };
 
-#define OBJECT_PARSER_INIT { NULL, 0, 0, NULL, 0, 0 }
+extern struct alloc_state the_repository_blob_state;
+extern struct alloc_state the_repository_tree_state;
+extern struct alloc_state the_repository_commit_state;
+extern struct alloc_state the_repository_tag_state;
+extern struct alloc_state the_repository_object_state;
+#define OBJECT_PARSER_INIT { NULL, 0, 0, NULL, 0, 0, \
+	&the_repository_blob_state, \
+	&the_repository_tree_state, \
+	&the_repository_commit_state, \
+	&the_repository_tag_state, \
+	&the_repository_object_state, \
+	0 }
 
 struct object_list {
 	struct object *item;
