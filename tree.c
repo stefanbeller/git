@@ -199,7 +199,7 @@ struct tree *lookup_tree_the_repository(const struct object_id *oid)
 	struct object *obj = lookup_object(the_repository, oid->hash);
 	if (!obj)
 		return create_object(the_repository, oid->hash,
-				     alloc_tree_node());
+				     alloc_tree_node(the_repository));
 	return object_as_type(the_repository, obj, OBJ_TREE, 0);
 }
 
