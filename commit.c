@@ -805,8 +805,7 @@ static int queue_has_nonstale(struct prio_queue *queue)
 }
 
 /* all input commits in one and twos[] must have been parsed! */
-#define paint_down_to_common(r, o, n, t) paint_down_to_common_##r(o, n, t)
-static struct commit_list *paint_down_to_common_the_repository(struct commit *one, int n, struct commit **twos)
+static struct commit_list *paint_down_to_common(struct repository *r, struct commit *one, int n, struct commit **twos)
 {
 	struct prio_queue queue = { compare_commits_by_commit_date };
 	struct commit_list *result = NULL;
@@ -844,7 +843,7 @@ static struct commit_list *paint_down_to_common_the_repository(struct commit *on
 			parents = parents->next;
 			if ((p->object.flags & flags) == flags)
 				continue;
-			if (parse_commit(the_repository, p))
+			if (parse_commit(r, p))
 				return NULL;
 			p->object.flags |= flags;
 			prio_queue_put(&queue, p);
