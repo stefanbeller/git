@@ -1314,7 +1314,7 @@ static struct commit *get_base_commit(const char *base_commit,
 	while (rev_nr > 1) {
 		for (i = 0; i < rev_nr / 2; i++) {
 			struct commit_list *merge_base;
-			merge_base = get_merge_bases(rev[2 * i], rev[2 * i + 1]);
+			merge_base = get_merge_bases(the_repository, rev[2 * i], rev[2 * i + 1]);
 			if (!merge_base || merge_base->next)
 				die(_("Failed to find exact merge base"));
 

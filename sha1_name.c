@@ -1266,7 +1266,7 @@ int get_oid_mb(const char *name, struct object_id *oid)
 	two = lookup_commit_reference_gently(the_repository, &oid_tmp, 0);
 	if (!two)
 		return -1;
-	mbs = get_merge_bases(one, two);
+	mbs = get_merge_bases(the_repository, one, two);
 	if (!mbs || mbs->next)
 		st = -1;
 	else {
