@@ -913,8 +913,7 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	return ret;
 }
 
-#define remove_redundant(r, a, c) remove_redundant_##r(a, c)
-static int remove_redundant_the_repository(struct commit **array, int cnt)
+static int remove_redundant(struct repository *r, struct commit **array, int cnt)
 {
 	/*
 	 * Some commit in the array may be an ancestor of
@@ -932,7 +931,7 @@ static int remove_redundant_the_repository(struct commit **array, int cnt)
 	ALLOC_ARRAY(filled_index, cnt - 1);
 
 	for (i = 0; i < cnt; i++)
-		parse_commit(the_repository, array[i]);
+		parse_commit(r, array[i]);
 	for (i = 0; i < cnt; i++) {
 		struct commit_list *common;
 
@@ -944,7 +943,7 @@ static int remove_redundant_the_repository(struct commit **array, int cnt)
 			filled_index[filled] = j;
 			work[filled++] = array[j];
 		}
-		common = paint_down_to_common(the_repository, array[i], filled, work);
+		common = paint_down_to_common(r, array[i], filled, work);
 		if (array[i]->object.flags & PARENT2)
 			redundant[i] = 1;
 		for (j = 0; j < filled; j++)
