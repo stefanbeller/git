@@ -282,7 +282,7 @@ static int try_difference(const char *arg)
 			struct commit *a, *b;
 			a = lookup_commit_reference(the_repository, &oid);
 			b = lookup_commit_reference(the_repository, &end);
-			exclude = get_merge_bases(a, b);
+			exclude = get_merge_bases(the_repository, a, b);
 			while (exclude) {
 				struct commit *commit = pop_commit(&exclude);
 				show_rev(REVERSED, &commit->object.oid, NULL);

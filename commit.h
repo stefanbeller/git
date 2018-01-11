@@ -180,7 +180,8 @@ struct commit_graft *read_graft_line(struct strbuf *line);
 int register_commit_graft(struct repository *r, struct commit_graft *, int);
 struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid);
 
-extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2);
+#define get_merge_bases(r, r1, r2) get_merge_bases_##r(r1, r2)
+extern struct commit_list *get_merge_bases_the_repository(struct commit *rev1, struct commit *rev2);
 extern struct commit_list *get_merge_bases_many(struct commit *one, int n, struct commit **twos);
 extern struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 

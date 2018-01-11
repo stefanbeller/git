@@ -900,7 +900,7 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 
 		for (j = ret; j; j = j->next) {
 			struct commit_list *bases;
-			bases = get_merge_bases(i->item, j->item);
+			bases = get_merge_bases(the_repository, i->item, j->item);
 			if (!new)
 				new = bases;
 			else
@@ -1025,7 +1025,7 @@ struct commit_list *get_merge_bases_many_dirty(struct commit *one,
 	return get_merge_bases_many_0(the_repository, one, n, twos, 0);
 }
 
-struct commit_list *get_merge_bases(struct commit *one, struct commit *two)
+struct commit_list *get_merge_bases_the_repository(struct commit *one, struct commit *two)
 {
 	return get_merge_bases_many_0(the_repository, one, 1, &two, 1);
 }
