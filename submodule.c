@@ -441,19 +441,19 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 	return prepare_revision_walk(rev);
 }
 
-#define print_submodule_summary(r, rev, o) print_submodule_summary_##r(rev, o)
-static void print_submodule_summary_the_repository(struct rev_info *rev, struct diff_options *o)
+static void print_submodule_summary(struct repository *r, struct rev_info *rev, struct diff_options *o)
 {
 	static const char format[] = "  %m %s";
 	struct strbuf sb = STRBUF_INIT;
 	struct commit *commit;
 
+	/* NEEDSWORK: get_revision is not adapted to repository handling? */
 	while ((commit = get_revision(rev))) {
 		struct pretty_print_context ctx = {0};
 		ctx.date_mode = rev->date_mode;
 		ctx.output_encoding = get_log_output_encoding();
 		strbuf_setlen(&sb, 0);
-		format_commit_message(the_repository, commit, format, &sb,
+		format_commit_message(r, commit, format, &sb,
 				      &ctx);
 		strbuf_addch(&sb, '\n');
 		if (commit->object.flags & SYMMETRIC_LEFT)
@@ -513,7 +513,8 @@ static int open_submodule(struct repository *out, const char *path)
  * attempt to lookup both the left and right commits and put them into the
  * left and right pointers.
  */
-static void show_submodule_header(struct diff_options *o, const char *path,
+static void show_submodule_header(struct diff_options *o, struct repository *sub,
+		const char *path,
 		struct object_id *one, struct object_id *two,
 		unsigned dirty_submodule,
 		struct commit **left, struct commit **right,
@@ -534,7 +535,7 @@ static void show_submodule_header(struct diff_options *o, const char *path,
 	else if (is_null_oid(two))
 		message = "(submodule deleted)";
 
-	if (add_submodule_odb(path)) {
+	if (open_submodule(sub, path) < 0) {
 		if (!message)
 			message = "(commits not present)";
 		goto output_header;
@@ -544,8 +545,8 @@ static void show_submodule_header(struct diff_options *o, const char *path,
 	 * Attempt to lookup the commit references, and determine if this is
 	 * a fast forward or fast backwards update.
 	 */
-	*left = lookup_commit_reference(the_repository, one);
-	*right = lookup_commit_reference(the_repository, two);
+	*left = lookup_commit_reference(sub, one);
+	*right = lookup_commit_reference(sub, two);
 
 	/*
 	 * Warn about missing commits in the submodule project, but only if
@@ -555,7 +556,7 @@ static void show_submodule_header(struct diff_options *o, const char *path,
 	     (!is_null_oid(two) && !*right))
 		message = "(commits not present)";
 
-	*merge_bases = get_merge_bases(the_repository, *left, *right);
+	*merge_bases = get_merge_bases(sub, *left, *right);
 	if (*merge_bases) {
 		if ((*merge_bases)->item == *left)
 			fast_forward = 1;
@@ -589,8 +590,9 @@ void show_submodule_summary(struct diff_options *o, const char *path,
 	struct rev_info rev;
 	struct commit *left = NULL, *right = NULL;
 	struct commit_list *merge_bases = NULL;
+	struct repository sub;
 
-	show_submodule_header(o, path, one, two, dirty_submodule,
+	show_submodule_header(o, &sub, path, one, two, dirty_submodule,
 			      &left, &right, &merge_bases);
 
 	/*
@@ -607,7 +609,7 @@ void show_submodule_summary(struct diff_options *o, const char *path,
 		goto out;
 	}
 
-	print_submodule_summary(the_repository, &rev, o);
+	print_submodule_summary(&sub, &rev, o);
 
 out:
 	if (merge_bases)
@@ -625,8 +627,9 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 	struct commit_list *merge_bases = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
+	struct repository sub;
 
-	show_submodule_header(o, path, one, two, dirty_submodule,
+	show_submodule_header(o, &sub, path, one, two, dirty_submodule,
 			      &left, &right, &merge_bases);
 
 	/* We need a valid left and right commit to display a difference */
