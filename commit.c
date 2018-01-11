@@ -854,8 +854,7 @@ static struct commit_list *paint_down_to_common(struct repository *r, struct com
 	return result;
 }
 
-#define merge_bases_many(r, o, n, t) merge_bases_many_##r(o, n, t)
-static struct commit_list *merge_bases_many_the_repository(struct commit *one, int n, struct commit **twos)
+static struct commit_list *merge_bases_many(struct repository *r, struct commit *one, int n, struct commit **twos)
 {
 	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
@@ -870,14 +869,14 @@ static struct commit_list *merge_bases_many_the_repository(struct commit *one, i
 			return commit_list_insert(one, &result);
 	}
 
-	if (parse_commit(the_repository, one))
+	if (parse_commit(r, one))
 		return NULL;
 	for (i = 0; i < n; i++) {
-		if (parse_commit(the_repository, twos[i]))
+		if (parse_commit(r, twos[i]))
 			return NULL;
 	}
 
-	list = paint_down_to_common(the_repository, one, n, twos);
+	list = paint_down_to_common(r, one, n, twos);
 
 	while (list) {
 		struct commit *commit = pop_commit(&list);
