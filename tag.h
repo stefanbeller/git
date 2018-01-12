@@ -12,8 +12,7 @@ struct tag {
 	timestamp_t date;
 };
 extern struct tag *lookup_tag(struct repository *r, const struct object_id *oid);
-#define parse_tag_buffer(r, i, d, s) parse_tag_buffer_##r(i, d, s)
-extern int parse_tag_buffer_the_repository(struct tag *item, const void *data, unsigned long size);
+extern int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, unsigned long size);
 extern int parse_tag(struct tag *item);
 #define deref_tag(r, o, w, l) deref_tag_##r(o, w, l)
 extern struct object *deref_tag_the_repository(struct object *, const char *, int);
