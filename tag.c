@@ -118,7 +118,7 @@ static timestamp_t parse_tag_date(const char *buf, const char *tail)
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
-int parse_tag_buffer_the_repository(struct tag *item, const void *data, unsigned long size)
+int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, unsigned long size)
 {
 	struct object_id oid;
 	char type[20];
@@ -146,13 +146,13 @@ int parse_tag_buffer_the_repository(struct tag *item, const void *data, unsigned
 	bufptr = nl + 1;
 
 	if (!strcmp(type, blob_type)) {
-		item->tagged = (struct object *)lookup_blob(the_repository, &oid);
+		item->tagged = (struct object *)lookup_blob(r, &oid);
 	} else if (!strcmp(type, tree_type)) {
-		item->tagged = (struct object *)lookup_tree(the_repository, &oid);
+		item->tagged = (struct object *)lookup_tree(r, &oid);
 	} else if (!strcmp(type, commit_type)) {
-		item->tagged = (struct object *)lookup_commit(the_repository, &oid);
+		item->tagged = (struct object *)lookup_commit(r, &oid);
 	} else if (!strcmp(type, tag_type)) {
-		item->tagged = (struct object *)lookup_tag(the_repository, &oid);
+		item->tagged = (struct object *)lookup_tag(r, &oid);
 	} else {
 		error("Unknown type %s", type);
 		item->tagged = NULL;
