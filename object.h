@@ -160,8 +160,7 @@ extern void *read_object_with_reference(const unsigned char *sha1,
  *
  * Returns NULL if the object is missing or corrupt.
  */
-#define parse_object(r, oid) parse_object_##r(oid)
-struct object *parse_object_the_repository(const struct object_id *oid);
+struct object *parse_object(struct repository *r, const struct object_id *oid);
 
 /*
  * Like parse_object, but will die() instead of returning NULL. If the
