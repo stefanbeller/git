@@ -808,7 +808,7 @@ void *xmmap(void *start, size_t length,
 	return ret;
 }
 
-int check_sha1_signature_the_repository(const unsigned char *sha1, void *map,
+int check_sha1_signature(struct repository *r, const unsigned char *sha1, void *map,
 			 unsigned long size, const char *type)
 {
 	unsigned char real_sha1[20];
@@ -823,7 +823,7 @@ int check_sha1_signature_the_repository(const unsigned char *sha1, void *map,
 		return hashcmp(sha1, real_sha1) ? -1 : 0;
 	}
 
-	st = open_istream(the_repository, sha1, &obj_type, &size, NULL);
+	st = open_istream(r, sha1, &obj_type, &size, NULL);
 	if (!st)
 		return -1;
 
