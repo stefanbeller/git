@@ -232,7 +232,8 @@ extern void prune_shallow(int show_only);
 extern struct trace_key trace_shallow;
 
 int is_descendant_of(struct commit *, struct commit_list *);
-int in_merge_bases(struct commit *, struct commit *);
+#define in_merge_bases(r, c1, c2) in_merge_bases_##r(c1, c2)
+int in_merge_bases_the_repository(struct commit *, struct commit *);
 #define in_merge_bases_many(r, c, n, co) in_merge_bases_many_##r(c, n, co)
 int in_merge_bases_many_the_repository(struct commit *, int, struct commit **);
 

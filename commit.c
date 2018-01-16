@@ -1040,7 +1040,7 @@ int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
 
 		other = with_commit->item;
 		with_commit = with_commit->next;
-		if (in_merge_bases(other, commit))
+		if (in_merge_bases(the_repository, other, commit))
 			return 1;
 	}
 	return 0;
@@ -1072,7 +1072,7 @@ int in_merge_bases_many_the_repository(struct commit *commit, int nr_reference, 
 /*
  * Is "commit" an ancestor of (i.e. reachable from) the "reference"?
  */
-int in_merge_bases(struct commit *commit, struct commit *reference)
+int in_merge_bases_the_repository(struct commit *commit, struct commit *reference)
 {
 	return in_merge_bases_many(the_repository, commit, 1, &reference);
 }

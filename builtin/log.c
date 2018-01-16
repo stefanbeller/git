@@ -1325,7 +1325,7 @@ static struct commit *get_base_commit(const char *base_commit,
 		rev_nr = DIV_ROUND_UP(rev_nr, 2);
 	}
 
-	if (!in_merge_bases(base, rev[0]))
+	if (!in_merge_bases(the_repository, base, rev[0]))
 		die(_("base commit should be the ancestor of revision list"));
 
 	for (i = 0; i < total; i++) {

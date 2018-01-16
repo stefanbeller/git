@@ -286,7 +286,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 		if (stored->bitmap == NULL) {
 			if (i < writer.selected_nr - 1 &&
 			    (need_reset ||
-			     !in_merge_bases(writer.selected[i + 1].commit,
+			     !in_merge_bases(the_repository, writer.selected[i + 1].commit,
 					     stored->commit))) {
 			    bitmap_reset(base);
 			    reset_all_seen();
