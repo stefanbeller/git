@@ -695,7 +695,7 @@ static int update_local_ref(struct ref *ref,
 		return r;
 	}
 
-	if (in_merge_bases(current, updated)) {
+	if (in_merge_bases(the_repository, current, updated)) {
 		struct strbuf quickref = STRBUF_INIT;
 		int r;
 		strbuf_add_unique_abbrev(&quickref, current->object.oid.hash, DEFAULT_ABBREV);
