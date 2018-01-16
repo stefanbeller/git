@@ -24,3 +24,11 @@ expression H;
  format_commit_message(
 +the_repository,
  E, F, G, H)
+
+@@
+expression E;
+expression F;
+@@
+ in_merge_bases(
++the_repository,
+ E, F)
