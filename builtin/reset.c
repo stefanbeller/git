@@ -111,7 +111,8 @@ static void print_new_head_line(struct commit *commit)
 
 	hex = find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV);
 	printf(_("HEAD is now at %s"), hex);
-	msg = logmsg_reencode(commit, NULL, get_log_output_encoding());
+	msg = logmsg_reencode(the_repository, commit, NULL,
+			      get_log_output_encoding());
 	body = strstr(msg, "\n\n");
 	if (body) {
 		const char *eol;

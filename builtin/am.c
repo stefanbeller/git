@@ -1328,7 +1328,8 @@ static void get_commit_info(struct am_state *state, struct commit *commit)
 	size_t ident_len;
 	struct ident_split id;
 
-	buffer = logmsg_reencode(commit, NULL, get_commit_output_encoding());
+	buffer = logmsg_reencode(the_repository, commit, NULL,
+				 get_commit_output_encoding());
 
 	ident_line = find_commit_header(buffer, "author", &ident_len);
 
