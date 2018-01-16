@@ -595,14 +595,14 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 	return strbuf_detach(&tmp, NULL);
 }
 
-const char *logmsg_reencode_the_repository(const struct commit *commit,
+const char *logmsg_reencode(struct repository *r, const struct commit *commit,
 			    char **commit_encoding,
 			    const char *output_encoding)
 {
 	static const char *utf8 = "UTF-8";
 	const char *use_encoding;
 	char *encoding;
-	const char *msg = get_commit_buffer(the_repository, commit, NULL);
+	const char *msg = get_commit_buffer(r, commit, NULL);
 	char *out;
 
 	if (!output_encoding || !*output_encoding) {
@@ -630,7 +630,7 @@ const char *logmsg_reencode_the_repository(const struct commit *commit,
 		 * the cached copy from get_commit_buffer, we need to duplicate it
 		 * to avoid munging the cached copy.
 		 */
-		if (msg == get_cached_commit_buffer(the_repository, commit, NULL))
+		if (msg == get_cached_commit_buffer(r, commit, NULL))
 			out = xstrdup(msg);
 		else
 			out = (char *)msg;
@@ -644,7 +644,7 @@ const char *logmsg_reencode_the_repository(const struct commit *commit,
 		 */
 		out = reencode_string(msg, output_encoding, use_encoding);
 		if (out)
-			unuse_commit_buffer(the_repository, commit, msg);
+			unuse_commit_buffer(r, commit, msg);
 	}
 
 	/*
