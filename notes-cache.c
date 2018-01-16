@@ -21,7 +21,7 @@ static int notes_cache_match_validity(const char *ref, const char *validity)
 		return 0;
 
 	memset(&pretty_ctx, 0, sizeof(pretty_ctx));
-	format_commit_message(commit, "%s", &msg, &pretty_ctx);
+	format_commit_message(the_repository, commit, "%s", &msg, &pretty_ctx);
 	strbuf_trim(&msg);
 
 	ret = !strcmp(msg.buf, validity);
