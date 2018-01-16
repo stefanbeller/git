@@ -1072,9 +1072,9 @@ int in_merge_bases_many(struct repository *r, struct commit *commit, int nr_refe
 /*
  * Is "commit" an ancestor of (i.e. reachable from) the "reference"?
  */
-int in_merge_bases_the_repository(struct commit *commit, struct commit *reference)
+int in_merge_bases(struct repository *r, struct commit *commit, struct commit *reference)
 {
-	return in_merge_bases_many(the_repository, commit, 1, &reference);
+	return in_merge_bases_many(r, commit, 1, &reference);
 }
 
 struct commit_list *reduce_heads(struct commit_list *heads)
