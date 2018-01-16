@@ -278,13 +278,13 @@ const void *get_cached_commit_buffer(struct repository *r, const struct commit *
 	return v->buffer;
 }
 
-const void *get_commit_buffer_the_repository(const struct commit *commit, unsigned long *sizep)
+const void *get_commit_buffer(struct repository *r, const struct commit *commit, unsigned long *sizep)
 {
-	const void *ret = get_cached_commit_buffer(the_repository, commit, sizep);
+	const void *ret = get_cached_commit_buffer(r, commit, sizep);
 	if (!ret) {
 		enum object_type type;
 		unsigned long size;
-		ret = read_sha1_file(the_repository, commit->object.oid.hash,
+		ret = read_sha1_file(r, commit->object.oid.hash,
 				     &type, &size);
 		if (!ret)
 			die("cannot read commit object %s",
