@@ -401,7 +401,7 @@ static int create_graft(int argc, const char **argv, int force)
 		die(_("Not a valid object name: '%s'"), old_ref);
 	commit = lookup_commit_or_die(&old, old_ref);
 
-	buffer = get_commit_buffer(commit, &size);
+	buffer = get_commit_buffer(the_repository, commit, &size);
 	strbuf_add(&buf, buffer, size);
 	unuse_commit_buffer(the_repository, commit, buffer);
 
