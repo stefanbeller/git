@@ -1150,7 +1150,7 @@ static int get_oid_oneline(const char *prefix, struct object_id *oid,
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
 		if (!parse_object(the_repository, &commit->object.oid))
 			continue;
-		buf = get_commit_buffer(commit, NULL);
+		buf = get_commit_buffer(the_repository, commit, NULL);
 		p = strstr(buf, "\n\n");
 		matches = negative ^ (p && !regexec(&regex, p + 2, 0, NULL, 0));
 		unuse_commit_buffer(the_repository, commit, buf);

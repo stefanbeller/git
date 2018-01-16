@@ -602,7 +602,7 @@ const char *logmsg_reencode(const struct commit *commit,
 	static const char *utf8 = "UTF-8";
 	const char *use_encoding;
 	char *encoding;
-	const char *msg = get_commit_buffer(commit, NULL);
+	const char *msg = get_commit_buffer(the_repository, commit, NULL);
 	char *out;
 
 	if (!output_encoding || !*output_encoding) {
