@@ -595,7 +595,7 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 	return strbuf_detach(&tmp, NULL);
 }
 
-const char *logmsg_reencode(const struct commit *commit,
+const char *logmsg_reencode_the_repository(const struct commit *commit,
 			    char **commit_encoding,
 			    const char *output_encoding)
 {
@@ -1519,7 +1519,7 @@ void format_commit_message(const struct commit *commit,
 	 * convert a commit message to UTF-8 first
 	 * as far as 'format_commit_item' assumes it in UTF-8
 	 */
-	context.message = logmsg_reencode(commit,
+	context.message = logmsg_reencode(the_repository, commit,
 					  &context.commit_encoding,
 					  utf8);
 
@@ -1801,7 +1801,8 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	}
 
 	encoding = get_log_output_encoding();
-	msg = reencoded = logmsg_reencode(commit, NULL, encoding);
+	msg = reencoded = logmsg_reencode(the_repository, commit, NULL,
+					  encoding);
 
 	if (pp->fmt == CMIT_FMT_ONELINE || cmit_fmt_is_mail(pp->fmt))
 		indent = 0;
