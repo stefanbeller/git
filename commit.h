@@ -234,8 +234,7 @@ extern struct trace_key trace_shallow;
 int is_descendant_of(struct commit *, struct commit_list *);
 #define in_merge_bases(r, c1, c2) in_merge_bases_##r(c1, c2)
 int in_merge_bases_the_repository(struct commit *, struct commit *);
-#define in_merge_bases_many(r, c, n, co) in_merge_bases_many_##r(c, n, co)
-int in_merge_bases_many_the_repository(struct commit *, int, struct commit **);
+int in_merge_bases_many(struct repository *r, struct commit *, int, struct commit **);
 
 extern int interactive_add(int argc, const char **argv, const char *prefix, int patch);
 extern int run_add_interactive(const char *revision, const char *patch_mode,
