@@ -1050,7 +1050,7 @@ int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
 /*
  * Is "commit" an ancestor of one of the "references"?
  */
-int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit **reference)
+int in_merge_bases_many_the_repository(struct commit *commit, int nr_reference, struct commit **reference)
 {
 	struct commit_list *bases;
 	int ret = 0, i;
@@ -1075,7 +1075,7 @@ int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit *
  */
 int in_merge_bases(struct commit *commit, struct commit *reference)
 {
-	return in_merge_bases_many(commit, 1, &reference);
+	return in_merge_bases_many(the_repository, commit, 1, &reference);
 }
 
 struct commit_list *reduce_heads(struct commit_list *heads)

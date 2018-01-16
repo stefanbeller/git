@@ -1396,7 +1396,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			 * Is this tag, which they do not have, reachable from
 			 * any of the commits we are sending?
 			 */
-			if (!in_merge_bases_many(commit, sent_tips.nr, sent_tips.tip))
+			if (!in_merge_bases_many(the_repository, commit, sent_tips.nr, sent_tips.tip))
 				continue;
 
 			/* Add it in */
