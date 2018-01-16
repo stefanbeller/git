@@ -374,7 +374,7 @@ static void shortlog(const char *name,
 		if (subjects.nr > limit)
 			continue;
 
-		format_commit_message(commit, "%s", &sb, &ctx);
+		format_commit_message(the_repository, commit, "%s", &sb, &ctx);
 		strbuf_ltrim(&sb);
 
 		if (!sb.len)

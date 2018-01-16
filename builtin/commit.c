@@ -698,7 +698,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			if (!c)
 				die(_("could not lookup commit %s"), squash_message);
 			ctx.output_encoding = get_commit_output_encoding();
-			format_commit_message(c, "squash! %s\n\n", &sb,
+			format_commit_message(the_repository, c,
+					      "squash! %s\n\n", &sb,
 					      &ctx);
 		}
 	}
@@ -732,7 +733,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (!commit)
 			die(_("could not lookup commit %s"), fixup_message);
 		ctx.output_encoding = get_commit_output_encoding();
-		format_commit_message(commit, "fixup! %s\n\n",
+		format_commit_message(the_repository, commit, "fixup! %s\n\n",
 				      &sb, &ctx);
 		hook_arg1 = "message";
 	} else if (!stat(git_path_merge_msg(the_repository), &statbuf)) {
@@ -1072,7 +1073,8 @@ static const char *find_author_by_nickname(const char *name)
 		struct pretty_print_context ctx = {0};
 		ctx.date_mode.type = DATE_NORMAL;
 		strbuf_release(&buf);
-		format_commit_message(commit, "%aN <%aE>", &buf, &ctx);
+		format_commit_message(the_repository, commit, "%aN <%aE>",
+				      &buf, &ctx);
 		clear_mailmap(&mailmap);
 		return strbuf_detach(&buf, NULL);
 	}
@@ -1475,15 +1477,18 @@ static void print_summary(const char *prefix, const struct object_id *oid,
 
 	strbuf_addstr(&format, "format:%h] %s");
 
-	format_commit_message(commit, "%an <%ae>", &author_ident, &pctx);
-	format_commit_message(commit, "%cn <%ce>", &committer_ident, &pctx);
+	format_commit_message(the_repository, commit, "%an <%ae>",
+			      &author_ident, &pctx);
+	format_commit_message(the_repository, commit, "%cn <%ce>",
+			      &committer_ident, &pctx);
 	if (strbuf_cmp(&author_ident, &committer_ident)) {
 		strbuf_addstr(&format, "\n Author: ");
 		strbuf_addbuf_percentquote(&format, &author_ident);
 	}
 	if (author_date_is_interesting()) {
 		struct strbuf date = STRBUF_INIT;
-		format_commit_message(commit, "%ad", &date, &pctx);
+		format_commit_message(the_repository, commit, "%ad", &date,
+				      &pctx);
 		strbuf_addstr(&format, "\n Date: ");
 		strbuf_addbuf_percentquote(&format, &date);
 		strbuf_release(&date);
