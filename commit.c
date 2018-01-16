@@ -278,7 +278,7 @@ const void *get_cached_commit_buffer(struct repository *r, const struct commit *
 	return v->buffer;
 }
 
-const void *get_commit_buffer(const struct commit *commit, unsigned long *sizep)
+const void *get_commit_buffer_the_repository(const struct commit *commit, unsigned long *sizep)
 {
 	const void *ret = get_cached_commit_buffer(the_repository, commit, sizep);
 	if (!ret) {
@@ -618,7 +618,7 @@ define_commit_slab(author_date_slab, unsigned long);
 static void record_author_date(struct author_date_slab *author_date,
 			       struct commit *commit)
 {
-	const char *buffer = get_commit_buffer(commit, NULL);
+	const char *buffer = get_commit_buffer(the_repository, commit, NULL);
 	struct ident_split ident;
 	const char *ident_line;
 	size_t ident_len;
@@ -1164,7 +1164,7 @@ int parse_signed_commit(const struct commit *commit,
 {
 
 	unsigned long size;
-	const char *buffer = get_commit_buffer(commit, &size);
+	const char *buffer = get_commit_buffer(the_repository, commit, &size);
 	int in_signature, saw_signature = -1;
 	const char *line, *tail;
 
@@ -1321,7 +1321,7 @@ struct commit_extra_header *read_commit_extra_headers(struct commit *commit,
 {
 	struct commit_extra_header *extra = NULL;
 	unsigned long size;
-	const char *buffer = get_commit_buffer(commit, &size);
+	const char *buffer = get_commit_buffer(the_repository, commit, &size);
 	extra = read_commit_extra_header_lines(buffer, size, exclude);
 	unuse_commit_buffer(the_repository, commit, buffer);
 	return extra;

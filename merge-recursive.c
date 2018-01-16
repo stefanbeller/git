@@ -237,7 +237,8 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 			strbuf_addstr(&o->obuf, _("(bad commit)\n"));
 		else {
 			const char *title;
-			const char *msg = get_commit_buffer(commit, NULL);
+			const char *msg = get_commit_buffer(the_repository,
+							    commit, NULL);
 			int len = find_commit_subject(msg, &title);
 			if (len)
 				strbuf_addf(&o->obuf, "%.*s\n", len, title);

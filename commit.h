@@ -91,7 +91,8 @@ const void *get_cached_commit_buffer(struct repository *r, const struct commit *
  * from disk. The resulting memory should not be modified, and must be given
  * to unuse_commit_buffer when the caller is done.
  */
-const void *get_commit_buffer(const struct commit *, unsigned long *size);
+#define get_commit_buffer(r, c, s) get_commit_buffer_##r(c, s)
+const void *get_commit_buffer_the_repository(const struct commit *, unsigned long *size);
 
 /*
  * Tell the commit subsytem that we are done with a particular commit buffer.

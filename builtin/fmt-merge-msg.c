@@ -261,7 +261,7 @@ static void record_person_from_buf(int which, struct string_list *people,
 static void record_person(int which, struct string_list *people,
 			  struct commit *commit)
 {
-	const char *buffer = get_commit_buffer(commit, NULL);
+	const char *buffer = get_commit_buffer(the_repository, commit, NULL);
 	record_person_from_buf(which, people, buffer);
 	unuse_commit_buffer(the_repository, commit, buffer);
 }
