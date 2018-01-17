@@ -1503,7 +1503,7 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 	strbuf_release(&dummy);
 }
 
-void format_commit_message_the_repository(const struct commit *commit,
+void format_commit_message(struct repository *r, const struct commit *commit,
 			   const char *format, struct strbuf *sb,
 			   const struct pretty_print_context *pretty_ctx)
 {
@@ -1519,7 +1519,7 @@ void format_commit_message_the_repository(const struct commit *commit,
 	 * convert a commit message to UTF-8 first
 	 * as far as 'format_commit_item' assumes it in UTF-8
 	 */
-	context.message = logmsg_reencode(the_repository, commit,
+	context.message = logmsg_reencode(r, commit,
 					  &context.commit_encoding,
 					  utf8);
 
@@ -1545,7 +1545,7 @@ void format_commit_message_the_repository(const struct commit *commit,
 	}
 
 	free(context.commit_encoding);
-	unuse_commit_buffer(the_repository, commit, context.message);
+	unuse_commit_buffer(r, commit, context.message);
 }
 
 static void pp_header(struct pretty_print_context *pp,
