@@ -441,7 +441,8 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 	return prepare_revision_walk(rev);
 }
 
-static void print_submodule_summary(struct rev_info *rev, struct diff_options *o)
+#define print_submodule_summary(r, rev, o) print_submodule_summary_##r(rev, o)
+static void print_submodule_summary_the_repository(struct rev_info *rev, struct diff_options *o)
 {
 	static const char format[] = "  %m %s";
 	struct strbuf sb = STRBUF_INIT;
@@ -579,7 +580,7 @@ void show_submodule_summary(struct diff_options *o, const char *path,
 		goto out;
 	}
 
-	print_submodule_summary(&rev, o);
+	print_submodule_summary(the_repository, &rev, o);
 
 out:
 	if (merge_bases)
