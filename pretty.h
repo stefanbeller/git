@@ -99,9 +99,7 @@ void pp_remainder(struct pretty_print_context *pp, const char **msg_p,
  * Put the result to "sb".
  * Please use this function for custom formats.
  */
-#define format_commit_message(r, c, f, s, p) \
-	format_commit_message_##r(c, f, s, p)
-void format_commit_message_the_repository(const struct commit *commit,
+void format_commit_message(struct repository *r, const struct commit *commit,
 			const char *format, struct strbuf *sb,
 			const struct pretty_print_context *context);
 
