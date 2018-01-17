@@ -481,6 +481,33 @@ void prepare_submodule_repo_env(struct argv_array *out)
 			 DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 
+/*
+ * Initialize 'out' based on the provided submodule path.
+ *
+ * Unlike repo_submodule_init, this tolerates submodules not present
+ * in .gitmodules. NEEDSWORK: The repo_submodule_init behavior is
+ * preferrable. This function exists only to preserve historical behavior.
+ *
+ * Returns 0 on success, -1 when the submodule is not present.
+ */
+static int open_submodule(struct repository *out, const char *path)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	if (submodule_to_gitdir(&sb, path))
+		return -1;
+
+	if (repo_init(out, sb.buf, NULL)) {
+		strbuf_release(&sb);
+		return -1;
+	}
+
+	out->submodule_prefix = xstrdup(path);
+
+	strbuf_release(&sb);
+	return 0;
+}
+
 /* Helper function to display the submodule header line prior to the full
  * summary output. If it can locate the submodule objects directory it will
  * attempt to lookup both the left and right commits and put them into the
@@ -837,33 +864,6 @@ static int check_has_commit(const struct object_id *oid, void *data)
 		die(_("submodule entry '%s' (%s) is a %s, not a commit"),
 		    r->submodule_prefix, oid_to_hex(oid), typename(type));
 	}
-}
-
-/*
- * Initialize 'out' based on the provided submodule path.
- *
- * Unlike repo_submodule_init, this tolerates submodules not present
- * in .gitmodules. NEEDSWORK: The repo_submodule_init behavior is
- * preferrable. This function exists only to preserve historical behavior.
- *
- * Returns 0 on success, -1 when the submodule is not present.
- */
-static int open_submodule(struct repository *out, const char *path)
-{
-	struct strbuf sb = STRBUF_INIT;
-
-	if (submodule_to_gitdir(&sb, path))
-		return -1;
-
-	if (repo_init(out, sb.buf, NULL)) {
-		strbuf_release(&sb);
-		return -1;
-	}
-
-	out->submodule_prefix = xstrdup(path);
-
-	strbuf_release(&sb);
-	return 0;
 }
 
 static int submodule_has_commits(const char *path, struct oid_array *commits)
