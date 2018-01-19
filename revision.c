@@ -2169,7 +2169,9 @@ static int for_each_good_bisect_ref(struct ref_store *refs, each_ref_fn fn, void
 	return for_each_bisect_ref(refs, fn, cb_data, term_good);
 }
 
-static int handle_revision_pseudo_opt(const char *submodule,
+#define handle_revision_pseudo_opt(r, s, revs, argc, argv, flags) \
+	handle_revision_pseudo_opt_##r(s, revs, argc, argv, flags)
+static int handle_revision_pseudo_opt_the_repository(const char *submodule,
 				struct rev_info *revs,
 				int argc, const char **argv, int *flags)
 {
@@ -2339,7 +2341,7 @@ int setup_revisions_the_repository(int argc, const char **argv, struct rev_info 
 		if (*arg == '-') {
 			int opts;
 
-			opts = handle_revision_pseudo_opt(submodule,
+			opts = handle_revision_pseudo_opt(the_repository, submodule,
 						revs, argc - i, argv + i,
 						&flags);
 			if (opts > 0) {
