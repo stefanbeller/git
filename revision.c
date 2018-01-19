@@ -192,7 +192,9 @@ void add_head_to_pending_the_repository(struct rev_info *revs)
 	add_pending_object(revs, obj, "HEAD");
 }
 
-static struct object *get_reference(struct rev_info *revs, const char *name,
+#define get_reference(r, revs, n, o, f) \
+	get_reference_##r(revs, n, o, f)
+static struct object *get_reference_the_repository(struct rev_info *revs, const char *name,
 				    const struct object_id *oid,
 				    unsigned int flags)
 {
@@ -211,7 +213,7 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 void add_pending_oid(struct rev_info *revs, const char *name,
 		      const struct object_id *oid, unsigned int flags)
 {
-	struct object *object = get_reference(revs, name, oid, flags);
+	struct object *object = get_reference(the_repository, revs, name, oid, flags);
 	add_pending_object(revs, object, name);
 }
 
@@ -1172,7 +1174,7 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 	if (ref_excluded(cb->all_revs->ref_excludes, path))
 	    return 0;
 
-	object = get_reference(cb->all_revs, path, oid, cb->all_flags);
+	object = get_reference(the_repository, cb->all_revs, path, oid, cb->all_flags);
 	add_rev_cmdline(cb->all_revs, object, path, REV_CMD_REF, cb->all_flags);
 	add_pending_oid(cb->all_revs, path, oid, cb->all_flags);
 	return 0;
@@ -1382,7 +1384,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 	if (get_oid_committish(arg, &oid))
 		return 0;
 	while (1) {
-		it = get_reference(revs, arg, &oid, 0);
+		it = get_reference(the_repository, revs, arg, &oid, 0);
 		if (!it && revs->ignore_missing)
 			return 0;
 		if (it->type != OBJ_TAG)
@@ -1682,7 +1684,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 		return revs->ignore_missing ? 0 : -1;
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
-	object = get_reference(revs, arg, &oid, flags ^ local_flags);
+	object = get_reference(the_repository, revs, arg, &oid, flags ^ local_flags);
 	add_rev_cmdline(revs, object, arg_, REV_CMD_REV, flags ^ local_flags);
 	add_pending_object_with_path(revs, object, arg, oc.mode, oc.path);
 	free(oc.path);
@@ -2406,7 +2408,7 @@ int setup_revisions_the_repository(int argc, const char **argv, struct rev_info 
 		struct object_context oc;
 		if (get_oid_with_context(revs->def, 0, &oid, &oc))
 			diagnose_missing_default(revs->def);
-		object = get_reference(revs, revs->def, &oid, 0);
+		object = get_reference(the_repository, revs, revs->def, &oid, 0);
 		add_pending_object_with_mode(revs, object, revs->def, oc.mode);
 	}
 
