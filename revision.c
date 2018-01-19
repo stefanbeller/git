@@ -2981,7 +2981,8 @@ static int commit_rewrite_person(struct strbuf *buf, const char *what, struct st
 	return 0;
 }
 
-static int commit_match(struct commit *commit, struct rev_info *opt)
+#define commit_match(r, c, o) commit_match_##r(c, o)
+static int commit_match_the_repository(struct commit *commit, struct rev_info *opt)
 {
 	int retval;
 	const char *encoding;
@@ -3081,7 +3082,7 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 		    ((revs->max_parents >= 0) && (n > revs->max_parents)))
 			return commit_ignore;
 	}
-	if (!commit_match(commit, revs))
+	if (!commit_match(the_repository, commit, revs))
 		return commit_ignore;
 	if (revs->prune && revs->dense) {
 		/* Commit without changes? */
