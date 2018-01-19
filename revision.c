@@ -1323,7 +1323,9 @@ static void add_cache_tree_the_repository(struct cache_tree *it, struct rev_info
 
 }
 
-static void do_add_index_objects_to_pending(struct rev_info *revs,
+#define do_add_index_objects_to_pending(r, revs, i) \
+	do_add_index_objects_to_pending_##r(revs, i)
+static void do_add_index_objects_to_pending_the_repository(struct rev_info *revs,
 					    struct index_state *istate)
 {
 	int i;
@@ -1354,7 +1356,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 	struct worktree **worktrees, **p;
 
 	read_cache();
-	do_add_index_objects_to_pending(revs, &the_index);
+	do_add_index_objects_to_pending(the_repository, revs, &the_index);
 
 	if (revs->single_worktree)
 		return;
@@ -1369,7 +1371,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 
 		if (read_index_from(&istate,
 				    worktree_git_path(wt, "index")) > 0)
-			do_add_index_objects_to_pending(revs, &istate);
+			do_add_index_objects_to_pending(the_repository, revs, &istate);
 		discard_index(&istate);
 	}
 	free_worktrees(worktrees);
