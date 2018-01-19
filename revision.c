@@ -180,7 +180,7 @@ void add_pending_object(struct rev_info *revs,
 	add_pending_object_with_mode(revs, obj, name, S_IFINVALID);
 }
 
-void add_head_to_pending(struct rev_info *revs)
+void add_head_to_pending_the_repository(struct rev_info *revs)
 {
 	struct object_id oid;
 	struct object *obj;

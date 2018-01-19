@@ -376,7 +376,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				break;
 			else if (!strcmp(arg, "--cached") ||
 				 !strcmp(arg, "--staged")) {
-				add_head_to_pending(&rev);
+				add_head_to_pending(the_repository, &rev);
 				if (!rev.pending.nr) {
 					struct tree *tree;
 					tree = lookup_tree(the_repository,

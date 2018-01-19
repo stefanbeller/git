@@ -294,7 +294,9 @@ extern void add_pending_oid(struct rev_info *revs,
 			    const char *name, const struct object_id *oid,
 			    unsigned int flags);
 
-extern void add_head_to_pending(struct rev_info *);
+#define add_head_to_pending(r, i) \
+	add_head_to_pending_##r(i)
+extern void add_head_to_pending_the_repository(struct rev_info *);
 extern void add_reflogs_to_pending(struct rev_info *, unsigned int flags);
 extern void add_index_objects_to_pending(struct rev_info *, unsigned int flags);
 

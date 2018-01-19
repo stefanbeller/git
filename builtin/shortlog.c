@@ -304,7 +304,7 @@ parse_done:
 
 	/* assume HEAD if from a tty */
 	if (!nongit && !rev.pending.nr && isatty(0))
-		add_head_to_pending(&rev);
+		add_head_to_pending(the_repository, &rev);
 	if (rev.pending.nr == 0) {
 		if (isatty(0))
 			fprintf(stderr, _("(reading log message from standard input)\n"));

@@ -1659,7 +1659,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			 * does not have.
 			 */
 			rev.pending.objects[0].item->flags |= UNINTERESTING;
-			add_head_to_pending(&rev);
+			add_head_to_pending(the_repository, &rev);
 			check_head = 1;
 		}
 		/*
