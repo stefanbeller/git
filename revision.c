@@ -1531,7 +1531,9 @@ static int dotdot_missing(const char *arg, char *dotdot,
 	    : "Invalid revision range %s", arg);
 }
 
-static int handle_dotdot_1(const char *arg, char *dotdot,
+#define handle_dotdot_1(r, arg, d, revs, f, c, a, b) \
+	handle_dotdot_1_##r(arg, d, revs, f, c, a, b)
+static int handle_dotdot_1_the_repository(const char *arg, char *dotdot,
 			   struct rev_info *revs, int flags,
 			   int cant_be_filename,
 			   struct object_context *a_oc,
@@ -1620,7 +1622,7 @@ static int handle_dotdot(const char *arg,
 	memset(&b_oc, 0, sizeof(b_oc));
 
 	*dotdot = '\0';
-	ret = handle_dotdot_1(arg, dotdot, revs, flags, cant_be_filename,
+	ret = handle_dotdot_1(the_repository, arg, dotdot, revs, flags, cant_be_filename,
 			      &a_oc, &b_oc);
 	*dotdot = '.';
 
