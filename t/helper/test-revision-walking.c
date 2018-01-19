@@ -41,7 +41,7 @@ static int run_revision_walk(void)
 		got_revision = 1;
 	}
 
-	reset_revision_walk();
+	reset_revision_walk(the_repository);
 	return got_revision;
 }
 

@@ -2843,7 +2843,7 @@ static void set_children(struct rev_info *revs)
 	}
 }
 
-void reset_revision_walk(void)
+void reset_revision_walk_the_repository(void)
 {
 	clear_object_flags(the_repository, SEEN | ADDED | SHOWN);
 }

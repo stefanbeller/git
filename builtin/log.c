@@ -1745,7 +1745,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	memset(&bases, 0, sizeof(bases));
 	if (base_commit || base_auto) {
 		struct commit *base = get_base_commit(base_commit, list, nr);
-		reset_revision_walk();
+		reset_revision_walk(the_repository);
 		prepare_bases(&bases, base, list, nr);
 	}
 

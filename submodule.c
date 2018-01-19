@@ -818,7 +818,7 @@ static void collect_changed_submodules(struct string_list *changed,
 		diff_tree_combined_merge(commit, 1, &diff_rev);
 	}
 
-	reset_revision_walk();
+	reset_revision_walk(the_repository);
 }
 
 static void free_submodules_oids(struct string_list *submodules)
@@ -1755,7 +1755,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 		if (in_merge_bases(the_repository, b, commit))
 			add_object_array(o, NULL, &merges);
 	}
-	reset_revision_walk();
+	reset_revision_walk(the_repository);
 
 	/* Now we've got all merges that contain a and b. Prune all
 	 * merges that contain another found merge and save them in

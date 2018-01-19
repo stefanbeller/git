@@ -722,7 +722,7 @@ int prepare_bitmap_walk(struct rev_info *revs)
 	if (haves) {
 		revs->ignore_missing_links = 1;
 		haves_bitmap = find_objects(revs, haves, NULL);
-		reset_revision_walk();
+		reset_revision_walk(the_repository);
 		revs->ignore_missing_links = 0;
 
 		if (haves_bitmap == NULL)

@@ -268,7 +268,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	revs.no_walk = 0;
 
 	revs.include_check = should_include;
-	reset_revision_walk();
+	reset_revision_walk(the_repository);
 
 	reuse_after = writer.selected_nr * REUSE_BITMAP_THRESHOLD;
 	need_reset = 0;

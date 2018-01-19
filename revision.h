@@ -269,7 +269,9 @@ extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ct
 extern int handle_revision_arg(const char *arg, struct rev_info *revs,
 			       int flags, unsigned revarg_opt);
 
-extern void reset_revision_walk(void);
+#define reset_revision_walk(r) \
+	reset_revision_walk_##r()
+extern void reset_revision_walk_the_repository(void);
 extern int prepare_revision_walk(struct rev_info *revs);
 extern struct commit *get_revision(struct rev_info *revs);
 extern char *get_revision_mark(const struct rev_info *revs,
