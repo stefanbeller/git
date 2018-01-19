@@ -217,7 +217,9 @@ void add_pending_oid(struct rev_info *revs, const char *name,
 	add_pending_object(revs, object, name);
 }
 
-static struct commit *handle_commit(struct rev_info *revs,
+#define handle_commit(r, revs, e) \
+	handle_commit_##r(revs, e)
+static struct commit *handle_commit_the_repository(struct rev_info *revs,
 				    struct object_array_entry *entry)
 {
 	struct object *object = entry->item;
@@ -2862,7 +2864,7 @@ int prepare_revision_walk(struct rev_info *revs)
 	revs->pending.objects = NULL;
 	for (i = 0; i < old_pending.nr; i++) {
 		struct object_array_entry *e = old_pending.objects + i;
-		struct commit *commit = handle_commit(revs, e);
+		struct commit *commit = handle_commit(the_repository, revs, e);
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
 				commit->object.flags |= SEEN;
