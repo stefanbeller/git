@@ -1220,7 +1220,9 @@ static void handle_refs(struct ref_store *refs,
 	for_each(refs, handle_one_ref, &cb);
 }
 
-static void handle_one_reflog_commit(struct object_id *oid, void *cb_data)
+#define handle_one_reflog_commit(r, o, c) \
+	handle_one_reflog_commit_##r(o, c)
+static void handle_one_reflog_commit_the_repository(struct object_id *oid, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	if (!is_null_oid(oid)) {
@@ -1242,8 +1244,8 @@ static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
 		const char *email, timestamp_t timestamp, int tz,
 		const char *message, void *cb_data)
 {
-	handle_one_reflog_commit(ooid, cb_data);
-	handle_one_reflog_commit(noid, cb_data);
+	handle_one_reflog_commit(the_repository, ooid, cb_data);
+	handle_one_reflog_commit(the_repository, noid, cb_data);
 	return 0;
 }
 
