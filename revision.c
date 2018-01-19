@@ -1300,7 +1300,9 @@ void add_reflogs_to_pending(struct rev_info *revs, unsigned flags)
 		add_other_reflogs_to_pending(&cb);
 }
 
-static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
+#define add_cache_tree(r, i, revs, p) \
+	add_cache_tree_the_repository(i, revs, p)
+static void add_cache_tree_the_repository(struct cache_tree *it, struct rev_info *revs,
 			   struct strbuf *path)
 {
 	size_t baselen = path->len;
@@ -1315,7 +1317,7 @@ static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
 	for (i = 0; i < it->subtree_nr; i++) {
 		struct cache_tree_sub *sub = it->down[i];
 		strbuf_addf(path, "%s%s", baselen ? "/" : "", sub->name);
-		add_cache_tree(sub->cache_tree, revs, path);
+		add_cache_tree(the_repository, sub->cache_tree, revs, path);
 		strbuf_setlen(path, baselen);
 	}
 
@@ -1342,7 +1344,7 @@ static void do_add_index_objects_to_pending(struct rev_info *revs,
 
 	if (istate->cache_tree) {
 		struct strbuf path = STRBUF_INIT;
-		add_cache_tree(istate->cache_tree, revs, &path);
+		add_cache_tree(the_repository, istate->cache_tree, revs, &path);
 		strbuf_release(&path);
 	}
 }
