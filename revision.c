@@ -750,7 +750,9 @@ static void commit_list_insert_by_date_cached(struct commit *p, struct commit_li
 		*cache = new_entry;
 }
 
-static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
+#define add_parents_to_list(r, revs, c, l, p) \
+	add_parents_to_list_##r(revs, c, l, p)
+static int add_parents_to_list_the_repository(struct rev_info *revs, struct commit *commit,
 		    struct commit_list **list, struct commit_list **cache_ptr)
 {
 	struct commit_list *parent = commit->parents;
@@ -1061,7 +1063,7 @@ static int limit_list(struct rev_info *revs)
 
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			obj->flags |= UNINTERESTING;
-		if (add_parents_to_list(revs, commit, &list, NULL) < 0)
+		if (add_parents_to_list(the_repository, revs, commit, &list, NULL) < 0)
 			return -1;
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
@@ -2907,7 +2909,7 @@ static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp
 	for (;;) {
 		struct commit *p = *pp;
 		if (!revs->limited)
-			if (add_parents_to_list(revs, p, &revs->commits, &cache) < 0)
+			if (add_parents_to_list(the_repository, revs, p, &revs->commits, &cache) < 0)
 				return rewrite_one_error;
 		if (p->object.flags & UNINTERESTING)
 			return rewrite_one_ok;
@@ -3240,7 +3242,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 
 			if (revs->reflog_info)
 				try_to_simplify_commit(the_repository, revs, commit);
-			else if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
+			else if (add_parents_to_list(the_repository, revs, commit, &revs->commits, NULL) < 0) {
 				if (!revs->ignore_missing_links)
 					die("Failed to traverse parents of commit %s",
 						oid_to_hex(&commit->object.oid));
