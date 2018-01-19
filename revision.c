@@ -1473,7 +1473,9 @@ static void add_pending_commit_list(struct rev_info *revs,
 	}
 }
 
-static void prepare_show_merge(struct rev_info *revs)
+#define prepare_show_merge(r, revs) \
+	prepare_show_merge_##r(revs)
+static void prepare_show_merge_the_repository(struct rev_info *revs)
 {
 	struct commit_list *bases;
 	struct commit *head, *other;
@@ -2411,7 +2413,7 @@ int setup_revisions_the_repository(int argc, const char **argv, struct rev_info 
 	if (opt && opt->tweak)
 		opt->tweak(revs, opt);
 	if (revs->show_merge)
-		prepare_show_merge(revs);
+		prepare_show_merge(the_repository, revs);
 	if (revs->def && !revs->pending.nr && !revs->rev_input_given && !got_rev_arg) {
 		struct object_id oid;
 		struct object *object;
