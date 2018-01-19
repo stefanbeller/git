@@ -298,7 +298,9 @@ extern void add_pending_oid(struct rev_info *revs,
 	add_head_to_pending_##r(i)
 extern void add_head_to_pending_the_repository(struct rev_info *);
 extern void add_reflogs_to_pending(struct rev_info *, unsigned int flags);
-extern void add_index_objects_to_pending(struct rev_info *, unsigned int flags);
+#define add_index_objects_to_pending(r, revs, f) \
+	add_index_objects_to_pending_##r(revs, f)
+extern void add_index_objects_to_pending_the_repository(struct rev_info *, unsigned int flags);
 
 enum commit_action {
 	commit_ignore,

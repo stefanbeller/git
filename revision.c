@@ -1351,7 +1351,7 @@ static void do_add_index_objects_to_pending_the_repository(struct rev_info *revs
 	}
 }
 
-void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
+void add_index_objects_to_pending_the_repository(struct rev_info *revs, unsigned int flags)
 {
 	struct worktree **worktrees, **p;
 
@@ -2249,7 +2249,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
 	} else if (!strcmp(arg, "--indexed-objects")) {
-		add_index_objects_to_pending(revs, *flags);
+		add_index_objects_to_pending(the_repository, revs, *flags);
 	} else if (!strcmp(arg, "--not")) {
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
