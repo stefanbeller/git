@@ -607,7 +607,9 @@ static inline int limiting_can_increase_treesame(const struct rev_info *revs)
 	       !revs->first_parent_only;
 }
 
-static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
+#define try_to_simplify_commit(r, revs, c) \
+	try_to_simplify_commit_##r(revs, c)
+static void try_to_simplify_commit_the_repository(struct rev_info *revs, struct commit *commit)
 {
 	struct commit_list **pp, *parent;
 	struct treesame_state *ts = NULL;
@@ -798,7 +800,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 	 * simplify the commit history and find the parent
 	 * that has no differences in the path set if one exists.
 	 */
-	try_to_simplify_commit(revs, commit);
+	try_to_simplify_commit(the_repository, revs, commit);
 
 	if (revs->no_walk)
 		return 0;
@@ -3237,7 +3239,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 				continue;
 
 			if (revs->reflog_info)
-				try_to_simplify_commit(revs, commit);
+				try_to_simplify_commit(the_repository, revs, commit);
 			else if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
 				if (!revs->ignore_missing_links)
 					die("Failed to traverse parents of commit %s",
