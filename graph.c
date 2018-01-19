@@ -356,7 +356,7 @@ static int graph_is_interesting(struct git_graph *graph, struct commit *commit)
 	 * Otherwise, use get_commit_action() to see if this commit is
 	 * interesting
 	 */
-	return get_commit_action(graph->revs, commit) == commit_show;
+	return get_commit_action(the_repository, graph->revs, commit) == commit_show;
 }
 
 static struct commit_list *next_interesting_parent(struct git_graph *graph,

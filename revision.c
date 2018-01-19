@@ -3081,7 +3081,7 @@ static timestamp_t comparison_date(const struct rev_info *revs,
 		commit->date;
 }
 
-enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
+enum commit_action get_commit_action_the_repository(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
 		return commit_ignore;
@@ -3184,7 +3184,7 @@ struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit
 
 enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 {
-	enum commit_action action = get_commit_action(revs, commit);
+	enum commit_action action = get_commit_action(the_repository, revs, commit);
 
 	if (action == commit_show &&
 	    !revs->show_all &&
