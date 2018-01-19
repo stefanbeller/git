@@ -49,7 +49,9 @@ static void mark_blob_uninteresting(struct blob *blob)
 	blob->object.flags |= UNINTERESTING;
 }
 
-static void mark_tree_contents_uninteresting(struct tree *tree)
+#define mark_tree_contents_uninteresting(r, t) \
+	mark_tree_contents_uninteresting_##r(t)
+static void mark_tree_contents_uninteresting_the_repository(struct tree *tree)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
@@ -93,7 +95,7 @@ void mark_tree_uninteresting(struct tree *tree)
 	if (obj->flags & UNINTERESTING)
 		return;
 	obj->flags |= UNINTERESTING;
-	mark_tree_contents_uninteresting(tree);
+	mark_tree_contents_uninteresting(the_repository, tree);
 }
 
 void mark_parents_uninteresting(struct commit *commit)
@@ -273,7 +275,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 		if (!revs->tree_objects)
 			return NULL;
 		if (flags & UNINTERESTING) {
-			mark_tree_contents_uninteresting(tree);
+			mark_tree_contents_uninteresting(the_repository, tree);
 			return NULL;
 		}
 		add_pending_object_with_path(revs, object, name, mode, path);
