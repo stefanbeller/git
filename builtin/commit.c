@@ -1062,7 +1062,7 @@ static const char *find_author_by_nickname(const char *name)
 	av[++ac] = "-i";
 	av[++ac] = buf.buf;
 	av[++ac] = NULL;
-	setup_revisions(ac, av, &revs, NULL);
+	setup_revisions(the_repository, ac, av, &revs, NULL);
 	revs.mailmap = &mailmap;
 	read_mailmap(revs.mailmap, NULL);
 
@@ -1505,7 +1505,7 @@ static void print_summary(const char *prefix, const struct object_id *oid,
 	strbuf_release(&committer_ident);
 
 	init_revisions(&rev, prefix);
-	setup_revisions(0, NULL, &rev, NULL);
+	setup_revisions(the_repository, 0, NULL, &rev, NULL);
 
 	rev.diff = 1;
 	rev.diffopt.output_format =

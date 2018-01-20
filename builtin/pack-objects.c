@@ -2844,7 +2844,7 @@ static void get_object_list(int ac, const char **av)
 
 	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
-	setup_revisions(ac, av, &revs, NULL);
+	setup_revisions(the_repository, ac, av, &revs, NULL);
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);

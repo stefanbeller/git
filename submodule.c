@@ -428,7 +428,7 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 	struct commit_list *list;
 
 	init_revisions(rev, NULL);
-	setup_revisions(0, NULL, rev, NULL);
+	setup_revisions(the_repository, 0, NULL, rev, NULL);
 	rev->left_right = 1;
 	rev->first_parent_only = 1;
 	left->object.flags |= SYMMETRIC_LEFT;
@@ -801,7 +801,7 @@ static void collect_changed_submodules(struct string_list *changed,
 	const struct commit *commit;
 
 	init_revisions(&rev, NULL);
-	setup_revisions(argv->argc, argv->argv, &rev, NULL);
+	setup_revisions(the_repository, argv->argc, argv->argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
 
@@ -1745,7 +1745,8 @@ static int find_first_merges(struct object_array *result, const char *path,
 	rev_opts.submodule = path;
 	/* FIXME: can't handle linked worktrees in submodules yet */
 	revs.single_worktree = path != NULL;
-	setup_revisions(ARRAY_SIZE(rev_args)-1, rev_args, &revs, &rev_opts);
+	setup_revisions(the_repository, ARRAY_SIZE(rev_args)-1, rev_args,
+			&revs, &rev_opts);
 
 	/* save all revisions from the above list that contain b */
 	if (prepare_revision_walk(&revs))

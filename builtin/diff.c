@@ -354,7 +354,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 
 	if (nongit)
 		die(_("Not a git repository"));
-	argc = setup_revisions(argc, argv, &rev, NULL);
+	argc = setup_revisions(the_repository, argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format) {
 		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 		diff_setup_done(&rev.diffopt);

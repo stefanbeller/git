@@ -350,7 +350,7 @@ static void shortlog(const char *name,
 	if (!branch || branch->type != OBJ_COMMIT)
 		return;
 
-	setup_revisions(0, NULL, rev, NULL);
+	setup_revisions(the_repository, 0, NULL, rev, NULL);
 	add_pending_object(rev, branch, name);
 	add_pending_object(rev, &head->object, "^HEAD");
 	head->object.flags |= UNINTERESTING;

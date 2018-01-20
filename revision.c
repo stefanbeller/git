@@ -2285,7 +2285,7 @@ static void NORETURN diagnose_missing_default(const char *def)
  * Returns the number of arguments left that weren't recognized
  * (which are also moved to the head of the argument list)
  */
-int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
+int setup_revisions_the_repository(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *opt)
 {
 	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0, revarg_opt;
 	struct argv_array prune_data = ARGV_ARRAY_INIT;

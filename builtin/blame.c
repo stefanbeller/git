@@ -859,7 +859,7 @@ parse_done:
 	}
 
 	revs.disable_stdin = 1;
-	setup_revisions(argc, argv, &revs, NULL);
+	setup_revisions(the_repository, argc, argv, &revs, NULL);
 
 	init_scoreboard(&sb);
 	sb.revs = &revs;

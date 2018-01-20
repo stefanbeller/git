@@ -173,7 +173,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 
 	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
-	setup_revisions(ac, av, &revs, NULL);
+	setup_revisions(the_repository, ac, av, &revs, NULL);
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");

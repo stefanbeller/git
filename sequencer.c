@@ -2497,7 +2497,7 @@ int sequencer_make_script(FILE *out, int argc, const char **argv,
 	pp.fmt = revs.commit_format;
 	pp.output_encoding = get_log_output_encoding();
 
-	if (setup_revisions(argc, argv, &revs, NULL) > 1)
+	if (setup_revisions(the_repository, argc, argv, &revs, NULL) > 1)
 		return error(_("make_script: unhandled options"));
 
 	if (prepare_revision_walk(&revs) < 0)

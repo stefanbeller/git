@@ -32,7 +32,7 @@ static int run_revision_walk(void)
 	int got_revision = 0;
 
 	init_revisions(&rev, NULL);
-	setup_revisions(argc, argv, &rev, NULL);
+	setup_revisions(the_repository, argc, argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
 

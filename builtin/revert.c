@@ -181,7 +181,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 			argv[1] = "@{-1}";
 		memset(&s_r_opt, 0, sizeof(s_r_opt));
 		s_r_opt.assume_dashdash = 1;
-		argc = setup_revisions(argc, argv, opts->revs, &s_r_opt);
+		argc = setup_revisions(the_repository, argc, argv, opts->revs, &s_r_opt);
 	}
 
 	if (argc > 1)

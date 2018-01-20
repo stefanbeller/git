@@ -26,7 +26,7 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	rev.abbrev = 0;
 	precompose_argv(argc, argv);
 
-	argc = setup_revisions(argc, argv, &rev, NULL);
+	argc = setup_revisions(the_repository, argc, argv, &rev, NULL);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 

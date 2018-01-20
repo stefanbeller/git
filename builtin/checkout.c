@@ -796,7 +796,7 @@ static void orphaned_commit_warning(struct commit *old, struct commit *new)
 	struct object_array refs;
 
 	init_revisions(&revs, NULL);
-	setup_revisions(0, NULL, &revs, NULL);
+	setup_revisions(the_repository, 0, NULL, &revs, NULL);
 
 	object->flags &= ~UNINTERESTING;
 	add_pending_object(&revs, object, oid_to_hex(&object->oid));

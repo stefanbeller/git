@@ -557,7 +557,7 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	struct rev_info rev;
 
 	init_revisions(&rev, NULL);
-	setup_revisions(0, NULL, &rev, NULL);
+	setup_revisions(the_repository, 0, NULL, &rev, NULL);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.flags.dirty_submodules = 1;
 	rev.diffopt.ita_invisible_in_index = 1;
@@ -581,7 +581,7 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	init_revisions(&rev, NULL);
 	memset(&opt, 0, sizeof(opt));
 	opt.def = s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference;
-	setup_revisions(0, NULL, &rev, &opt);
+	setup_revisions(the_repository, 0, NULL, &rev, &opt);
 
 	rev.diffopt.flags.override_submodule_config = 1;
 	rev.diffopt.ita_invisible_in_index = 1;
@@ -959,7 +959,7 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 
 	memset(&opt, 0, sizeof(opt));
 	opt.def = s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference;
-	setup_revisions(0, NULL, &rev, &opt);
+	setup_revisions(the_repository, 0, NULL, &rev, &opt);
 
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;

@@ -120,7 +120,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	s_r_opt.tweak = diff_tree_tweak_rev;
 
 	precompose_argv(argc, argv);
-	argc = setup_revisions(argc, argv, opt, &s_r_opt);
+	argc = setup_revisions(the_repository, argc, argv, opt, &s_r_opt);
 
 	while (--argc > 0) {
 		const char *arg = *++argv;

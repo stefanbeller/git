@@ -176,7 +176,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 
 	if (quiet)
 		rev->diffopt.output_format |= DIFF_FORMAT_NO_OUTPUT;
-	argc = setup_revisions(argc, argv, rev, opt);
+	argc = setup_revisions(the_repository, argc, argv, rev, opt);
 
 	/* Any arguments at this point are not recognized */
 	if (argc > 1)
@@ -1604,7 +1604,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		die (_("--subject-prefix/--rfc and -k are mutually exclusive."));
 	rev.preserve_subject = keep_subject;
 
-	argc = setup_revisions(argc, argv, &rev, &s_r_opt);
+	argc = setup_revisions(the_repository, argc, argv, &rev, &s_r_opt);
 	if (argc > 1)
 		die (_("unrecognized argument: %s"), argv[1]);
 

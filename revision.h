@@ -259,7 +259,9 @@ struct setup_revision_opt {
 };
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
-extern int setup_revisions(int argc, const char **argv, struct rev_info *revs,
+#define setup_revisions(r, c, v, revs, o) \
+	setup_revisions_##r(c, v, revs, o)
+extern int setup_revisions_the_repository(int argc, const char **argv, struct rev_info *revs,
 			   struct setup_revision_opt *);
 extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 			       const struct option *options,

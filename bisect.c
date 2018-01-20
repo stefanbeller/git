@@ -641,7 +641,8 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
 	if (read_paths)
 		read_bisect_paths(&rev_argv);
 
-	setup_revisions(rev_argv.argc, rev_argv.argv, revs, NULL);
+	setup_revisions(the_repository, rev_argv.argc, rev_argv.argv, revs,
+			NULL);
 	/* XXX leak rev_argv, as "revs" may still be pointing to it */
 }
 
@@ -911,7 +912,7 @@ static void show_diff_tree(const char *prefix, struct commit *commit)
 	if (!opt.diffopt.output_format)
 		opt.diffopt.output_format = DIFF_FORMAT_RAW;
 
-	setup_revisions(0, NULL, &opt, NULL);
+	setup_revisions(the_repository, 0, NULL, &opt, NULL);
 	log_tree_commit(&opt, commit);
 }
 

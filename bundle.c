@@ -157,7 +157,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	if (revs.pending.nr != p->nr)
 		return ret;
 	req_nr = revs.pending.nr;
-	setup_revisions(2, argv, &revs, NULL);
+	setup_revisions(the_repository, 2, argv, &revs, NULL);
 
 	/* Save pending objects, so they can be cleaned up later. */
 	refs = revs.pending;
@@ -454,7 +454,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	if (compute_and_write_prerequisites(bundle_fd, &revs, argc, argv))
 		goto err;
 
-	argc = setup_revisions(argc, argv, &revs, NULL);
+	argc = setup_revisions(the_repository, argc, argv, &revs, NULL);
 
 	if (argc > 1) {
 		error(_("unrecognized argument: %s"), argv[1]);

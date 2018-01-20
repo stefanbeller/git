@@ -111,7 +111,7 @@ int add_files_to_cache(const char *prefix,
 	data.flags = flags;
 
 	init_revisions(&rev, prefix);
-	setup_revisions(0, NULL, &rev, NULL);
+	setup_revisions(the_repository, 0, NULL, &rev, NULL);
 	if (pathspec)
 		copy_pathspec(&rev.prune_data, pathspec);
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
@@ -235,7 +235,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 	init_revisions(&rev, prefix);
 	rev.diffopt.context = 7;
 
-	argc = setup_revisions(argc, argv, &rev, NULL);
+	argc = setup_revisions(the_repository, argc, argv, &rev, NULL);
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 	rev.diffopt.use_color = 0;
 	rev.diffopt.flags.ignore_dirty_submodules = 1;

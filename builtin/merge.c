@@ -364,7 +364,7 @@ static void squash_message(struct commit *commit, struct commit_list *remotehead
 	for (j = remoteheads; j; j = j->next)
 		add_pending_object(&rev, &j->item->object, NULL);
 
-	setup_revisions(0, NULL, &rev, NULL);
+	setup_revisions(the_repository, 0, NULL, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die(_("revision walk setup failed"));
 
@@ -881,7 +881,7 @@ static int evaluate_result(void)
 
 	/* Check how many files differ. */
 	init_revisions(&rev, "");
-	setup_revisions(0, NULL, &rev, NULL);
+	setup_revisions(the_repository, 0, NULL, &rev, NULL);
 	rev.diffopt.output_format |=
 		DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = count_diff_files;
