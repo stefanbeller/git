@@ -268,7 +268,9 @@ extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ct
 			       const char * const usagestr[]);
 #define REVARG_CANNOT_BE_FILENAME 01
 #define REVARG_COMMITTISH 02
-extern int handle_revision_arg(const char *arg, struct rev_info *revs,
+#define handle_revision_arg(r, a, revs, f, o) \
+	handle_revision_arg_##r(a, revs, f, o)
+extern int handle_revision_arg_the_repository(const char *arg, struct rev_info *revs,
 			       int flags, unsigned revarg_opt);
 
 #define reset_revision_walk(r) \

@@ -2871,7 +2871,7 @@ static void get_object_list(int ac, const char **av)
 			}
 			die("not a rev '%s'", line);
 		}
-		if (handle_revision_arg(line, &revs, flags, REVARG_CANNOT_BE_FILENAME))
+		if (handle_revision_arg(the_repository, line, &revs, flags, REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", line);
 	}
 

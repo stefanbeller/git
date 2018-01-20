@@ -1632,7 +1632,7 @@ static int handle_dotdot(const char *arg,
 	return ret;
 }
 
-int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsigned revarg_opt)
+int handle_revision_arg_the_repository(const char *arg_, struct rev_info *revs, int flags, unsigned revarg_opt)
 {
 	struct object_context oc;
 	char *mark;
@@ -1734,7 +1734,7 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 			}
 			die("options not supported in --stdin mode");
 		}
-		if (handle_revision_arg(sb.buf, revs, 0,
+		if (handle_revision_arg(the_repository, sb.buf, revs, 0,
 					REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", sb.buf);
 	}
@@ -2371,7 +2371,7 @@ int setup_revisions_the_repository(int argc, const char **argv, struct rev_info 
 		}
 
 
-		if (handle_revision_arg(arg, revs, flags, revarg_opt)) {
+		if (handle_revision_arg(the_repository, arg, revs, flags, revarg_opt)) {
 			int j;
 			if (seen_dashdash || *arg == '^')
 				die("bad revision '%s'", arg);
