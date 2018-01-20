@@ -210,7 +210,7 @@ static struct object *get_reference_the_repository(struct rev_info *revs, const 
 	return object;
 }
 
-void add_pending_oid(struct rev_info *revs, const char *name,
+void add_pending_oid_the_repository(struct rev_info *revs, const char *name,
 		      const struct object_id *oid, unsigned int flags)
 {
 	struct object *object = get_reference(the_repository, revs, name, oid, flags);
@@ -1182,7 +1182,7 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 
 	object = get_reference(the_repository, cb->all_revs, path, oid, cb->all_flags);
 	add_rev_cmdline(cb->all_revs, object, path, REV_CMD_REF, cb->all_flags);
-	add_pending_oid(cb->all_revs, path, oid, cb->all_flags);
+	add_pending_oid(the_repository, cb->all_revs, path, oid, cb->all_flags);
 	return 0;
 }
 

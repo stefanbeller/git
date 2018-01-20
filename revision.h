@@ -290,7 +290,9 @@ extern void show_object_with_name(FILE *, struct object *, const char *);
 
 extern void add_pending_object(struct rev_info *revs,
 			       struct object *obj, const char *name);
-extern void add_pending_oid(struct rev_info *revs,
+#define add_pending_oid(r, revs, n, o, f) \
+	add_pending_oid_##r(revs, n, o, f)
+extern void add_pending_oid_the_repository(struct rev_info *revs,
 			    const char *name, const struct object_id *oid,
 			    unsigned int flags);
 
