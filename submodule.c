@@ -154,24 +154,6 @@ void stage_updated_gitmodules(struct index_state *istate)
 		die(_("staging updated .gitmodules failed"));
 }
 
-static int add_submodule_odb(const char *path)
-{
-	struct strbuf objects_directory = STRBUF_INIT;
-	int ret = 0;
-
-	ret = strbuf_git_path_submodule(&objects_directory, path, "objects/");
-	if (ret)
-		goto done;
-	if (!is_directory(objects_directory.buf)) {
-		ret = -1;
-		goto done;
-	}
-	add_to_alternates_memory(the_repository, objects_directory.buf);
-done:
-	strbuf_release(&objects_directory);
-	return ret;
-}
-
 void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 					     const char *path)
 {
@@ -1802,6 +1784,7 @@ int merge_submodule(struct object_id *result, const char *path,
 	struct commit *commit_base, *commit_a, *commit_b;
 	int parent_count;
 	struct object_array merges;
+	struct repository sub;
 
 	int i;
 
@@ -1816,31 +1799,31 @@ int merge_submodule(struct object_id *result, const char *path,
 	if (is_null_oid(b))
 		return 0;
 
-	if (add_submodule_odb(path)) {
-		MERGE_WARNING(path, "not checked out");
+	if (open_submodule(&sub, path) < 0) {
+		MERGE_WARNING(path, "submodule not present");
 		return 0;
 	}
 
-	if (!(commit_base = lookup_commit_reference(the_repository, base)) ||
-	    !(commit_a = lookup_commit_reference(the_repository, a)) ||
-	    !(commit_b = lookup_commit_reference(the_repository, b))) {
+	if (!(commit_base = lookup_commit_reference(&sub, base)) ||
+	    !(commit_a = lookup_commit_reference(&sub, a)) ||
+	    !(commit_b = lookup_commit_reference(&sub, b))) {
 		MERGE_WARNING(path, "commits not present");
 		return 0;
 	}
 
 	/* check whether both changes are forward */
-	if (!in_merge_bases(the_repository, commit_base, commit_a) ||
-	    !in_merge_bases(the_repository, commit_base, commit_b)) {
+	if (!in_merge_bases(&sub, commit_base, commit_a) ||
+	    !in_merge_bases(&sub, commit_base, commit_b)) {
 		MERGE_WARNING(path, "commits don't follow merge-base");
 		return 0;
 	}
 
 	/* Case #1: a is contained in b or vice versa */
-	if (in_merge_bases(the_repository, commit_a, commit_b)) {
+	if (in_merge_bases(&sub, commit_a, commit_b)) {
 		oidcpy(result, b);
 		return 1;
 	}
-	if (in_merge_bases(the_repository, commit_b, commit_a)) {
+	if (in_merge_bases(&sub, commit_b, commit_a)) {
 		oidcpy(result, a);
 		return 1;
 	}
