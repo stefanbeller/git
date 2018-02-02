@@ -2312,6 +2312,8 @@ int setup_revisions_the_repository(int argc, const char **argv, struct rev_info 
 	if (opt)
 		submodule = opt->submodule;
 
+	revs->repo = the_repository;
+
 	/* First, search for "--" */
 	if (opt && opt->assume_dashdash) {
 		seen_dashdash = 1;

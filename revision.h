@@ -53,6 +53,9 @@ struct rev_cmdline_info {
 #define REVISION_WALK_NO_WALK_UNSORTED 2
 
 struct rev_info {
+	/* The repository the revision walk operates on */
+	struct repository *repo;
+
 	/* Starting list */
 	struct commit_list *commits;
 	struct object_array pending;
