@@ -215,7 +215,7 @@ static void show_submodule(struct repository *superproject,
 
 	show_files(&submodule, dir);
 
-	repo_clear(&submodule);
+	repo_free(&submodule);
 }
 
 static void show_ce(struct repository *repo, struct dir_struct *dir,
