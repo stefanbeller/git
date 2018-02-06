@@ -12,7 +12,7 @@ struct pack_window;
 enum object_type;
 extern int check_replace_refs;
 
-struct object_store {
+struct raw_object_store {
 	struct packed_git *packed_git;
 
 	/*
@@ -57,10 +57,10 @@ struct object_store {
 	 */
 	unsigned packed_git_initialized : 1;
 };
-#define OBJECT_STORE_INIT \
+#define RAW_OBJECT_STORE_INIT \
 	{ NULL, MRU_INIT, ALTERNATES_INIT, { NULL, 0, 0, 0 }, 0, 0, 0 }
 
-extern void object_store_clear(struct object_store *o);
+extern void raw_object_store_clear(struct raw_object_store *o);
 
 struct packed_git {
 	struct packed_git *next;

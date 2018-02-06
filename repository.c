@@ -6,7 +6,7 @@
 
 /* The main repository */
 static struct repository the_repo = {
-	NULL, NULL, NULL, OBJECT_STORE_INIT, NULL,
+	NULL, NULL, NULL, RAW_OBJECT_STORE_INIT, OBJECT_PARSER_INIT, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, &the_index, NULL, 0, 0
 };
 struct repository *the_repository = &the_repo;
@@ -217,7 +217,8 @@ void repo_clear(struct repository *repo)
 	FREE_AND_NULL(repo->worktree);
 	FREE_AND_NULL(repo->submodule_prefix);
 
-	object_store_clear(&repo->objects);
+	raw_object_store_clear(&repo->objects);
+	object_parser_clear(&repo->parsed_objects);
 
 	if (repo->config) {
 		git_configset_clear(repo->config);

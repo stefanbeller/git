@@ -1,6 +1,15 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+struct object_parser {
+	struct object **obj_hash;
+	int nr_objs, obj_hash_size;
+};
+
+#define OBJECT_PARSER_INIT { NULL, 0, 0 }
+
+extern void object_parser_clear(struct object_parser *o);
+
 struct object_list {
 	struct object *item;
 	struct object_list *next;
