@@ -466,4 +466,10 @@ void raw_object_store_clear(struct raw_object_store *o)
 
 	free_alt_odbs(o);
 	o->alt_odb_tail = NULL;
+
+	mru_clear(&o->packed_git_mru);
+	/*
+	 * TODO: call close_all_packs once migrated to
+	 * take an object store argument
+	 */
 }
