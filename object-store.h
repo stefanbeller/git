@@ -1,6 +1,8 @@
 #ifndef OBJECT_STORE_H
 #define OBJECT_STORE_H
 
+#include "cache.h"
+
 struct raw_object_store {
 	/*
 	 * Path to the repository's object store.
@@ -8,9 +10,12 @@ struct raw_object_store {
 	 */
 	char *objectdir;
 
+	struct alternate_object_database *alt_odb_list;
+	struct alternate_object_database **alt_odb_tail;
+
 	unsigned ignore_env : 1;
 };
-#define RAW_OBJECT_STORE_INIT { NULL, 0 }
+#define RAW_OBJECT_STORE_INIT { NULL, NULL, NULL, 0 }
 
 void raw_object_store_clear(struct raw_object_store *o);
 
