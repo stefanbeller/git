@@ -445,3 +445,8 @@ void clear_commit_marks_all(unsigned int flags)
 			obj->flags &= ~flags;
 	}
 }
+
+void raw_object_store_clear(struct raw_object_store *o)
+{
+	free(o->objectdir);
+}
