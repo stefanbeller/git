@@ -1,11 +1,18 @@
 #include "cache.h"
 #include "repository.h"
+#include "object-store.h"
 #include "config.h"
 #include "submodule-config.h"
 
 /* The main repository */
 static struct repository the_repo = {
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &the_index, &hash_algos[GIT_HASH_SHA1], 0, 0
+	NULL, NULL,
+	RAW_OBJECT_STORE_INIT,
+	NULL, NULL, NULL,
+	NULL, NULL, NULL,
+	&the_index,
+	&hash_algos[GIT_HASH_SHA1],
+	0, 0
 };
 struct repository *the_repository = &the_repo;
 
@@ -42,9 +49,11 @@ static void repo_setup_env(struct repository *repo)
 						    !repo->ignore_env);
 	free(repo->commondir);
 	repo->commondir = strbuf_detach(&sb, NULL);
-	free(repo->objectdir);
-	repo->objectdir = git_path_from_env(DB_ENVIRONMENT, repo->commondir,
+	free(repo->objects.objectdir);
+	repo->objects.objectdir = git_path_from_env(DB_ENVIRONMENT, repo->commondir,
 					    "objects", !repo->ignore_env);
+	repo->objects.ignore_env = repo->ignore_env;
+
 	free(repo->graft_file);
 	repo->graft_file = git_path_from_env(GRAFT_ENVIRONMENT, repo->commondir,
 					     "info/grafts", !repo->ignore_env);
@@ -209,11 +218,13 @@ void repo_clear(struct repository *repo)
 {
 	FREE_AND_NULL(repo->gitdir);
 	FREE_AND_NULL(repo->commondir);
-	FREE_AND_NULL(repo->objectdir);
 	FREE_AND_NULL(repo->graft_file);
 	FREE_AND_NULL(repo->index_file);
 	FREE_AND_NULL(repo->worktree);
 	FREE_AND_NULL(repo->submodule_prefix);
+
+	raw_object_store_clear(&repo->objects);
+	memset(&repo->objects, 0, sizeof(repo->objects));
 
 	if (repo->config) {
 		git_configset_clear(repo->config);
