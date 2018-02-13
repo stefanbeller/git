@@ -677,21 +677,22 @@ int foreach_alt_odb(alt_odb_fn fn, void *cb)
 	return r;
 }
 
-void prepare_alt_odb_the_repository(void)
+void prepare_alt_odb(struct repository *r)
 {
-	const char *alt;
-
-	if (the_repository->objects.alt_odb_tail)
+	if (r->objects.alt_odb_tail)
 		return;
 
-	alt = getenv(ALTERNATE_DB_ENVIRONMENT);
+	r->objects.alt_odb_tail = &r->objects.alt_odb_list;
 
-	the_repository->objects.alt_odb_tail =
-			&the_repository->objects.alt_odb_list;
-	link_alt_odb_entries(the_repository, alt,
-			     PATH_SEP, NULL, 0);
+	if (!r->ignore_env) {
+		const char *alt = getenv(ALTERNATE_DB_ENVIRONMENT);
+		if (!alt)
+			alt = "";
 
-	read_info_alternates(the_repository, get_object_directory(), 0);
+		link_alt_odb_entries(r, alt, PATH_SEP, NULL, 0);
+	}
+
+	read_info_alternates(r, r->objects.objectdir, 0);
 }
 
 /* Returns 1 if we have successfully freshened the file, 0 otherwise. */

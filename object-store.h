@@ -61,7 +61,6 @@ struct packed_git {
 	char pack_name[FLEX_ARRAY]; /* more */
 };
 
-#define prepare_alt_odb(r) prepare_alt_odb_##r()
-extern void prepare_alt_odb_the_repository(void);
+void prepare_alt_odb(struct repository *r);
 
 #endif /* OBJECT_STORE_H */
