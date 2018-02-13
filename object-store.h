@@ -68,8 +68,7 @@ struct packed_git {
  * is overwritten each time the function is called.
  */
 const char *sha1_file_name(struct repository *r, const unsigned char *sha1);
-#define map_sha1_file(r, s, sz) map_sha1_file_##r(s, sz)
-void *map_sha1_file_the_repository(const unsigned char *sha1, unsigned long *size);
+extern void *map_sha1_file(struct repository *r, const unsigned char *sha1, unsigned long *size);
 
 void prepare_alt_odb(struct repository *r);
 
