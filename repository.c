@@ -144,6 +144,9 @@ int repo_init(struct repository *repo, const char *gitdir, const char *worktree)
 
 	repo->ignore_env = 1;
 
+	repo->objects.ignore_env = 1;
+	INIT_LIST_HEAD(&repo->objects.packed_git_mru);
+
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
 
