@@ -24,6 +24,14 @@ struct raw_object_store {
 	unsigned ignore_env : 1;
 
 	/*
+	 * A fast, rough count of the number of objects in the repository.
+	 * These two fields are not meant for direct access. Use
+	 * approximate_object_count() instead.
+	 */
+	unsigned long approximate_object_count;
+	unsigned approximate_object_count_valid : 1;
+
+	/*
 	 * Whether packed_git has already been populated with this repository's
 	 * packs.
 	 */
@@ -31,7 +39,7 @@ struct raw_object_store {
 };
 
 #define MRU_LIST_INIT {NULL, NULL}
-#define RAW_OBJECT_STORE_INIT { NULL, NULL, MRU_LIST_INIT, NULL, NULL, 0, 0 }
+#define RAW_OBJECT_STORE_INIT { NULL, NULL, MRU_LIST_INIT, NULL, NULL, 0, 0, 0, 0 }
 
 void raw_object_store_clear(struct raw_object_store *o);
 
