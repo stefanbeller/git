@@ -73,6 +73,8 @@ extern struct packed_git {
  */
 void sha1_file_name(struct raw_object_store *o, struct strbuf *buf, const unsigned char *sha1);
 
+void *map_sha1_file(struct raw_object_store *o, const unsigned char *sha1, unsigned long *size);
+
 void prepare_alt_odb(struct raw_object_store *o);
 
 #endif /* OBJECT_STORE_H */

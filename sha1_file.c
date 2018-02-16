@@ -962,9 +962,10 @@ static void *map_sha1_file_1(struct raw_object_store *o, const char *path,
 	return map;
 }
 
-void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
+void *map_sha1_file(struct raw_object_store *o,
+		    const unsigned char *sha1, unsigned long *size)
 {
-	return map_sha1_file_1(&the_repository->objects, NULL, sha1, size);
+	return map_sha1_file_1(o, NULL, sha1, size);
 }
 
 static int unpack_sha1_short_header(git_zstream *stream,
@@ -1186,7 +1187,7 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 		return 0;
 	}
 
-	map = map_sha1_file(sha1, &mapsize);
+	map = map_sha1_file(&the_repository->objects, sha1, &mapsize);
 	if (!map)
 		return -1;
 
