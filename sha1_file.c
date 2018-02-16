@@ -1154,7 +1154,8 @@ int parse_sha1_header(const char *hdr, unsigned long *sizep)
 	return parse_sha1_header_extended(hdr, &oi, 0);
 }
 
-static int sha1_loose_object_info(const unsigned char *sha1,
+static int sha1_loose_object_info(struct raw_object_store *o,
+				  const unsigned char *sha1,
 				  struct object_info *oi,
 				  int flags)
 {
@@ -1180,14 +1181,14 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	if (!oi->typep && !oi->typename && !oi->sizep && !oi->contentp) {
 		const char *path;
 		struct stat st;
-		if (stat_sha1_file(&the_repository->objects, sha1, &st, &path) < 0)
+		if (stat_sha1_file(o, sha1, &st, &path) < 0)
 			return -1;
 		if (oi->disk_sizep)
 			*oi->disk_sizep = st.st_size;
 		return 0;
 	}
 
-	map = map_sha1_file(&the_repository->objects, sha1, &mapsize);
+	map = map_sha1_file(o, sha1, &mapsize);
 	if (!map)
 		return -1;
 
@@ -1275,7 +1276,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 			break;
 
 		/* Most likely it's a loose object. */
-		if (!sha1_loose_object_info(real, oi, flags))
+		if (!sha1_loose_object_info(&the_repository->objects, real, oi, flags))
 			return 0;
 
 		/* Not a loose object; someone else may have just packed it. */
