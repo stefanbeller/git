@@ -67,6 +67,12 @@ extern struct packed_git {
 	char pack_name[FLEX_ARRAY]; /* more */
 } *packed_git;
 
+/*
+ * Put in `buf` the name of the file in the local object database that
+ * would be used to store a loose object with the specified sha1.
+ */
+void sha1_file_name(struct raw_object_store *o, struct strbuf *buf, const unsigned char *sha1);
+
 void prepare_alt_odb(struct raw_object_store *o);
 
 #endif /* OBJECT_STORE_H */

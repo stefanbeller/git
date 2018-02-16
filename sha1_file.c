@@ -323,9 +323,9 @@ static void fill_sha1_path(struct strbuf *buf, const unsigned char *sha1)
 	}
 }
 
-void sha1_file_name(struct strbuf *buf, const unsigned char *sha1)
+void sha1_file_name(struct raw_object_store *o, struct strbuf *buf, const unsigned char *sha1)
 {
-	strbuf_addstr(buf, get_object_directory());
+	strbuf_addstr(buf, o->objectdir);
 	strbuf_addch(buf, '/');
 	fill_sha1_path(buf, sha1);
 }
@@ -717,7 +717,7 @@ static int check_and_freshen_local(const unsigned char *sha1, int freshen)
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	sha1_file_name(&buf, sha1);
+	sha1_file_name(&the_repository->objects, &buf, sha1);
 
 	return check_and_freshen_file(buf.buf, freshen);
 }
@@ -878,7 +878,7 @@ static int stat_sha1_file(const unsigned char *sha1, struct stat *st,
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	sha1_file_name(&buf, sha1);
+	sha1_file_name(&the_repository->objects, &buf, sha1);
 	*path = buf.buf;
 
 	if (!lstat(*path, st))
@@ -907,7 +907,7 @@ static int open_sha1_file(const unsigned char *sha1, const char **path)
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	sha1_file_name(&buf, sha1);
+	sha1_file_name(&the_repository->objects, &buf, sha1);
 	*path = buf.buf;
 
 	fd = git_open(*path);
@@ -1592,7 +1592,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	static struct strbuf filename = STRBUF_INIT;
 
 	strbuf_reset(&filename);
-	sha1_file_name(&filename, sha1);
+	sha1_file_name(&the_repository->objects, &filename, sha1);
 
 	fd = create_tmpfile(&tmp_file, filename.buf);
 	if (fd < 0) {
