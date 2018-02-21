@@ -92,6 +92,12 @@ struct raw_object_store {
 
 	struct alternate_object_database *alt_odb_list;
 	struct alternate_object_database **alt_odb_tail;
+
+	/*
+	 * Whether packed_git has already been populated with this repository's
+	 * packs.
+	 */
+	unsigned packed_git_initialized : 1;
 };
 
 /*
@@ -101,7 +107,7 @@ struct raw_object_store {
  * that macro on member variables. Use NULL instead as that is defined
  * and accepted, deferring the real init to prepare_packed_git_mru(). */
 #define __MRU_INIT { NULL, NULL }
-#define RAW_OBJECT_STORE_INIT { NULL, NULL, __MRU_INIT, NULL, NULL }
+#define RAW_OBJECT_STORE_INIT { NULL, NULL, __MRU_INIT, NULL, NULL, 0 }
 
 void raw_object_store_clear(struct raw_object_store *o);
 
