@@ -1,7 +1,7 @@
 #ifndef OBJECT_STORE_H
 #define OBJECT_STORE_H
 
-extern struct alternate_object_database {
+struct alternate_object_database {
 	struct alternate_object_database *next;
 
 	/* see alt_scratch_buf() */
@@ -19,7 +19,7 @@ extern struct alternate_object_database {
 	struct oid_array loose_objects_cache;
 
 	char path[FLEX_ARRAY];
-} *alt_odb_list;
+};
 void prepare_alt_odb(void);
 char *compute_alternate_path(const char *path, struct strbuf *err);
 typedef int alt_odb_fn(struct alternate_object_database *, void *);
@@ -58,8 +58,11 @@ struct raw_object_store {
 	 * Cannot be NULL after initialization.
 	 */
 	char *objectdir;
+
+	struct alternate_object_database *alt_odb_list;
+	struct alternate_object_database **alt_odb_tail;
 };
-#define RAW_OBJECT_STORE_INIT { NULL }
+#define RAW_OBJECT_STORE_INIT { NULL, NULL, NULL }
 
 void raw_object_store_clear(struct raw_object_store *o);
 
