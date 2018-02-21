@@ -52,6 +52,30 @@ void add_to_alternates_memory(const char *dir);
  */
 struct strbuf *alt_scratch_buf(struct alternate_object_database *alt);
 
+struct packed_git {
+	struct packed_git *next;
+	struct list_head mru;
+	struct pack_window *windows;
+	off_t pack_size;
+	const void *index_data;
+	size_t index_size;
+	uint32_t num_objects;
+	uint32_t num_bad_objects;
+	unsigned char *bad_object_sha1;
+	int index_version;
+	time_t mtime;
+	int pack_fd;
+	unsigned pack_local:1,
+		 pack_keep:1,
+		 freshened:1,
+		 do_not_close:1,
+		 pack_promisor:1;
+	unsigned char sha1[20];
+	struct revindex_entry *revindex;
+	/* something like ".git/objects/pack/xxxxx.pack" */
+	char pack_name[FLEX_ARRAY]; /* more */
+};
+
 struct raw_object_store {
 	/*
 	 * Path to the repository's object store.
@@ -59,10 +83,25 @@ struct raw_object_store {
 	 */
 	char *objectdir;
 
+	struct packed_git *packed_git;
+	/*
+	 * A most-recently-used ordered version of the packed_git list, which can
+	 * be iterated instead of packed_git (and marked via mru_mark).
+	 */
+	struct list_head packed_git_mru;
+
 	struct alternate_object_database *alt_odb_list;
 	struct alternate_object_database **alt_odb_tail;
 };
-#define RAW_OBJECT_STORE_INIT { NULL, NULL, NULL }
+
+/*
+ * The mru list_head is supposed to be initialized using
+ * the LIST_HEAD macro, assigning prev/next to itself.
+ * However this doesn't work in this case as some compilers dislike
+ * that macro on member variables. Use NULL instead as that is defined
+ * and accepted, deferring the real init to prepare_packed_git_mru(). */
+#define __MRU_INIT { NULL, NULL }
+#define RAW_OBJECT_STORE_INIT { NULL, NULL, __MRU_INIT, NULL, NULL }
 
 void raw_object_store_clear(struct raw_object_store *o);
 
