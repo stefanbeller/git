@@ -87,12 +87,9 @@ struct raw_object_store {
 	 */
 	char *objectdir;
 
-	struct packed_git *packed_git;
-	/*
-	 * A most-recently-used ordered version of the packed_git list, which can
-	 * be iterated instead of packed_git (and marked via mru_mark).
-	 */
-	struct list_head packed_git_mru;
+	struct packed_git *packed_git; /* private */
+	/* A most-recently-used ordered version of the packed_git list. */
+	struct list_head packed_git_mru; /* private */
 
 	struct alternate_object_database *alt_odb_list;
 	struct alternate_object_database **alt_odb_tail;
