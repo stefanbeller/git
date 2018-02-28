@@ -1273,7 +1273,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 	}
 
 	while (1) {
-		if (find_pack_entry(real, &e))
+		if (find_pack_entry(the_repository, real, &e))
 			break;
 
 		/* Most likely it's a loose object. */
@@ -1282,7 +1282,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 
 		/* Not a loose object; someone else may have just packed it. */
 		reprepare_packed_git(the_repository);
-		if (find_pack_entry(real, &e))
+		if (find_pack_entry(the_repository, real, &e))
 			break;
 
 		/* Check if it is a missing object */
@@ -1662,7 +1662,7 @@ static int freshen_loose_object(const unsigned char *sha1)
 static int freshen_packed_object(const unsigned char *sha1)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(sha1, &e))
+	if (!find_pack_entry(the_repository, sha1, &e))
 		return 0;
 	if (e.p->freshened)
 		return 1;
