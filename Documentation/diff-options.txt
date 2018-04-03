@@ -276,6 +276,11 @@ plain::
 	that are added somewhere else in the diff. This mode picks up any
 	moved line, but it is not very useful in a review to determine
 	if a block of code was moved without permutation.
+blocks:
+	Blocks of moved text of at least 20 alphanumeric characters
+	are detected greedily. The detected blocks are
+	painted using either the 'color.diff.{old,new}Moved' color.
+	Adjacent blocks cannot be told apart.
 zebra::
 	Blocks of moved text of at least 20 alphanumeric characters
 	are detected greedily. The detected blocks are
