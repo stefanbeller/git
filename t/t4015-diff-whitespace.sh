@@ -1791,45 +1791,19 @@ test_expect_success 'move detection with submodules' '
 	git submodule deinit bananas
 '
 
-test_expect_success 'move detection only ignores white spaces' '
+test_expect_success 'only move detection ignores white spaces' '
 	git reset --hard &&
-	q_to_tab <<-\EOF >function.c &&
-	int func()
-	{
-	Qif (foo) {
-	QQ// this part of the function
-	QQ// function will be very long
-	QQ// indeed. We must exceed both
-	QQ// per-line and number of line
-	QQ// minimums
-	QQ;
-	Q}
-	Qbaz();
-	Qbar();
-	Q// more unrelated stuff
-	}
+	q_to_tab <<-\EOF >text.txt &&
+		a long line to exceed per-line minimum
+		another long line to exceed per-line minimum
+		original file
 	EOF
-	git add function.c &&
-	git commit -m "add function.c" &&
+	git add text.txt &&
+	git commit -m "add text" &&
 	q_to_tab <<-\EOF >function.c &&
-	int do_foo()
-	{
-	Q// this part of the function
-	Q// function will be very long
-	Q// indeed. We must exceed both
-	Q// per-line and number of line
-	Q// minimums
-	Q;
-	}
-
-	int func()
-	{
-	Qif (foo)
-	QQdo_foo();
-	Qbaz();
-	Qbar();
-	Q// more unrelated stuff
-	}
+		Qa long line to exceed per-line minimum
+		Qanother long line to exceed per-line minimum
+		new file
 	EOF
 
 	# Make sure we get a different diff using -w ("moved function header")
