@@ -22,9 +22,18 @@ struct repository {
 	char *commondir;
 
 	/*
-	 * Holds any information related to accessing the raw object content.
+	 * Holds any information needed to retrieve the raw content
+	 * of objects. The object_parser uses this to get object
+	 * content which it then parses.
 	 */
 	struct raw_object_store *objects;
+
+	/*
+	 * State for the object parser. This owns all parsed objects
+	 * (struct object) so callers do not have to manage their
+	 * lifetime.
+	 */
+	struct object_parser *parsed_objects;
 
 	/* The store in which the refs are held. */
 	struct ref_store *refs;
