@@ -16,10 +16,15 @@ struct object_parser {
 	struct alloc_state *tag_state;
 	struct alloc_state *object_state;
 	unsigned commit_count;
+
+	int is_shallow;
+	struct stat_validity *shallow_stat;
+	char *alternate_shallow_file;
 };
 
 struct object_parser *object_parser_new(int is_the_repo);
 void object_parser_clear(struct object_parser *o);
+struct stat_validity the_repository_shallow_stat;
 
 struct object_list {
 	struct object *item;

@@ -159,6 +159,10 @@ static int repo_init(struct repository *repo,
 	if (worktree)
 		repo_set_worktree(repo, worktree);
 
+	repo->parsed_objects->is_shallow = -1;
+	repo->parsed_objects->shallow_stat = xcalloc(1, sizeof(
+		*repo->parsed_objects->shallow_stat));
+
 	return 0;
 
 error:
