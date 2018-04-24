@@ -304,6 +304,10 @@ dimmed_zebra::
 	Ignore whitespace when comparing lines when performing the move
 	detection for --color-moved.  This ignores differences even if
 	one line has whitespace where the other line has none.
+--color-moved-allow-indentation-change::
+	Initially ignore any white spaces in the move detection, then
+	group the moved code blocks only into a block if the change in
+	whitespace is the same per line.
 
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.

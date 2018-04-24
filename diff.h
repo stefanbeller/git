@@ -214,7 +214,9 @@ struct diff_options {
 	} color_moved;
 	#define COLOR_MOVED_DEFAULT COLOR_MOVED_ZEBRA
 	#define COLOR_MOVED_MIN_ALNUM_COUNT 20
+	/* XDF_WHITESPACE_FLAGS regarding block detection are set at 2, 3, 4 */
 	int color_moved_ws_handling;
+	int color_moved_allow_indent_change;
 };
 
 void diff_emit_submodule_del(struct diff_options *o, const char *line);
