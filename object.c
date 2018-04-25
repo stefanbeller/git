@@ -1,11 +1,11 @@
 #include "cache.h"
 #include "object.h"
 #include "replace-object.h"
+#include "object-store.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
 #include "tag.h"
-#include "object-store.h"
 #include "packfile.h"
 
 static struct object **obj_hash;
