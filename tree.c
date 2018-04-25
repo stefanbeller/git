@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree-walk.h"
+#include "repository.h"
 
 const char *tree_type = "tree";
 
@@ -242,7 +243,7 @@ void free_tree_buffer(struct tree *tree)
 
 struct tree *parse_tree_indirect(const struct object_id *oid)
 {
-	struct object *obj = parse_object(oid);
+	struct object *obj = parse_object(the_repository, oid);
 	do {
 		if (!obj)
 			return NULL;
@@ -255,6 +256,6 @@ struct tree *parse_tree_indirect(const struct object_id *oid)
 		else
 			return NULL;
 		if (!obj->parsed)
-			parse_object(&obj->oid);
+			parse_object(the_repository, &obj->oid);
 	} while (1);
 }
