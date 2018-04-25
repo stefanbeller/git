@@ -82,7 +82,7 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
  * Look up the record for the given sha1 in the hash map stored in
  * obj_hash.  Return NULL if it was not found.
  */
-struct object *lookup_object(const unsigned char *sha1)
+struct object *lookup_object_the_repository(const unsigned char *sha1)
 {
 	unsigned int i, first;
 	struct object *obj;
@@ -176,7 +176,7 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 
 struct object *lookup_unknown_object(const unsigned char *sha1)
 {
-	struct object *obj = lookup_object(sha1);
+	struct object *obj = lookup_object(the_repository, sha1);
 	if (!obj)
 		obj = create_object(the_repository, sha1,
 				    alloc_object_node());
@@ -252,7 +252,7 @@ struct object *parse_object_the_repository(const struct object_id *oid)
 	void *buffer;
 	struct object *obj;
 
-	obj = lookup_object(oid->hash);
+	obj = lookup_object(the_repository, oid->hash);
 	if (obj && obj->parsed)
 		return obj;
 
@@ -264,7 +264,7 @@ struct object *parse_object_the_repository(const struct object_id *oid)
 			return NULL;
 		}
 		parse_blob_buffer(lookup_blob(oid), NULL, 0);
-		return lookup_object(oid->hash);
+		return lookup_object(the_repository, oid->hash);
 	}
 
 	buffer = read_object_file(oid, &type, &size);
