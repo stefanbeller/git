@@ -20,6 +20,8 @@ struct object_parser {
 	int is_shallow;
 	struct stat_validity *shallow_stat;
 	char *alternate_shallow_file;
+
+	int commit_graft_prepared;
 };
 
 struct object_parser *object_parser_new(int is_the_repo);
