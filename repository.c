@@ -15,7 +15,7 @@ void initialize_the_repository(void)
 
 	the_repo.index = &the_index;
 	the_repo.objects = raw_object_store_new();
-	the_repo.parsed_objects = object_parser_new();
+	the_repo.parsed_objects = object_parser_new(1);
 
 	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
@@ -146,7 +146,7 @@ static int repo_init(struct repository *repo,
 	memset(repo, 0, sizeof(*repo));
 
 	repo->objects = raw_object_store_new();
-	repo->parsed_objects = object_parser_new();
+	repo->parsed_objects = object_parser_new(0);
 
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;

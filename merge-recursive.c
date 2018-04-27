@@ -16,6 +16,7 @@
 #include "tree-walk.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "alloc.h"
 #include "tag.h"
 #include "unpack-trees.h"
 #include "string-list.h"

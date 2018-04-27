@@ -5,6 +5,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
+#include "alloc.h"
 #include "tag.h"
 #include "packfile.h"
 
@@ -452,10 +453,24 @@ void clear_commit_marks_all(unsigned int flags)
 	}
 }
 
-struct object_parser *object_parser_new(void)
+struct object_parser *object_parser_new(int is_the_repo)
 {
 	struct object_parser *o = xmalloc(sizeof(*o));
 	memset(o, 0, sizeof(*o));
+
+	if (is_the_repo) {
+		o->blob_state = &the_repository_blob_state;
+		o->tree_state = &the_repository_tree_state;
+		o->commit_state = &the_repository_commit_state;
+		o->tag_state = &the_repository_tag_state;
+		o->object_state = &the_repository_object_state;
+	} else {
+		o->blob_state = allocate_alloc_state();
+		o->tree_state = allocate_alloc_state();
+		o->commit_state = allocate_alloc_state();
+		o->tag_state = allocate_alloc_state();
+		o->object_state = allocate_alloc_state();
+	}
 	return o;
 }
 
