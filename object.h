@@ -6,11 +6,7 @@ struct parsed_object_pool {
 	int nr_objs, obj_hash_size;
 
 	/* TODO: migrate alloc_states to mem-pool? */
-	struct alloc_state *blob_state;
-	struct alloc_state *tree_state;
-	struct alloc_state *commit_state;
-	struct alloc_state *tag_state;
-	struct alloc_state *object_state;
+	struct object_allocs *allocs;
 	unsigned commit_count;
 };
 
@@ -101,7 +97,7 @@ extern struct object *get_indexed_object(unsigned int);
  */
 struct object *lookup_object(const unsigned char *sha1);
 
-extern void *create_object(struct repository *r, const unsigned char *sha1, void *obj);
+void *create_object(struct repository *r, const unsigned char *sha1, enum object_type type);
 
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
 

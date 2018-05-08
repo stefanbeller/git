@@ -140,9 +140,11 @@ static void grow_object_hash(struct repository *r)
 	r->parsed_objects->obj_hash_size = new_hash_size;
 }
 
-void *create_object(struct repository *r, const unsigned char *sha1, void *o)
+void *create_object(struct repository *r, const unsigned char *sha1, enum object_type type)
 {
-	struct object *obj = o;
+	struct object *obj;
+
+	allocate_memory(r->parsed_objects->allocs, type, &obj);
 
 	obj->parsed = 0;
 	obj->flags = 0;
@@ -163,7 +165,7 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 		return obj;
 	else if (obj->type == OBJ_NONE) {
 		if (type == OBJ_COMMIT)
-			((struct commit *)obj)->index = alloc_commit_index(the_repository);
+			((struct commit *)obj)->index = alloc_commit_index(the_repository->parsed_objects->allocs);
 		obj->type = type;
 		return obj;
 	}
@@ -180,8 +182,7 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj)
-		obj = create_object(the_repository, sha1,
-				    alloc_object_node(the_repository));
+		obj = create_object(the_repository, sha1, OBJ_NONE);
 	return obj;
 }
 
@@ -457,11 +458,7 @@ struct parsed_object_pool *parsed_object_pool_new(void)
 	struct parsed_object_pool *o = xmalloc(sizeof(*o));
 	memset(o, 0, sizeof(*o));
 
-	o->blob_state = allocate_alloc_state();
-	o->tree_state = allocate_alloc_state();
-	o->commit_state = allocate_alloc_state();
-	o->tag_state = allocate_alloc_state();
-	o->object_state = allocate_alloc_state();
+	o->allocs = allocate_object_allocs();
 
 	return o;
 }
@@ -534,14 +531,6 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 	FREE_AND_NULL(o->obj_hash);
 	o->obj_hash_size = 0;
 
-	clear_alloc_state(o->blob_state);
-	clear_alloc_state(o->tree_state);
-	clear_alloc_state(o->commit_state);
-	clear_alloc_state(o->tag_state);
-	clear_alloc_state(o->object_state);
-	FREE_AND_NULL(o->blob_state);
-	FREE_AND_NULL(o->tree_state);
-	FREE_AND_NULL(o->commit_state);
-	FREE_AND_NULL(o->tag_state);
-	FREE_AND_NULL(o->object_state);
+	clear_object_allocs(o->allocs);
+	FREE_AND_NULL(o->allocs);
 }

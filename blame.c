@@ -162,7 +162,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 
 	read_cache();
 	time(&now);
-	commit = alloc_commit_node(the_repository);
+	commit = create_object(the_repository, null_sha1, OBJ_COMMIT);
 	commit->object.parsed = 1;
 	commit->date = now;
 	parent_tail = &commit->parents;

@@ -26,22 +26,37 @@ union any_object {
 	struct tag tag;
 };
 
-struct alloc_state {
-	int count; /* total number of nodes allocated */
-	int nr;    /* number of nodes left in current allocation */
-	void *p;   /* first free node in current allocation */
+/* what about OBJ_BAD ? */
+unsigned node_size[] = {sizeof(union any_object),
+			sizeof(struct commit),
+			sizeof(struct tree),
+			sizeof(struct blob),
+			sizeof(struct tag),
+			sizeof(union any_object)};
 
-	/* bookkeeping of allocations */
+/*
+ * Each slab
+ *  - contains only structs of the same object type, hence no alignment issues
+ *  - contains a fixed number of structs.
+ *    The number is the same regardless of object type.
+ *
+ */
+struct object_allocs {
+	int slab_idx[1<<TYPE_BITS]; /* index in slabs of latest slab */
+	int nr[1<<TYPE_BITS];       /* number of nodes left in current allocation */
+
 	void **slabs;
 	int slab_nr, slab_alloc;
+
+	int commit_count;
 };
 
-void *allocate_alloc_state(void)
+void *allocate_object_allocs(void)
 {
-	return xcalloc(1, sizeof(struct alloc_state));
+	return xcalloc(1, sizeof(struct object_allocs));
 }
 
-void clear_alloc_state(struct alloc_state *s)
+void clear_object_allocs(struct object_allocs *s)
 {
 	while (s->slab_nr > 0) {
 		s->slab_nr--;
@@ -51,82 +66,37 @@ void clear_alloc_state(struct alloc_state *s)
 	FREE_AND_NULL(s->slabs);
 }
 
-static inline void *alloc_node(struct alloc_state *s, size_t node_size)
+void allocate_memory(struct object_allocs *s, unsigned type, struct object **mem)
 {
-	void *ret;
+	unsigned ns = node_size[type];
+	struct object *obj;
+	unsigned node_idx, slab_idx;
 
-	if (!s->nr) {
-		s->nr = BLOCKING;
-		s->p = xmalloc(BLOCKING * node_size);
-
+	if (!s->nr[type]) {
 		ALLOC_GROW(s->slabs, s->slab_nr + 1, s->slab_alloc);
-		s->slabs[s->slab_nr++] = s->p;
+
+		s->slabs[s->slab_nr] = xcalloc(BLOCKING, ns);
+		s->slab_idx[type] = s->slab_nr;
+
+		s->nr[type] = BLOCKING;
+		s->slab_nr++;
 	}
-	s->nr--;
-	s->count++;
-	ret = s->p;
-	s->p = (char *)s->p + node_size;
-	memset(ret, 0, node_size);
 
-	return ret;
+	node_idx = BLOCKING - s->nr[type];
+	s->nr[type]--;
+
+	slab_idx = s->slab_idx[type];
+
+	obj = (struct object*) & ((char*) s->slabs[slab_idx]) [node_idx * node_size[type]];
+
+	obj->type = type;
+	if (type == OBJ_COMMIT)
+		((struct commit *)obj)->index = alloc_commit_index(s);
+
+	*mem = obj;
 }
 
-void *alloc_blob_node(struct repository *r)
+unsigned int alloc_commit_index(struct object_allocs *s)
 {
-	struct blob *b = alloc_node(r->parsed_objects->blob_state, sizeof(struct blob));
-	b->object.type = OBJ_BLOB;
-	return b;
-}
-
-void *alloc_tree_node(struct repository *r)
-{
-	struct tree *t = alloc_node(r->parsed_objects->tree_state, sizeof(struct tree));
-	t->object.type = OBJ_TREE;
-	return t;
-}
-
-void *alloc_tag_node(struct repository *r)
-{
-	struct tag *t = alloc_node(r->parsed_objects->tag_state, sizeof(struct tag));
-	t->object.type = OBJ_TAG;
-	return t;
-}
-
-void *alloc_object_node(struct repository *r)
-{
-	struct object *obj = alloc_node(r->parsed_objects->object_state, sizeof(union any_object));
-	obj->type = OBJ_NONE;
-	return obj;
-}
-
-unsigned int alloc_commit_index(struct repository *r)
-{
-	return r->parsed_objects->commit_count++;
-}
-
-void *alloc_commit_node(struct repository *r)
-{
-	struct commit *c = alloc_node(r->parsed_objects->commit_state, sizeof(struct commit));
-	c->object.type = OBJ_COMMIT;
-	c->index = alloc_commit_index(r);
-	return c;
-}
-
-static void report(const char *name, unsigned int count, size_t size)
-{
-	fprintf(stderr, "%10s: %8u (%"PRIuMAX" kB)\n",
-			name, count, (uintmax_t) size);
-}
-
-#define REPORT(name, type)	\
-    report(#name, r->parsed_objects->name##_state->count, \
-		  r->parsed_objects->name##_state->count * sizeof(type) >> 10)
-
-void alloc_report(struct repository *r)
-{
-	REPORT(blob, struct blob);
-	REPORT(tree, struct tree);
-	REPORT(commit, struct commit);
-	REPORT(tag, struct tag);
-	REPORT(object, union any_object);
+	return s->commit_count++;
 }

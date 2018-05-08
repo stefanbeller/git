@@ -1,19 +1,10 @@
 #ifndef ALLOC_H
 #define ALLOC_H
 
-struct tree;
-struct commit;
-struct tag;
+void *allocate_object_allocs(void);
+void clear_object_allocs(struct object_allocs *s);
 
-void *alloc_blob_node(struct repository *r);
-void *alloc_tree_node(struct repository *r);
-void *alloc_commit_node(struct repository *r);
-void *alloc_tag_node(struct repository *r);
-void *alloc_object_node(struct repository *r);
-void alloc_report(struct repository *r);
-unsigned int alloc_commit_index(struct repository *r);
-
-void *allocate_alloc_state(void);
-void clear_alloc_state(struct alloc_state *s);
+unsigned int alloc_commit_index(struct object_allocs *s);
+void allocate_memory(struct object_allocs *s, unsigned type, struct object **mem);
 
 #endif
