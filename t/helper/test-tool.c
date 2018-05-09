@@ -7,6 +7,7 @@ struct test_cmd {
 };
 
 static struct test_cmd cmds[] = {
+	{ "abc", cmd__abc },
 	{ "chmtime", cmd__chmtime },
 	{ "config", cmd__config },
 	{ "ctype", cmd__ctype },
