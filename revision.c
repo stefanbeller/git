@@ -1451,6 +1451,17 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->notes_opt.use_default_notes = -1;
 }
 
+void clear_revisions(struct rev_info *revs)
+{
+	struct rev_cmdline_info *info = &revs->cmdline;
+	unsigned int nr = info->nr, c;
+
+	for (c = 0; c < nr; c++)
+		free((void*)info->rev[c].name);
+
+	free(info->rev);
+}
+
 static void add_pending_commit_list(struct rev_info *revs,
                                     struct commit_list *commit_list,
                                     unsigned int flags)
