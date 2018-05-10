@@ -484,7 +484,5 @@ void raw_object_store_clear(struct raw_object_store *o)
 	free_alt_odbs(o);
 	o->alt_odb_tail = NULL;
 
-	INIT_LIST_HEAD(&o->packed_git_mru);
-	close_all_packs(o);
-	o->packed_git = NULL;
+	close_and_free_packs(o);
 }

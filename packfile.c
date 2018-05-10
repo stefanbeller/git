@@ -322,6 +322,19 @@ void close_all_packs(struct raw_object_store *o)
 			close_pack(p);
 }
 
+void close_and_free_packs(struct raw_object_store *o)
+{
+	close_all_packs(o);
+
+	INIT_LIST_HEAD(&o->packed_git_mru);
+
+	while (o->packed_git) {
+		struct packed_git *p = o->packed_git;
+		o->packed_git = p->next;
+		free(p);
+	}
+}
+
 /*
  * The LRU pack is the one with the oldest MRU window, preferring packs
  * with no used windows, or the oldest mtime if it has no windows allocated.
