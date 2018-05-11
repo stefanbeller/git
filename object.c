@@ -169,6 +169,7 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 	if (obj->type == type)
 		return obj;
 	else if (obj->type == OBJ_NONE) {
+		assert(0);
 		if (type == OBJ_COMMIT)
 			((struct commit *)obj)->index = alloc_commit_index(the_repository->parsed_objects->allocs);
 		obj->type = type;
@@ -186,8 +187,21 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 struct object *lookup_unknown_object(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
-	if (!obj)
-		obj = create_object(the_repository, sha1, OBJ_NONE);
+	if (!obj) {
+		struct object_id oid;
+		struct object_info oi = OBJECT_INFO_INIT;
+		enum object_type type;
+		unsigned flags = 0;
+
+		oi.typep = &type;
+		hashcpy(oid.hash, sha1);
+
+		if (oid_object_info_extended(the_repository, &oid, &oi, flags) ||
+		    type < OBJ_COMMIT || type > OBJ_TAG)
+			BUG("could not detect type of object");
+
+		obj = create_object(the_repository, sha1, type);
+	}
 	return obj;
 }
 
