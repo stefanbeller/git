@@ -2,7 +2,7 @@
 #define OBJECT_H
 
 struct parsed_object_pool {
-	struct object **obj_hash;
+	unsigned *obj_hash;
 	int nr_objs, obj_hash_size;
 
 	/* TODO: migrate alloc_states to mem-pool? */

@@ -16,7 +16,8 @@ unsigned int get_max_object_index(void)
 
 struct object *get_indexed_object(unsigned int idx)
 {
-	return the_repository->parsed_objects->obj_hash[idx];
+	unsigned oidx = the_repository->parsed_objects->obj_hash[idx];
+	return get_mem(the_repository->parsed_objects->allocs, oidx);
 }
 
 static const char *object_type_strings[] = {
@@ -67,7 +68,7 @@ static unsigned int hash_obj(const unsigned char *sha1, unsigned int n)
  * must be a power of 2).  On collisions, simply overflow to the next
  * empty bucket.
  */
-static void insert_obj_hash(struct object *obj, struct object **hash, unsigned int size)
+static void insert_obj_hash(struct object *obj, unsigned oidx, unsigned *hash, unsigned int size)
 {
 	unsigned int j = hash_obj(obj->oid.hash, size);
 
@@ -76,7 +77,7 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
 		if (j >= size)
 			j = 0;
 	}
-	hash[j] = obj;
+	hash[j] = oidx;
 }
 
 /*
@@ -86,14 +87,16 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
 struct object *lookup_object(const unsigned char *sha1)
 {
 	unsigned int i, first;
-	struct object *obj;
+	struct object *obj = NULL;
+	unsigned oidx;
 
 	if (!the_repository->parsed_objects->obj_hash)
 		return NULL;
 
 	first = i = hash_obj(sha1,
 			     the_repository->parsed_objects->obj_hash_size);
-	while ((obj = the_repository->parsed_objects->obj_hash[i]) != NULL) {
+	while ((oidx = the_repository->parsed_objects->obj_hash[i]) != 0) {
+		obj = get_mem(the_repository->parsed_objects->allocs, oidx);
 		if (!hashcmp(sha1, obj->oid.hash))
 			break;
 		i++;
@@ -125,15 +128,16 @@ static void grow_object_hash(struct repository *r)
 	 * above.
 	 */
 	int new_hash_size = r->parsed_objects->obj_hash_size < 32 ? 32 : 2 * r->parsed_objects->obj_hash_size;
-	struct object **new_hash;
+	unsigned *new_hash;
 
-	new_hash = xcalloc(new_hash_size, sizeof(struct object *));
+	new_hash = xcalloc(new_hash_size, sizeof(unsigned));
 	for (i = 0; i < r->parsed_objects->obj_hash_size; i++) {
-		struct object *obj = r->parsed_objects->obj_hash[i];
+		unsigned oidx = r->parsed_objects->obj_hash[i];
+		struct object *obj = get_mem(r->parsed_objects->allocs, oidx);
 
 		if (!obj)
 			continue;
-		insert_obj_hash(obj, new_hash, new_hash_size);
+		insert_obj_hash(obj, oidx, new_hash, new_hash_size);
 	}
 	free(r->parsed_objects->obj_hash);
 	r->parsed_objects->obj_hash = new_hash;
@@ -154,7 +158,7 @@ void *create_object(struct repository *r, const unsigned char *sha1, enum object
 	if (r->parsed_objects->obj_hash_size - 1 <= r->parsed_objects->nr_objs * 2)
 		grow_object_hash(r);
 
-	insert_obj_hash(obj, r->parsed_objects->obj_hash,
+	insert_obj_hash(obj, i, r->parsed_objects->obj_hash,
 			r->parsed_objects->obj_hash_size);
 	r->parsed_objects->nr_objs++;
 	return obj;
@@ -437,7 +441,8 @@ void clear_object_flags(unsigned flags)
 	int i;
 
 	for (i=0; i < the_repository->parsed_objects->obj_hash_size; i++) {
-		struct object *obj = the_repository->parsed_objects->obj_hash[i];
+		unsigned oidx = the_repository->parsed_objects->obj_hash[i];
+		struct object *obj = get_mem(the_repository->parsed_objects->allocs, oidx);
 		if (obj)
 			obj->flags &= ~flags;
 	}
@@ -448,7 +453,8 @@ void clear_commit_marks_all(unsigned int flags)
 	int i;
 
 	for (i = 0; i < the_repository->parsed_objects->obj_hash_size; i++) {
-		struct object *obj = the_repository->parsed_objects->obj_hash[i];
+		unsigned oidx = the_repository->parsed_objects->obj_hash[i];
+		struct object *obj = get_mem(the_repository->parsed_objects->allocs, oidx);
 		if (obj && obj->type == OBJ_COMMIT)
 			obj->flags &= ~flags;
 	}
@@ -516,7 +522,8 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 	unsigned i;
 
 	for (i = 0; i < o->obj_hash_size; i++) {
-		struct object *obj = o->obj_hash[i];
+		unsigned oidx = o->obj_hash[i];
+		struct object *obj = get_mem(o->allocs, oidx);
 
 		if (!obj)
 			continue;
