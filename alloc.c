@@ -66,7 +66,7 @@ void clear_object_allocs(struct object_allocs *s)
 	FREE_AND_NULL(s->slabs);
 }
 
-void allocate_memory(struct object_allocs *s, unsigned type, struct object **mem)
+void allocate_memory(struct object_allocs *s, unsigned type, unsigned *obj_i, struct object **mem)
 {
 	unsigned ns = node_size[type];
 	struct object *obj;
@@ -94,9 +94,30 @@ void allocate_memory(struct object_allocs *s, unsigned type, struct object **mem
 		((struct commit *)obj)->index = alloc_commit_index(s);
 
 	*mem = obj;
+	*obj_i = (BLOCKING * slab_idx) + node_idx + 1;
+
+	assert(get_mem(s, *obj_i) == obj);
 }
 
 unsigned int alloc_commit_index(struct object_allocs *s)
 {
 	return s->commit_count++;
+}
+
+void *get_mem(struct object_allocs *s, unsigned i)
+{
+	unsigned slab_idx, node_idx, type;
+	void *ret;
+
+	if (!i)
+		return NULL;
+	i --;
+
+	slab_idx = i / BLOCKING;
+	node_idx = i % BLOCKING;
+	type = ((struct object *)(&s->slabs[slab_idx])[0])->type;
+
+	ret = & ((char*) s->slabs[slab_idx]) [node_idx * node_size[type]];
+
+	return ret;
 }

@@ -143,8 +143,9 @@ static void grow_object_hash(struct repository *r)
 void *create_object(struct repository *r, const unsigned char *sha1, enum object_type type)
 {
 	struct object *obj;
+	unsigned i;
 
-	allocate_memory(r->parsed_objects->allocs, type, &obj);
+	allocate_memory(r->parsed_objects->allocs, type, &i, &obj);
 
 	obj->parsed = 0;
 	obj->flags = 0;
