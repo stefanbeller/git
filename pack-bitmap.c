@@ -92,6 +92,27 @@ struct bitmap_index {
 	unsigned loaded : 1;
 };
 
+void bitmap_release(struct bitmap_index *b)
+{
+	b->pack = NULL; /* is free'd elsewhere */
+
+	munmap(b->map);
+	ewah_pool_free(b->commits);
+	ewah_pool_free(b->trees);
+	ewah_pool_free(b->blobs);
+	ewah_pool_free(b->tags);
+
+	b->bitmaps
+	b->hashes
+
+	b->ext_index->objects
+	b->ext_index->hashes
+
+	b->result
+
+
+}
+
 static struct ewah_bitmap *lookup_stored_bitmap(struct stored_bitmap *st)
 {
 	struct ewah_bitmap *parent;

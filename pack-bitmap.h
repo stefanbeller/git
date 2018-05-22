@@ -53,5 +53,6 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 			  uint32_t index_nr,
 			  const char *filename,
 			  uint16_t options);
+void bitmap_release(
 
 #endif
