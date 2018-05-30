@@ -108,7 +108,7 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 		 * - empty is not allowed.
 		 * - otherwise it must be a valid looking ref.
 		 */
-		if (!item->dst) {
+		if (!rhs) {
 			if (check_refname_format(item->src, flags))
 				return 0;
 		} else if (!*item->dst) {
