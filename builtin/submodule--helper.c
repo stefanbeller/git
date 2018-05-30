@@ -64,6 +64,7 @@ static int print_default_remote(int argc, const char **argv, const char *prefix)
 	if (remote)
 		printf("%s\n", remote);
 
+	free(remote);
 	return 0;
 }
 
