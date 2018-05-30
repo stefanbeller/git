@@ -8,11 +8,24 @@
 #include "diffcore.h"
 #include "commit.h"
 #include "quote.h"
+#include "help.h"
 
 static int grep_source_load(struct grep_source *gs);
 static int grep_source_is_binary(struct grep_source *gs);
 
 static struct grep_opt grep_defaults;
+
+static const char *color_grep_slots[] = {
+	[GREP_COLOR_CONTEXT]	    = "context",
+	[GREP_COLOR_FILENAME]	    = "filename",
+	[GREP_COLOR_FUNCTION]	    = "function",
+	[GREP_COLOR_LINENO]	    = "lineNumber",
+	[GREP_COLOR_COLUMNNO]	    = "column",
+	[GREP_COLOR_MATCH_CONTEXT]  = "matchContext",
+	[GREP_COLOR_MATCH_SELECTED] = "matchSelected",
+	[GREP_COLOR_SELECTED]	    = "selected",
+	[GREP_COLOR_SEP]	    = "separator",
+};
 
 static void std_output(struct grep_opt *opt, const void *buf, size_t size)
 {
@@ -43,15 +56,15 @@ void init_grep_defaults(void)
 	opt->pathname = 1;
 	opt->max_depth = -1;
 	opt->pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
-	color_set(opt->color_context, "");
-	color_set(opt->color_filename, "");
-	color_set(opt->color_function, "");
-	color_set(opt->color_lineno, "");
-	color_set(opt->color_columnno, "");
-	color_set(opt->color_match_context, GIT_COLOR_BOLD_RED);
-	color_set(opt->color_match_selected, GIT_COLOR_BOLD_RED);
-	color_set(opt->color_selected, "");
-	color_set(opt->color_sep, GIT_COLOR_CYAN);
+	color_set(opt->colors[GREP_COLOR_CONTEXT], "");
+	color_set(opt->colors[GREP_COLOR_FILENAME], "");
+	color_set(opt->colors[GREP_COLOR_FUNCTION], "");
+	color_set(opt->colors[GREP_COLOR_LINENO], "");
+	color_set(opt->colors[GREP_COLOR_COLUMNNO], "");
+	color_set(opt->colors[GREP_COLOR_MATCH_CONTEXT], GIT_COLOR_BOLD_RED);
+	color_set(opt->colors[GREP_COLOR_MATCH_SELECTED], GIT_COLOR_BOLD_RED);
+	color_set(opt->colors[GREP_COLOR_SELECTED], "");
+	color_set(opt->colors[GREP_COLOR_SEP], GIT_COLOR_CYAN);
 	opt->color = -1;
 	opt->output = std_output;
 }
@@ -71,6 +84,8 @@ static int parse_pattern_type_arg(const char *opt, const char *arg)
 	die("bad %s argument: %s", opt, arg);
 }
 
+define_list_config_array_extra(color_grep_slots, {"match"});
+
 /*
  * Read the configuration file once and store it in
  * the grep_defaults template.
@@ -78,7 +93,7 @@ static int parse_pattern_type_arg(const char *opt, const char *arg)
 int grep_config(const char *var, const char *value, void *cb)
 {
 	struct grep_opt *opt = &grep_defaults;
-	char *color = NULL;
+	const char *slot;
 
 	if (userdiff_config(var, value) < 0)
 		return -1;
@@ -109,34 +124,18 @@ int grep_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, "color.grep"))
 		opt->color = git_config_colorbool(var, value);
-	else if (!strcmp(var, "color.grep.context"))
-		color = opt->color_context;
-	else if (!strcmp(var, "color.grep.filename"))
-		color = opt->color_filename;
-	else if (!strcmp(var, "color.grep.function"))
-		color = opt->color_function;
-	else if (!strcmp(var, "color.grep.linenumber"))
-		color = opt->color_lineno;
-	else if (!strcmp(var, "color.grep.column"))
-		color = opt->color_columnno;
-	else if (!strcmp(var, "color.grep.matchcontext"))
-		color = opt->color_match_context;
-	else if (!strcmp(var, "color.grep.matchselected"))
-		color = opt->color_match_selected;
-	else if (!strcmp(var, "color.grep.selected"))
-		color = opt->color_selected;
-	else if (!strcmp(var, "color.grep.separator"))
-		color = opt->color_sep;
-	else if (!strcmp(var, "color.grep.match")) {
-		int rc = 0;
-		if (!value)
-			return config_error_nonbool(var);
-		rc |= color_parse(value, opt->color_match_context);
-		rc |= color_parse(value, opt->color_match_selected);
-		return rc;
-	}
+	if (!strcmp(var, "color.grep.match")) {
+		if (grep_config("color.grep.matchcontext", value, cb) < 0)
+			return -1;
+		if (grep_config("color.grep.matchselected", value, cb) < 0)
+			return -1;
+	} else if (skip_prefix(var, "color.grep.", &slot)) {
+		int i = LOOKUP_CONFIG(color_grep_slots, slot);
+		char *color;
 
-	if (color) {
+		if (i < 0)
+			return -1;
+		color = opt->colors[i];
 		if (!value)
 			return config_error_nonbool(var);
 		return color_parse(value, color);
@@ -152,6 +151,7 @@ int grep_config(const char *var, const char *value, void *cb)
 void grep_init(struct grep_opt *opt, const char *prefix)
 {
 	struct grep_opt *def = &grep_defaults;
+	int i;
 
 	memset(opt, 0, sizeof(*opt));
 	opt->prefix = prefix;
@@ -169,15 +169,8 @@ void grep_init(struct grep_opt *opt, const char *prefix)
 	opt->relative = def->relative;
 	opt->output = def->output;
 
-	color_set(opt->color_context, def->color_context);
-	color_set(opt->color_filename, def->color_filename);
-	color_set(opt->color_function, def->color_function);
-	color_set(opt->color_lineno, def->color_lineno);
-	color_set(opt->color_columnno, def->color_columnno);
-	color_set(opt->color_match_context, def->color_match_context);
-	color_set(opt->color_match_selected, def->color_match_selected);
-	color_set(opt->color_selected, def->color_selected);
-	color_set(opt->color_sep, def->color_sep);
+	for (i = 0; i < NR_GREP_COLORS; i++)
+		color_set(opt->colors[i], def->colors[i]);
 }
 
 static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, struct grep_opt *opt)
@@ -1108,12 +1101,12 @@ static void output_sep(struct grep_opt *opt, char sign)
 	if (opt->null_following_name)
 		opt->output(opt, "\0", 1);
 	else
-		output_color(opt, &sign, 1, opt->color_sep);
+		output_color(opt, &sign, 1, opt->colors[GREP_COLOR_SEP]);
 }
 
 static void show_name(struct grep_opt *opt, const char *name)
 {
-	output_color(opt, name, strlen(name), opt->color_filename);
+	output_color(opt, name, strlen(name), opt->colors[GREP_COLOR_FILENAME]);
 	opt->output(opt, opt->null_following_name ? "\0" : "\n", 1);
 }
 
@@ -1372,19 +1365,19 @@ static void show_line_header(struct grep_opt *opt, const char *name,
 			     unsigned lno, unsigned cno, char sign)
 {
 	if (opt->heading && opt->last_shown == 0) {
-		output_color(opt, name, strlen(name), opt->color_filename);
+		output_color(opt, name, strlen(name), opt->colors[GREP_COLOR_FILENAME]);
 		opt->output(opt, "\n", 1);
 	}
 	opt->last_shown = lno;
 
 	if (!opt->heading && opt->pathname) {
-		output_color(opt, name, strlen(name), opt->color_filename);
+		output_color(opt, name, strlen(name), opt->colors[GREP_COLOR_FILENAME]);
 		output_sep(opt, sign);
 	}
 	if (opt->linenum) {
 		char buf[32];
 		xsnprintf(buf, sizeof(buf), "%d", lno);
-		output_color(opt, buf, strlen(buf), opt->color_lineno);
+		output_color(opt, buf, strlen(buf), opt->colors[GREP_COLOR_LINENO]);
 		output_sep(opt, sign);
 	}
 	/*
@@ -1396,7 +1389,7 @@ static void show_line_header(struct grep_opt *opt, const char *name,
 	if (opt->columnnum && sign == ':' && !opt->extended) {
 		char buf[32];
 		xsnprintf(buf, sizeof(buf), "%d", cno);
-		output_color(opt, buf, strlen(buf), opt->color_columnno);
+		output_color(opt, buf, strlen(buf), opt->colors[GREP_COLOR_COLUMNNO]);
 		output_sep(opt, sign);
 	}
 }
@@ -1413,11 +1406,11 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	} else if (opt->pre_context || opt->post_context || opt->funcbody) {
 		if (opt->last_shown == 0) {
 			if (opt->show_hunk_mark) {
-				output_color(opt, "--", 2, opt->color_sep);
+				output_color(opt, "--", 2, opt->colors[GREP_COLOR_SEP]);
 				opt->output(opt, "\n", 1);
 			}
 		} else if (lno > opt->last_shown + 1) {
-			output_color(opt, "--", 2, opt->color_sep);
+			output_color(opt, "--", 2, opt->colors[GREP_COLOR_SEP]);
 			opt->output(opt, "\n", 1);
 		}
 	}
@@ -1441,15 +1434,15 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 		int offset = 1;
 
 		if (sign == ':')
-			match_color = opt->color_match_selected;
+			match_color = opt->colors[GREP_COLOR_MATCH_SELECTED];
 		else
-			match_color = opt->color_match_context;
+			match_color = opt->colors[GREP_COLOR_MATCH_CONTEXT];
 		if (sign == ':')
-			line_color = opt->color_selected;
+			line_color = opt->colors[GREP_COLOR_SELECTED];
 		else if (sign == '-')
-			line_color = opt->color_context;
+			line_color = opt->colors[GREP_COLOR_CONTEXT];
 		else if (sign == '=')
-			line_color = opt->color_function;
+			line_color = opt->colors[GREP_COLOR_FUNCTION];
 		*eol = '\0';
 		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
 			if (match.rm_so == match.rm_eo)
@@ -1873,7 +1866,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 			if (binary_match_only) {
 				opt->output(opt, "Binary file ", 12);
 				output_color(opt, gs->name, strlen(gs->name),
-					     opt->color_filename);
+					     opt->colors[GREP_COLOR_FILENAME]);
 				opt->output(opt, " matches\n", 9);
 				return 1;
 			}
@@ -1947,7 +1940,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		char buf[32];
 		if (opt->pathname) {
 			output_color(opt, gs->name, strlen(gs->name),
-				     opt->color_filename);
+				     opt->colors[GREP_COLOR_FILENAME]);
 			output_sep(opt, ':');
 		}
 		xsnprintf(buf, sizeof(buf), "%u\n", count);
