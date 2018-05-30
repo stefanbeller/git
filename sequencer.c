@@ -1774,8 +1774,10 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 	else if (!opts->strategy || !strcmp(opts->strategy, "recursive") || command == TODO_REVERT) {
 		res = do_recursive_merge(base, next, base_label, next_label,
 					 &head, &msgbuf, opts);
-		if (res < 0)
+		if (res < 0) {
+			free(author);
 			return res;
+		}
 		res |= write_message(msgbuf.buf, msgbuf.len,
 				     git_path_merge_msg(the_repository), 0);
 	} else {
