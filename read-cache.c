@@ -831,7 +831,7 @@ struct cache_entry *make_transient_cache_entry(unsigned int mode, const unsigned
 	struct cache_entry *ce;
 	int len;
 
-	if (!verify_path(path)) {
+	if (!verify_path(path, mode)) {
 		error("Invalid path '%s'", path);
 		return NULL;
 	}
