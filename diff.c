@@ -302,11 +302,17 @@ static int parse_color_moved_ws(const char *arg)
 			ret |= XDF_IGNORE_WHITESPACE_AT_EOL;
 		else if (!strcmp(sb.buf, "ignore-all-space"))
 			ret |= XDF_IGNORE_WHITESPACE;
+		else if (!strcmp(sb.buf, "allow-indentation-change"))
+			ret |= COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE;
 		else
 			error(_("ignoring unknown color-moved-ws mode '%s'"), sb.buf);
 
 		strbuf_release(&sb);
 	}
+
+	if ((ret & COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) &&
+	    (ret & XDF_WHITESPACE_FLAGS))
+		die(_("color-moved-ws: allow-indentation-change cannot be combined with other white space modes"));
 
 	string_list_clear(&l, 0);
 
@@ -737,7 +743,101 @@ struct moved_entry {
 	struct hashmap_entry ent;
 	const struct emitted_diff_symbol *es;
 	struct moved_entry *next_line;
+	struct ws_delta *wsd;
 };
+
+/**
+ * The struct ws_delta holds white space differences between moved lines, i.e.
+ * between '+' and '-' lines that have been detected to be a move.
+ * The string contains the difference in leading white spaces, before the
+ * rest of the line is compared using the white space config for move
+ * coloring. The current_longer indicates if the first string in the
+ * comparision is longer than the second.
+ */
+struct ws_delta {
+	char *string;
+	int current_longer : 1;
+};
+#define WS_DELTA_INIT { NULL, 0 }
+
+static void compute_ws_delta(const struct emitted_diff_symbol *a,
+			     const struct emitted_diff_symbol *b,
+			     struct ws_delta *out)
+{
+	const struct emitted_diff_symbol *longer =  a->len > b->len ? a : b;
+	const struct emitted_diff_symbol *shorter = a->len > b->len ? b : a;
+	int d = longer->len - shorter->len;
+
+	out->string = xmemdupz(longer->line, d);
+	out->current_longer = (a == longer);
+}
+
+struct ws_block_cmp_add_data {
+	int n;
+	struct moved_entry *pmb; /* current compared */
+};
+
+static int cmp_in_block_with_wsd(const void *hashmap_cmp_fn_data,
+				 const void *entry,
+				 const void *entry_or_key,
+				 const void *keydata)
+{
+	const struct diff_options *o = hashmap_cmp_fn_data;
+	const struct moved_entry *pnext = entry;
+	const struct moved_entry *match = entry_or_key;
+	const struct ws_block_cmp_add_data *d = keydata;
+
+	struct emitted_diff_symbol *l = &o->emitted_symbols->buf[d->n];
+	int al = pnext->es->len, cl = l->len;
+	const char *a = pnext->es->line,
+		   *b = match->es->line,
+		   *c = l->line;
+
+	int wslen;
+
+	/*
+	 * We need to check if 'pnext' is equal to 'match'.
+	 * As those are from the same (+/-) side, we do not need to adjust for
+	 * indent changes. However these were found using fuzzy matching
+	 * so we do have to check if they are equal.
+	 */
+	if (strcmp(a, b))
+		return 1;
+
+	if (!d->pmb->wsd)
+		/*
+		 * No white space delta was carried forward? This can happen
+		 * when we exit early in this function and do not carry
+		 * forward ws.
+		 */
+		return 1;
+
+	/*
+	 * The indent changes of the block are known and carried forward in
+	 * pmb->wsd; however we need to check if the indent changes of the
+	 * current line are still the same as before.
+	 *
+	 * To do so we need to compare 'l' to 'pnext', adjusting the
+	 * one of them for the white spaces, depending which was longer.
+	 */
+
+	wslen = strlen(d->pmb->wsd->string);
+	if (d->pmb->wsd->current_longer) {
+		c += wslen;
+		cl -= wslen;
+	} else {
+		a += wslen;
+		al -= wslen;
+	}
+
+	if (strcmp(a, c))
+		return 1;
+
+	/* Carry forward the wsd information. */
+	d->pmb->next_line->wsd = d->pmb->wsd;
+
+	return 0;
+}
 
 static int moved_entry_cmp(const void *hashmap_cmp_fn_data,
 			   const void *entry,
@@ -749,6 +849,16 @@ static int moved_entry_cmp(const void *hashmap_cmp_fn_data,
 	const struct moved_entry *b = entry_or_key;
 	unsigned flags = diffopt->color_moved_ws_handling
 			 & XDF_WHITESPACE_FLAGS;
+
+	if (diffopt->color_moved_ws_handling &
+	    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
+		/*
+		 * As there is not specific white space config given,
+		 * we'd need to check for a new block, so ignore all
+		 * white space. The setup of the white space
+		 * configuration for the next block is done else where
+		 */
+		flags |= XDF_IGNORE_WHITESPACE;
 
 	return !xdiff_compare_lines(a->es->line, a->es->len,
 				    b->es->line, b->es->len,
@@ -765,6 +875,7 @@ static struct moved_entry *prepare_entry(struct diff_options *o,
 	ret->ent.hash = xdiff_hash_string(l->line, l->len, flags);
 	ret->es = l;
 	ret->next_line = NULL;
+	ret->wsd = NULL;
 
 	return ret;
 }
@@ -818,6 +929,10 @@ static int shrink_potential_moved_blocks(struct moved_entry **pmb,
 
 		if (lp < pmb_nr && rp > -1 && lp < rp) {
 			pmb[lp] = pmb[rp];
+			if (pmb[rp]->wsd) {
+				free(pmb[rp]->wsd->string);
+				FREE_AND_NULL(pmb[rp]->wsd);
+			}
 			pmb[rp] = NULL;
 			rp--;
 			lp++;
@@ -911,7 +1026,19 @@ static void mark_color_as_moved(struct diff_options *o,
 			struct moved_entry *p = pmb[i];
 			struct moved_entry *pnext = (p && p->next_line) ?
 					p->next_line : NULL;
-			if (pnext && !hm->cmpfn(o, pnext, match, NULL)) {
+			hashmap_cmp_fn cmp_fn = hm->cmpfn;
+			void *keydata = NULL;
+			struct ws_block_cmp_add_data ad;
+
+			if (o->color_moved_ws_handling &
+			    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {
+				cmp_fn = cmp_in_block_with_wsd;
+				keydata = &ad;
+				ad.n = n;
+				ad.pmb = pmb[i];
+			}
+
+			if (pnext && !cmp_fn(o, pnext, match, keydata)) {
 				pmb[i] = p->next_line;
 			} else {
 				pmb[i] = NULL;
@@ -927,6 +1054,11 @@ static void mark_color_as_moved(struct diff_options *o,
 			 */
 			for (; match; match = hashmap_get_next(hm, match)) {
 				ALLOC_GROW(pmb, pmb_nr + 1, pmb_alloc);
+				if (o->color_moved_ws_handling &
+				    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) {
+					match->wsd = xmalloc(sizeof(*match->wsd));
+					compute_ws_delta(l, match->es, match->wsd);
+				}
 				pmb[pmb_nr++] = match;
 			}
 
@@ -5581,6 +5713,10 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 	if (o->emitted_symbols) {
 		if (o->color_moved) {
 			struct hashmap add_lines, del_lines;
+
+			if (o->color_moved_ws_handling &
+			    COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE)
+				o->color_moved_ws_handling |= XDF_IGNORE_WHITESPACE;
 
 			hashmap_init(&del_lines, moved_entry_cmp, o, 0);
 			hashmap_init(&add_lines, moved_entry_cmp, o, 0);
