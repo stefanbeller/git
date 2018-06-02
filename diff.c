@@ -984,7 +984,6 @@ static void mark_color_as_moved(struct diff_options *o,
 	int pmb_nr = 0, pmb_alloc = 0;
 	int n, flipped_block = 1, block_length = 0;
 
-
 	for (n = 0; n < o->emitted_symbols->nr; n++) {
 		struct hashmap *hm = NULL;
 		struct moved_entry *key;
@@ -1023,7 +1022,7 @@ static void mark_color_as_moved(struct diff_options *o,
 
 		/* Check any potential block runs, advance each or nullify */
 		for (i = 0; i < pmb_nr; i++) {
-			struct moved_entry *p = pmb[i];
+			struct moved_entry *p = pmb[i]; /* is one behind l */
 			struct moved_entry *pnext = (p && p->next_line) ?
 					p->next_line : NULL;
 			hashmap_cmp_fn cmp_fn = hm->cmpfn;
