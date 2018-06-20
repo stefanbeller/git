@@ -256,7 +256,7 @@ static void display_error_msgs(struct unpack_trees_options *o)
 
 static int check_submodule_move_head(const struct cache_entry *ce,
 				     const char *old_id,
-				     const char *new_id,
+				     const struct object_id *new_id,
 				     struct unpack_trees_options *o)
 {
 	unsigned flags = SUBMODULE_MOVE_HEAD_DRY_RUN;
@@ -1517,7 +1517,7 @@ static int verify_uptodate_1(const struct cache_entry *ce,
 
 		if (submodule_from_ce(ce)) {
 			int r = check_submodule_move_head(ce,
-				"HEAD", oid_to_hex(&ce->oid), o);
+				"HEAD", &ce->oid, o);
 			if (r)
 				return o->gently ? -1 :
 					add_rejected_path(o, error_type, ce->name);
@@ -1591,8 +1591,7 @@ static int verify_clean_submodule(const char *old_sha1,
 	if (!submodule_from_ce(ce))
 		return 0;
 
-	return check_submodule_move_head(ce, old_sha1,
-					 oid_to_hex(&ce->oid), o);
+	return check_submodule_move_head(ce, old_sha1, &ce->oid, o);
 }
 
 static int verify_clean_subdirectory(const struct cache_entry *ce,
@@ -1836,8 +1835,7 @@ static int merged_entry(const struct cache_entry *ce,
 
 		if (submodule_from_ce(ce)) {
 			int ret = check_submodule_move_head(ce, NULL,
-							    oid_to_hex(&ce->oid),
-							    o);
+							    &ce->oid, o);
 			if (ret)
 				return ret;
 		}
@@ -1865,8 +1863,7 @@ static int merged_entry(const struct cache_entry *ce,
 
 		if (submodule_from_ce(ce)) {
 			int ret = check_submodule_move_head(ce, oid_to_hex(&old->oid),
-							    oid_to_hex(&ce->oid),
-							    o);
+							    &ce->oid, o);
 			if (ret)
 				return ret;
 		}

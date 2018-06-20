@@ -124,7 +124,7 @@ int submodule_to_gitdir(struct strbuf *buf, const char *submodule);
 #define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
 int submodule_move_head(const char *path,
 			const char *old,
-			const char *new_head,
+			const struct object_id *new_oid,
 			unsigned flags);
 
 void submodule_unset_core_worktree(const struct submodule *sub);

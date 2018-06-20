@@ -358,7 +358,7 @@ static int write_entry(struct cache_entry *ce,
 		sub = submodule_from_ce(ce);
 		if (sub)
 			return submodule_move_head(ce->name,
-				NULL, oid_to_hex(&ce->oid),
+				NULL, &ce->oid,
 				state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		break;
 
@@ -439,10 +439,10 @@ int checkout_entry(struct cache_entry *ce,
 					unlink_or_warn(ce->name);
 
 				return submodule_move_head(ce->name,
-					NULL, oid_to_hex(&ce->oid), 0);
+					NULL, &ce->oid, 0);
 			} else
 				return submodule_move_head(ce->name,
-					"HEAD", oid_to_hex(&ce->oid),
+					"HEAD", &ce->oid,
 					state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		}
 
