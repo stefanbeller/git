@@ -1605,6 +1605,7 @@ int submodule_move_head(const char *path,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	const struct submodule *sub;
 	int *error_code_ptr, error_code;
+	struct repository subrepo;
 
 	if (!is_submodule_active(the_repository, path))
 		return 0;
@@ -1626,6 +1627,13 @@ int submodule_move_head(const char *path,
 
 	if (!sub)
 		BUG("could not get submodule information for '%s'", path);
+
+	if (repo_submodule_init(&subrepo, the_repository, path) < 0)
+		warning(_("Could not get submodule repository for submodule 's'"), path);
+	else if (new_oid && !lookup_commit(subrepo, new_oid)) {
+		return error(_("Submodule '%s' doesn't have commit '%s'"),
+			     path, oid_to_hex(new_oid));
+	}
 
 	if (old_head && !(flags & SUBMODULE_MOVE_HEAD_FORCE)) {
 		/* Check if the submodule has a dirty index. */
