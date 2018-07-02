@@ -771,55 +771,7 @@ static int clone_submodules(int submodule_progress)
 	int err = 0;
 
 	if (option_recurse_submodules.nr > 0) {
-		struct child_process cp = CHILD_PROCESS_INIT;
 		struct argv_array args = ARGV_ARRAY_INIT;
-		argv_array_pushl(&cp.args, "submodule--helper", "update-clone", NULL);
-		if (option_verbosity < 0)
-			argv_array_push(&cp.args, "--quiet");
-
-		if (submodule_progress)
-			argv_array_push(&cp.args, "--progress");
-
-		if (option_shallow_submodules == 1)
-			argv_array_push(&cp.args, "--depth=1");
-
-		if (max_jobs != -1)
-			argv_array_pushf(&cp.args, "--jobs=%d", max_jobs);
-
-		cp.git_cmd = 1;
-		cp.no_stdin = 1;
-		cp.env_array
-		cp.out = -1;
-
-
-struct child_process {
-	struct argv_array env_array;
-	pid_t pid;
-
-	int in;
-	int out;
-	int err;
-	const char *dir;
-	const char *const *env;
-	unsigned no_stdin:1;
-	unsigned no_stdout:1;
-	unsigned no_stderr:1;
-	unsigned silent_exec_failure:1;
-	unsigned stdout_to_stderr:1;
-	unsigned use_shell:1;
-	unsigned clean_on_exit:1;
-	unsigned wait_after_clean:1;
-	void (*clean_on_exit_handler)(struct child_process *process);
-	void *clean_on_exit_handler_cbdata;
-};
-
-
-		err = run_command(&cp);
-
-		if (err)
-			return err;
-
-
 		argv_array_pushl(&args, "submodule", "update", "--init", "--recursive", NULL);
 
 		if (option_shallow_submodules == 1)
