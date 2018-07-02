@@ -1444,6 +1444,14 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+struct submodule_update_clone_information {
+	int mode;
+	struct object_id oid;
+	int stage;
+	unsigned just_cloned;
+	const char *sm_path;
+};
+
 struct submodule_update_clone {
 	/* index into 'list', the list of submodules to look into for cloning */
 	int current;
@@ -1464,7 +1472,8 @@ struct submodule_update_clone {
 	const char *prefix;
 
 	/* Machine-readable status lines to be consumed by git-submodule.sh */
-	struct string_list projectlines;
+	struct submodule_update_clone_information *submodule_lines;
+	int submodule_lines_nr; int submodule_lines_alloc;
 
 	/* If we want to stop as fast as possible and return an error */
 	unsigned quickstop : 1;
@@ -1476,7 +1485,7 @@ struct submodule_update_clone {
 #define SUBMODULE_UPDATE_CLONE_INIT {0, MODULE_LIST_INIT, 0, \
 	SUBMODULE_UPDATE_STRATEGY_INIT, 0, 0, -1, STRING_LIST_INIT_DUP, 0, \
 	NULL, NULL, NULL, \
-	STRING_LIST_INIT_DUP, 0, NULL, 0, 0}
+	NULL, 0, 0, 0, NULL, 0, 0}
 
 
 static void next_submodule_warn_missing(struct submodule_update_clone *suc,
@@ -1570,11 +1579,14 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	strbuf_addf(&sb, "%s/.git", ce->name);
 	needs_cloning = !file_exists(sb.buf);
 
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%06o %s %d %d\t%s\n", ce->ce_mode,
-			oid_to_hex(&ce->oid), ce_stage(ce),
-			needs_cloning, ce->name);
-	string_list_append(&suc->projectlines, sb.buf);
+	ALLOC_GROW(suc->submodule_lines, suc->submodule_lines_nr + 1,
+					 suc->submodule_lines_alloc);
+	suc->submodule_lines[suc->submodule_lines_nr].mode = ce->ce_mode;
+	oidcpy(&suc->submodule_lines[suc->submodule_lines_nr].oid, &ce->oid);
+	suc->submodule_lines[suc->submodule_lines_nr].stage = ce_stage(ce);
+	suc->submodule_lines[suc->submodule_lines_nr].just_cloned = needs_cloning;
+	suc->submodule_lines[suc->submodule_lines_nr].sm_path = ce->name;
+	suc->submodule_lines_nr++;
 
 	if (!needs_cloning)
 		goto cleanup;
@@ -1718,9 +1730,9 @@ static int gitmodules_update_clone_config(const char *var, const char *value,
 static int update_clone(int argc, const char **argv, const char *prefix)
 {
 	const char *update = NULL;
-	int max_jobs = 1;
-	struct string_list_item *item;
+	int i, max_jobs = 1;
 	struct pathspec pathspec;
+	struct strbuf sb = STRBUF_INIT;
 	struct submodule_update_clone suc = SUBMODULE_UPDATE_CLONE_INIT;
 
 	struct option module_update_clone_options[] = {
@@ -1790,8 +1802,18 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 	if (suc.quickstop)
 		return 1;
 
-	for_each_string_list_item(item, &suc.projectlines)
-		fprintf(stdout, "%s", item->string);
+	for (i = 0; i < suc.submodule_lines_nr; i++) {
+		strbuf_addf(&sb, "%06o %s %d %d\t%s\n",
+			suc.submodule_lines[i].mode,
+			oid_to_hex(&suc.submodule_lines[i].oid),
+			suc.submodule_lines[i].stage,
+			suc.submodule_lines[i].just_cloned,
+			suc.submodule_lines[i].sm_path);
+		fprintf(stdout, "%s", sb.buf);
+		strbuf_reset(&sb);
+	}
+
+	strbuf_release(&sb);
 
 	return 0;
 }
