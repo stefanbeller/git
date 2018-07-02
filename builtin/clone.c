@@ -710,7 +710,7 @@ static void update_head(const struct ref *our, const struct ref *remote,
 	}
 }
 
-static int checkout(int submodule_progress)
+static int checkout(void)
 {
 	struct object_id oid;
 	char *head;
@@ -763,7 +763,14 @@ static int checkout(int submodule_progress)
 	err |= run_hook_le(NULL, "post-checkout", sha1_to_hex(null_sha1),
 			   oid_to_hex(&oid), "1", NULL);
 
-	if (!err && (option_recurse_submodules.nr > 0)) {
+	return err;
+}
+
+static int clone_submodules(int submodule_progress)
+{
+	int err = 0;
+
+	if (option_recurse_submodules.nr > 0) {
 		struct argv_array args = ARGV_ARRAY_INIT;
 		argv_array_pushl(&args, "submodule", "update", "--init", "--recursive", NULL);
 
@@ -1223,7 +1230,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	junk_mode = JUNK_LEAVE_REPO;
 	fetch_if_missing = 1;
-	err = checkout(submodule_progress);
+	err = checkout();
+
+	if (!err)
+		err = clone_submodules(submodule_progress);
 
 	strbuf_release(&reflog_msg);
 	strbuf_release(&branch_top);
