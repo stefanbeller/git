@@ -1748,6 +1748,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&suc.quiet, N_("don't print cloning progress")),
 		OPT_BOOL(0, "progress", &suc.progress,
 			    N_("force cloning progress")),
+
 		OPT_END()
 	};
 
