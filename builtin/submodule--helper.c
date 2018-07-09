@@ -1727,6 +1727,147 @@ static int gitmodules_update_clone_config(const char *var, const char *value,
 	return 0;
 }
 
+static int cmd_update(struct submodule_update_clone_information *suci,
+		      const char *update_cmd)
+{
+	return 0;
+	//~ struct submodule *sub = submodule_from_path(suci->sm_path);
+/*
+	if (!sub)
+		return 0;
+
+	if (update_cmd
+		if ! test -z "$update"
+		then
+			update_module=$update
+		else
+			update_module=$(git config submodule."$name".update)
+			if test -z "$update_module"
+			then
+				update_module="checkout"
+			fi
+		fi
+
+		displaypath=$(git submodule--helper relative-path "$prefix$sm_path" "$wt_prefix")
+
+		if test $just_cloned -eq 1
+		then
+			subsha1=
+			case "$update_module" in
+			merge | rebase | none)
+				update_module=checkout ;;
+			esac
+		else
+			subsha1=$(sanitize_submodule_env; cd "$sm_path" &&
+				git rev-parse --verify HEAD) ||
+			die "$(eval_gettext "Unable to find current revision in submodule path '\$displaypath'")"
+		fi
+
+		if test -n "$remote"
+		then
+			branch=$(git submodule--helper remote-branch "$sm_path")
+			if test -z "$nofetch"
+			then
+				# Fetch remote before determining tracking $sha1
+				git submodule--helper fetch-in-submodule "$sm_path" $depth ||
+				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
+			fi
+			remote_name=$(sanitize_submodule_env; cd "$sm_path" && get_default_remote)
+			sha1=$(sanitize_submodule_env; cd "$sm_path" &&
+				git rev-parse --verify "${remote_name}/${branch}") ||
+			die "$(eval_gettext "Unable to find current \${remote_name}/\${branch} revision in submodule path '\$sm_path'")"
+		fi
+
+		if test "$subsha1" != "$sha1" || test -n "$force"
+		then
+			subforce=$force
+			# If we don't already have a -f flag and the submodule has never been checked out
+			if test -z "$subsha1" && test -z "$force"
+			then
+				subforce="-f"
+			fi
+
+			if test -z "$nofetch"
+			then
+				# Run fetch only if $sha1 isn't present or it
+				# is not reachable from a ref.
+				git submodule--helper is-tip-reachable "$sm_path" "$sha1" ||
+				git submodule--helper fetch_in_submodule "$sm_path" $depth ||
+				say "$(eval_gettext "Unable to fetch in submodule path '\$displaypath'")"
+
+				# Now we tried the usual fetch, but $sha1 may
+				# not be reachable from any of the refs
+				git submodule--helper is-tip-reachable "$sm_path" "$sha1" ||
+				git submodule--helper fetch-in-submodule "$sm_path" $depth "$sha1" ||
+				die "$(eval_gettext "Fetched in submodule path '\$displaypath', but it did not contain \$sha1. Direct fetching of that commit failed.")"
+			fi
+
+			must_die_on_failure=
+			case "$update_module" in
+			checkout)
+				command="git checkout $subforce -q"
+				die_msg="$(eval_gettext "Unable to checkout '\$sha1' in submodule path '\$displaypath'")"
+				say_msg="$(eval_gettext "Submodule path '\$displaypath': checked out '\$sha1'")"
+				;;
+			rebase)
+				command="git rebase"
+				die_msg="$(eval_gettext "Unable to rebase '\$sha1' in submodule path '\$displaypath'")"
+				say_msg="$(eval_gettext "Submodule path '\$displaypath': rebased into '\$sha1'")"
+				must_die_on_failure=yes
+				;;
+			merge)
+				command="git merge"
+				die_msg="$(eval_gettext "Unable to merge '\$sha1' in submodule path '\$displaypath'")"
+				say_msg="$(eval_gettext "Submodule path '\$displaypath': merged in '\$sha1'")"
+				must_die_on_failure=yes
+				;;
+			!*)
+				command="${update_module#!}"
+				die_msg="$(eval_gettext "Execution of '\$command \$sha1' failed in submodule path '\$displaypath'")"
+				say_msg="$(eval_gettext "Submodule path '\$displaypath': '\$command \$sha1'")"
+				must_die_on_failure=yes
+				;;
+			*)
+				die "$(eval_gettext "Invalid update mode '$update_module' for submodule '$name'")"
+			esac
+
+			if (sanitize_submodule_env; cd "$sm_path" && $command "$sha1")
+			then
+				say "$say_msg"
+			elif test -n "$must_die_on_failure"
+			then
+				die_with_status 2 "$die_msg"
+			else
+				err="${err};$die_msg"
+				continue
+			fi
+		fi
+
+		if test -n "$recursive"
+		then
+			(
+				prefix=$(git submodule--helper relative-path "$prefix$sm_path/" "$wt_prefix")
+				wt_prefix=
+				sanitize_submodule_env
+				cd "$sm_path" &&
+				eval cmd_update
+			)
+			res=$?
+			if test $res -gt 0
+			then
+				die_msg="$(eval_gettext "Failed to recurse into submodule path '\$displaypath'")"
+				if test $res -ne 2
+				then
+					err="${err};$die_msg"
+					continue
+				else
+					die_with_status $res "$die_msg"
+				fi
+			fi
+		fi
+*/
+}
+
 static int update_clone(int argc, const char **argv, const char *prefix)
 {
 	const char *update = NULL;
