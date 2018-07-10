@@ -945,7 +945,7 @@ test_expect_success 'ws-error-highlight test setup' '
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1,2 +1,3 @@<RESET>
-	 <RESET>0. blank-at-eol<RESET><BLUE> <RESET>
+	 0. blank-at-eol<RESET><BLUE> <RESET>
 	<RED>-<RESET><RED>1. blank-at-eol<RESET><BLUE> <RESET>
 	<GREEN>+<RESET><GREEN>1. still-blank-at-eol<RESET><BLUE> <RESET>
 	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
@@ -1140,7 +1140,7 @@ test_expect_success 'detect malicious moved code, inside file' '
 	<CYAN>@@ -5,13 +5,6 @@<RESET> <RESET>printf("Hello ");<RESET>
 	 printf("World\n");<RESET>
 	 }<RESET>
-	 <RESET>
+	 
 	<BRED>-int secure_foo(struct user *u)<RESET>
 	<BRED>-{<RESET>
 	<BLUE>-if (!u->is_allowed_foo)<RESET>
@@ -1158,7 +1158,7 @@ test_expect_success 'detect malicious moved code, inside file' '
 	<CYAN>@@ -4,6 +4,13 @@<RESET> <RESET>int bar()<RESET>
 	 printf("Hello World, but different\n");<RESET>
 	 }<RESET>
-	 <RESET>
+	 
 	<BGREEN>+<RESET><BGREEN>int secure_foo(struct user *u)<RESET>
 	<BGREEN>+<RESET><BGREEN>{<RESET>
 	<GREEN>+<RESET><GREEN>foo(u);<RESET>
@@ -1189,7 +1189,7 @@ test_expect_success 'plain moved code, inside file' '
 	<CYAN>@@ -5,13 +5,6 @@<RESET> <RESET>printf("Hello ");<RESET>
 	 printf("World\n");<RESET>
 	 }<RESET>
-	 <RESET>
+	 
 	<BRED>-int secure_foo(struct user *u)<RESET>
 	<BRED>-{<RESET>
 	<BRED>-if (!u->is_allowed_foo)<RESET>
@@ -1207,7 +1207,7 @@ test_expect_success 'plain moved code, inside file' '
 	<CYAN>@@ -4,6 +4,13 @@<RESET> <RESET>int bar()<RESET>
 	 printf("Hello World, but different\n");<RESET>
 	 }<RESET>
-	 <RESET>
+	 
 	<BGREEN>+<RESET><BGREEN>int secure_foo(struct user *u)<RESET>
 	<BGREEN>+<RESET><BGREEN>{<RESET>
 	<BGREEN>+<RESET><BGREEN>foo(u);<RESET>
