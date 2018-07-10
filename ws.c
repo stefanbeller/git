@@ -139,10 +139,19 @@ char *whitespace_error_string(unsigned ws)
 	return strbuf_detach(&err, NULL);
 }
 
+static inline void optional_reset(FILE *stream, const char *reset, int *already_set)
+{
+	if (*already_set) {
+		fputs(reset, stream);
+		*already_set = 0;
+	}
+}
+
 /* If stream is non-NULL, emits the line after checking. */
 static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 				FILE *stream, const char *set,
-				const char *reset, const char *ws)
+				const char *reset, const char *ws,
+				int already_set)
 {
 	unsigned result = 0;
 	int written = 0;
@@ -186,6 +195,7 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 		if ((ws_rule & WS_SPACE_BEFORE_TAB) && written < i) {
 			result |= WS_SPACE_BEFORE_TAB;
 			if (stream) {
+				optional_reset(stream, reset, &already_set);
 				fputs(ws, stream);
 				fwrite(line + written, i - written, 1, stream);
 				fputs(reset, stream);
@@ -194,12 +204,14 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 		} else if (ws_rule & WS_TAB_IN_INDENT) {
 			result |= WS_TAB_IN_INDENT;
 			if (stream) {
+				optional_reset(stream, reset, &already_set);
 				fwrite(line + written, i - written, 1, stream);
 				fputs(ws, stream);
 				fwrite(line + i, 1, 1, stream);
 				fputs(reset, stream);
 			}
 		} else if (stream) {
+			optional_reset(stream, reset, &already_set);
 			fwrite(line + written, i - written + 1, 1, stream);
 		}
 		written = i + 1;
@@ -209,6 +221,7 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 	if ((ws_rule & WS_INDENT_WITH_NON_TAB) && i - written >= ws_tab_width(ws_rule)) {
 		result |= WS_INDENT_WITH_NON_TAB;
 		if (stream) {
+			optional_reset(stream, reset, &already_set);
 			fputs(ws, stream);
 			fwrite(line + written, i - written, 1, stream);
 			fputs(reset, stream);
@@ -224,19 +237,24 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 
 		/* Emit non-highlighted (middle) segment. */
 		if (trailing_whitespace - written > 0) {
-			fputs(set, stream);
+			if (!already_set)
+				fputs(set, stream);
 			fwrite(line + written,
 			    trailing_whitespace - written, 1, stream);
 			fputs(reset, stream);
+			already_set = 0;
 		}
 
 		/* Highlight errors in trailing whitespace. */
 		if (trailing_whitespace != len) {
+			optional_reset(stream, reset, &already_set);
 			fputs(ws, stream);
 			fwrite(line + trailing_whitespace,
 			    len - trailing_whitespace, 1, stream);
 			fputs(reset, stream);
 		}
+		if (already_set)
+			fputs(reset, stream);
 		if (trailing_carriage_return)
 			fputc('\r', stream);
 		if (trailing_newline)
@@ -247,14 +265,14 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 
 void ws_check_emit(const char *line, int len, unsigned ws_rule,
 		   FILE *stream, const char *set,
-		   const char *reset, const char *ws)
+		   const char *reset, const char *ws, int already_set)
 {
-	(void)ws_check_emit_1(line, len, ws_rule, stream, set, reset, ws);
+	(void)ws_check_emit_1(line, len, ws_rule, stream, set, reset, ws, already_set);
 }
 
 unsigned ws_check(const char *line, int len, unsigned ws_rule)
 {
-	return ws_check_emit_1(line, len, ws_rule, NULL, NULL, NULL, NULL);
+	return ws_check_emit_1(line, len, ws_rule, NULL, NULL, NULL, NULL, 0);
 }
 
 int ws_blank_line(const char *line, int len, unsigned ws_rule)

@@ -993,11 +993,11 @@ static void emit_line_ws_markup(struct diff_options *o,
 		/* Blank line at EOF - paint '+' as well */
 		emit_line_0(o, ws, set_sign, reset, sign, line, len);
 	else {
-		/* Emit just the prefix, then the rest. */
-		emit_line_0(o, set, set_sign, reset,
+		/* Emit just the prefix (with no RESET), then the rest. */
+		emit_line_0(o, set, set_sign, NULL,
 			    sign, "", 0);
 		ws_check_emit(line, len, ws_rule,
-			      o->file, set, reset, ws);
+			      o->file, set, reset, ws, 1);
 	}
 }
 
@@ -2918,7 +2918,7 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		free(err);
 		emit_line(data->o, set, reset, line, 1);
 		ws_check_emit(line + 1, len - 1, data->ws_rule,
-			      data->o->file, set, reset, ws);
+			      data->o->file, set, reset, ws, 0);
 	} else if (line[0] == ' ') {
 		data->lineno++;
 	} else if (line[0] == '@') {

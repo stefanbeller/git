@@ -874,9 +874,9 @@ test_expect_success 'diff that introduces a line with only tabs' '
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1 +1,4 @@<RESET>
 	 test<RESET>
-	<GREEN>+<RESET><GREEN>{<RESET>
+	<GREEN>+{<RESET>
 	<GREEN>+<RESET><BLUE>	<RESET>
-	<GREEN>+<RESET><GREEN>}<RESET>
+	<GREEN>+}<RESET>
 	EOF
 
 	test_cmp expected current
@@ -906,8 +906,8 @@ test_expect_success 'diff that introduces and removes ws breakages' '
 	<CYAN>@@ -1,2 +1,3 @@<RESET>
 	 0. blank-at-eol <RESET>
 	<RED>-1. blank-at-eol <RESET>
-	<GREEN>+<RESET><GREEN>1. still-blank-at-eol<RESET><BLUE> <RESET>
-	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
+	<GREEN>+1. still-blank-at-eol<RESET><BLUE> <RESET>
+	<GREEN>+2. and a new line<RESET><BLUE> <RESET>
 	EOF
 
 	test_cmp expected current
@@ -934,9 +934,9 @@ test_expect_success 'ws-error-highlight test setup' '
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1,2 +1,3 @@<RESET>
 	 0. blank-at-eol <RESET>
-	<RED>-<RESET><RED>1. blank-at-eol<RESET><BLUE> <RESET>
-	<GREEN>+<RESET><GREEN>1. still-blank-at-eol<RESET><BLUE> <RESET>
-	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
+	<RED>-1. blank-at-eol<RESET><BLUE> <RESET>
+	<GREEN>+1. still-blank-at-eol<RESET><BLUE> <RESET>
+	<GREEN>+2. and a new line<RESET><BLUE> <RESET>
 	EOF
 
 	cat >expect.all <<-\EOF &&
@@ -946,9 +946,9 @@ test_expect_success 'ws-error-highlight test setup' '
 	<BOLD>+++ b/x<RESET>
 	<CYAN>@@ -1,2 +1,3 @@<RESET>
 	 0. blank-at-eol<RESET><BLUE> <RESET>
-	<RED>-<RESET><RED>1. blank-at-eol<RESET><BLUE> <RESET>
-	<GREEN>+<RESET><GREEN>1. still-blank-at-eol<RESET><BLUE> <RESET>
-	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
+	<RED>-1. blank-at-eol<RESET><BLUE> <RESET>
+	<GREEN>+1. still-blank-at-eol<RESET><BLUE> <RESET>
+	<GREEN>+2. and a new line<RESET><BLUE> <RESET>
 	EOF
 
 	cat >expect.none <<-\EOF
@@ -1038,11 +1038,11 @@ test_expect_success 'detect moved code, complete file' '
 	<BOLD>--- /dev/null<RESET>
 	<BOLD>+++ b/main.c<RESET>
 	<CYAN>@@ -0,0 +1,5 @@<RESET>
-	<BGREEN>+<RESET><BGREEN>#include<stdio.h><RESET>
-	<BGREEN>+<RESET><BGREEN>main()<RESET>
-	<BGREEN>+<RESET><BGREEN>{<RESET>
-	<BGREEN>+<RESET><BGREEN>printf("Hello World");<RESET>
-	<BGREEN>+<RESET><BGREEN>}<RESET>
+	<BGREEN>+#include<stdio.h><RESET>
+	<BGREEN>+main()<RESET>
+	<BGREEN>+{<RESET>
+	<BGREEN>+printf("Hello World");<RESET>
+	<BGREEN>+}<RESET>
 	<BOLD>diff --git a/test.c b/test.c<RESET>
 	<BOLD>deleted file mode 100644<RESET>
 	<BOLD>index a986c57..0000000<RESET>
@@ -1159,12 +1159,12 @@ test_expect_success 'detect malicious moved code, inside file' '
 	 printf("Hello World, but different\n");<RESET>
 	 }<RESET>
 	 
-	<BGREEN>+<RESET><BGREEN>int secure_foo(struct user *u)<RESET>
-	<BGREEN>+<RESET><BGREEN>{<RESET>
-	<GREEN>+<RESET><GREEN>foo(u);<RESET>
-	<BGREEN>+<RESET><BGREEN>if (!u->is_allowed_foo)<RESET>
-	<BGREEN>+<RESET><BGREEN>return;<RESET>
-	<GREEN>+<RESET><GREEN>}<RESET>
+	<BGREEN>+int secure_foo(struct user *u)<RESET>
+	<BGREEN>+{<RESET>
+	<GREEN>+foo(u);<RESET>
+	<BGREEN>+if (!u->is_allowed_foo)<RESET>
+	<BGREEN>+return;<RESET>
+	<GREEN>+}<RESET>
 	<GREEN>+<RESET>
 	 int another_function()<RESET>
 	 {<RESET>
@@ -1208,12 +1208,12 @@ test_expect_success 'plain moved code, inside file' '
 	 printf("Hello World, but different\n");<RESET>
 	 }<RESET>
 	 
-	<BGREEN>+<RESET><BGREEN>int secure_foo(struct user *u)<RESET>
-	<BGREEN>+<RESET><BGREEN>{<RESET>
-	<BGREEN>+<RESET><BGREEN>foo(u);<RESET>
-	<BGREEN>+<RESET><BGREEN>if (!u->is_allowed_foo)<RESET>
-	<BGREEN>+<RESET><BGREEN>return;<RESET>
-	<BGREEN>+<RESET><BGREEN>}<RESET>
+	<BGREEN>+int secure_foo(struct user *u)<RESET>
+	<BGREEN>+{<RESET>
+	<BGREEN>+foo(u);<RESET>
+	<BGREEN>+if (!u->is_allowed_foo)<RESET>
+	<BGREEN>+return;<RESET>
+	<BGREEN>+}<RESET>
 	<BGREEN>+<RESET>
 	 int another_function()<RESET>
 	 {<RESET>
@@ -1288,12 +1288,12 @@ test_expect_success 'detect permutations inside moved code -- dimmed_zebra' '
 	 line 7<RESET>
 	 line 8<RESET>
 	 line 9<RESET>
-	<BCYAN>+<RESET><BCYAN>long line 1<RESET>
-	<BCYAN>+<RESET><BCYAN>long line 2<RESET>
-	<CYAN>+<RESET><CYAN>long line 3<RESET>
-	<YELLOW>+<RESET><YELLOW>long line 14<RESET>
-	<BYELLOW>+<RESET><BYELLOW>long line 15<RESET>
-	<BYELLOW>+<RESET><BYELLOW>long line 16<RESET>
+	<BCYAN>+long line 1<RESET>
+	<BCYAN>+long line 2<RESET>
+	<CYAN>+long line 3<RESET>
+	<YELLOW>+long line 14<RESET>
+	<BYELLOW>+long line 15<RESET>
+	<BYELLOW>+long line 16<RESET>
 	 line 10<RESET>
 	 line 11<RESET>
 	 line 12<RESET>
@@ -1332,12 +1332,12 @@ test_expect_success 'cmd option assumes configured colored-moved' '
 	 line 7<RESET>
 	 line 8<RESET>
 	 line 9<RESET>
-	<CYAN>+<RESET><CYAN>long line 1<RESET>
-	<CYAN>+<RESET><CYAN>long line 2<RESET>
-	<CYAN>+<RESET><CYAN>long line 3<RESET>
-	<YELLOW>+<RESET><YELLOW>long line 14<RESET>
-	<YELLOW>+<RESET><YELLOW>long line 15<RESET>
-	<YELLOW>+<RESET><YELLOW>long line 16<RESET>
+	<CYAN>+long line 1<RESET>
+	<CYAN>+long line 2<RESET>
+	<CYAN>+long line 3<RESET>
+	<YELLOW>+long line 14<RESET>
+	<YELLOW>+long line 15<RESET>
+	<YELLOW>+long line 16<RESET>
 	 line 10<RESET>
 	 line 11<RESET>
 	 line 12<RESET>
@@ -1467,10 +1467,10 @@ test_expect_success 'move detection ignoring whitespace changes' '
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
 	<CYAN>@@ -1,9 +1,9 @@<RESET>
-	<GREEN>+<RESET><GREEN>long	line 6<RESET>
-	<GREEN>+<RESET><GREEN>long	line 7<RESET>
-	<GREEN>+<RESET><GREEN>long	line 8<RESET>
-	<GREEN>+<RESET><GREEN>long li	ne 9<RESET>
+	<GREEN>+long	line 6<RESET>
+	<GREEN>+long	line 7<RESET>
+	<GREEN>+long	line 8<RESET>
+	<GREEN>+long li	ne 9<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
@@ -1491,10 +1491,10 @@ test_expect_success 'move detection ignoring whitespace changes' '
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
 	<CYAN>@@ -1,9 +1,9 @@<RESET>
-	<CYAN>+<RESET><CYAN>long	line 6<RESET>
-	<CYAN>+<RESET><CYAN>long	line 7<RESET>
-	<CYAN>+<RESET><CYAN>long	line 8<RESET>
-	<GREEN>+<RESET><GREEN>long li	ne 9<RESET>
+	<CYAN>+long	line 6<RESET>
+	<CYAN>+long	line 7<RESET>
+	<CYAN>+long	line 8<RESET>
+	<GREEN>+long li	ne 9<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
@@ -1534,10 +1534,10 @@ test_expect_success 'move detection ignoring whitespace at eol' '
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
 	<CYAN>@@ -1,9 +1,9 @@<RESET>
-	<GREEN>+<RESET><GREEN>long line 6	<RESET>
-	<GREEN>+<RESET><GREEN>long line 7	<RESET>
-	<GREEN>+<RESET><GREEN>long line 8	<RESET>
-	<GREEN>+<RESET><GREEN>long	line 9	<RESET>
+	<GREEN>+long line 6	<RESET>
+	<GREEN>+long line 7	<RESET>
+	<GREEN>+long line 8	<RESET>
+	<GREEN>+long	line 9	<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
@@ -1558,10 +1558,10 @@ test_expect_success 'move detection ignoring whitespace at eol' '
 	<BOLD>--- a/lines.txt<RESET>
 	<BOLD>+++ b/lines.txt<RESET>
 	<CYAN>@@ -1,9 +1,9 @@<RESET>
-	<CYAN>+<RESET><CYAN>long line 6	<RESET>
-	<CYAN>+<RESET><CYAN>long line 7	<RESET>
-	<CYAN>+<RESET><CYAN>long line 8	<RESET>
-	<GREEN>+<RESET><GREEN>long	line 9	<RESET>
+	<CYAN>+long line 6	<RESET>
+	<CYAN>+long line 7	<RESET>
+	<CYAN>+long line 8	<RESET>
+	<GREEN>+long	line 9	<RESET>
 	 line 1<RESET>
 	 line 2<RESET>
 	 line 3<RESET>
@@ -1605,7 +1605,7 @@ test_expect_success '--color-moved block at end of diff output respects MIN_ALNU
 	<BOLD>--- a/bar<RESET>
 	<BOLD>+++ b/bar<RESET>
 	<CYAN>@@ -0,0 +1 @@<RESET>
-	<GREEN>+<RESET><GREEN>line1<RESET>
+	<GREEN>+line1<RESET>
 	<BOLD>diff --git a/foo b/foo<RESET>
 	<BOLD>--- a/foo<RESET>
 	<BOLD>+++ b/foo<RESET>
@@ -1644,8 +1644,8 @@ test_expect_success '--color-moved respects MIN_ALNUM_COUNT' '
 	<BOLD>--- a/bar<RESET>
 	<BOLD>+++ b/bar<RESET>
 	<CYAN>@@ -0,0 +1,2 @@<RESET>
-	<BOLD;CYAN>+<RESET><BOLD;CYAN>twenty chars 234567890<RESET>
-	<GREEN>+<RESET><GREEN>nineteen chars 456789<RESET>
+	<BOLD;CYAN>+twenty chars 234567890<RESET>
+	<GREEN>+nineteen chars 456789<RESET>
 	<BOLD>diff --git a/foo b/foo<RESET>
 	<BOLD>--- a/foo<RESET>
 	<BOLD>+++ b/foo<RESET>
@@ -1685,9 +1685,9 @@ test_expect_success '--color-moved treats adjacent blocks as separate for MIN_AL
 	<BOLD>--- a/bar<RESET>
 	<BOLD>+++ b/bar<RESET>
 	<CYAN>@@ -0,0 +1,3 @@<RESET>
-	<GREEN>+<RESET><GREEN>7charsB<RESET>
-	<GREEN>+<RESET><GREEN>7charsC<RESET>
-	<GREEN>+<RESET><GREEN>7charsA<RESET>
+	<GREEN>+7charsB<RESET>
+	<GREEN>+7charsC<RESET>
+	<GREEN>+7charsA<RESET>
 	<BOLD>diff --git a/foo b/foo<RESET>
 	<BOLD>--- a/foo<RESET>
 	<BOLD>+++ b/foo<RESET>
