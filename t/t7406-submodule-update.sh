@@ -315,7 +315,9 @@ test_expect_success 'submodule update - rebase in .git/config' '
 	 (cd submodule &&
 	  compare_head
 	 ) &&
+	 test_pause &&
 	 git submodule update submodule &&
+
 	 cd submodule &&
 	 compare_head
 	)
