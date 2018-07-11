@@ -21,6 +21,11 @@ struct submodule_cache {
 	unsigned gitmodules_read:1;
 };
 
+enum submodule_config_trust_level {
+	in_repo = 1,
+	configured_by_user = 2
+};
+
 /*
  * thin wrapper struct needed to insert 'struct submodule' entries to
  * the hashmap
@@ -390,7 +395,8 @@ struct parse_config_parameter {
 	int overwrite;
 };
 
-static int parse_config(const char *var, const char *value, void *data)
+static int parse_config(const char *var, const char *value, void *data,
+			enum submodule_config_trust_level source)
 {
 	struct parse_config_parameter *me = data;
 	struct submodule *submodule;
@@ -475,6 +481,7 @@ static int parse_config(const char *var, const char *value, void *data)
 			submodule->recommend_shallow =
 				git_config_bool(var, value);
 	} else if (!strcmp(item.buf, "branch")) {
+		if (source < )
 		if (!me->overwrite && submodule->branch)
 			warn_multiple_config(me->treeish_name, submodule->name,
 					     "branch");
