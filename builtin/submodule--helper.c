@@ -1452,14 +1452,23 @@ static void determine_submodule_update_strategy(struct repository *r,
 {
 	const struct submodule *sub = submodule_from_path(r, &null_oid, path);
 
-	if (just_cloned)
+	trace_printf("determine_submodule_update_strategy");
+
+	if (just_cloned) {
 		/* keep the default */
 		out->type = SM_UPDATE_CHECKOUT;
+		return;
+	}
+
+	trace_printf("determine_submodule_update_strategy");
+	print_submodule(sub);
 
 	if (sub->update_strategy.type != SM_UPDATE_UNSPECIFIED) {
+		trace_printf("loaded thing");
 		out->type = sub->update_strategy.type;
 		out->command = sub->update_strategy.command;
 	} else if (update) {
+		trace_printf("parsing update");
 		if (parse_submodule_update_strategy(update, out) < 0)
 			die(_("Invalid update mode '%s' for submodule path '%s'"),
 				update, path);
@@ -1481,6 +1490,7 @@ static int module_update_module_mode(int argc, const char **argv, const char *pr
 	if (argc == 4)
 		update = argv[3];
 
+	repo_read_gitmodules(the_repository);
 	determine_submodule_update_strategy(the_repository,
 					    just_cloned, path, update,
 					    &update_strategy);
