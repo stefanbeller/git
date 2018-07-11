@@ -23,6 +23,8 @@ struct submodule {
 	int recommend_shallow;
 };
 
+extern void print_submodule(const struct submodule *sub);
+
 #define SUBMODULE_INIT { NULL, NULL, NULL, RECURSE_SUBMODULES_NONE, \
 	NULL, NULL, SUBMODULE_UPDATE_STRATEGY_INIT, { { 0 } }, -1 };
 

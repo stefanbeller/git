@@ -405,6 +405,8 @@ static int parse_config(const char *var, const char *value, void *data)
 					     me->gitmodules_oid,
 					     name.buf);
 
+	trace_printf("parse_config for %s: %s %s", submodule->name, var, value);
+
 	if (!strcmp(item.buf, "path")) {
 		if (!value)
 			ret = config_error_nonbool(var);
@@ -670,4 +672,18 @@ void submodule_free(struct repository *r)
 {
 	if (r->submodule_cache)
 		submodule_cache_clear(r->submodule_cache);
+}
+
+void print_submodule(const struct submodule *sub)
+{
+	trace_printf("print_submodule");
+	trace_printf("path %s", sub->path);
+	trace_printf("name %s", sub->name);
+	trace_printf("url %s", sub->url);
+	trace_printf("fetch_recurse %d", sub->fetch_recurse);
+	trace_printf("ignore %s", sub->ignore);
+	trace_printf("branch %s", sub->branch);
+	trace_printf("update_strategy type %d", sub->update_strategy.type);
+	trace_printf("update_strategy cmd %s", sub->update_strategy.command);
+	trace_printf("recommend_shallow %d", sub->recommend_shallow);
 }
