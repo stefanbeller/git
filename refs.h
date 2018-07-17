@@ -284,6 +284,16 @@ typedef int each_repo_ref_fn(struct repository *r,
 			     int flags,
 			     void *cb_data);
 
+struct each_ref_fn_repository_wrapper {
+	each_ref_fn *fn;
+	void *cb;
+};
+
+int each_ref_fn_repository_wrapped(struct repository *r,
+				   const char *refname,
+				   const struct object_id *oid,
+				   int flags, void *cb_data);
+
 /*
  * The following functions invoke the specified callback function for
  * each reference indicated.  If the function ever returns a nonzero
@@ -317,7 +327,16 @@ int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data,
 int for_each_tag_ref(each_ref_fn fn, void *cb_data);
 int for_each_branch_ref(each_ref_fn fn, void *cb_data);
 int for_each_remote_ref(each_ref_fn fn, void *cb_data);
-int for_each_replace_ref(struct repository *r, each_ref_fn fn, void *cb_data);
+int for_each_replace_repo_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data);
+static inline int for_each_replace_ref(struct repository *r, each_ref_fn fn, void *cb_data)
+{
+	/*
+	 * NEEDSWORK: remove this function when there are no
+	 * series in flight using this function.
+	 */
+	struct each_ref_fn_repository_wrapper cb = {fn, cb_data};
+	return for_each_replace_repo_ref(r, each_ref_fn_repository_wrapped, &cb);
+}
 int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
 int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 			 const char *prefix, void *cb_data);
