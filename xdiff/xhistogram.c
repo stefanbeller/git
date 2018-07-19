@@ -265,6 +265,7 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 	struct region lcs;
 	int sz;
 	int result = -1;
+	int skip_alloc = 0;
 
 	if (count1 <= 0 && count2 <= 0)
 		return 0;
@@ -315,13 +316,23 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 	if (xdl_cha_init(&index.rcha, sizeof(struct record), count1 / 4 + 1) < 0)
 		goto cleanup;
 
+//~ re_entry:
+
 	index.ptr_shift = line1;
 	index.max_chain_length = 64;
 
 	memset(&lcs, 0, sizeof(lcs));
-	if (find_lcs(&index, &lcs, line1, count1, line2, count2))
+	if (find_lcs(&index, &lcs, line1, count1, line2, count2)) {
+		xdl_free(index.records);
+		xdl_free(index.line_map);
+		xdl_free(index.next_ptrs);
+		xdl_cha_free(&index.rcha);
 		result = fall_back_to_classic_diff(&index, line1, count1, line2, count2);
-	else {
+	} else {
+		xdl_free(index.records);
+		xdl_free(index.line_map);
+		xdl_free(index.next_ptrs);
+		xdl_cha_free(&index.rcha);
 		if (lcs.begin1 == 0 && lcs.begin2 == 0) {
 			while (count1--)
 				env->xdf1.rchg[line1++ - 1] = 1;
@@ -334,6 +345,9 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 						line2, lcs.begin2 - line2);
 			if (result)
 				goto cleanup;
+
+			//skip_alloc = 1;
+			//goto re_entry;
 			result = histogram_diff(xpp, env,
 						lcs.end1 + 1, LINE_END(1) - lcs.end1,
 						lcs.end2 + 1, LINE_END(2) - lcs.end2);
