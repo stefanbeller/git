@@ -86,10 +86,9 @@ static int is_anchor(xpparam_t const *xpp, const char *line)
 	return 0;
 }
 
-/* The argument "pass" is 1 for the first file, 2 for the second. */
-static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
-			  int pass)
+static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map)
 {
+	int pass = 1;
 	xrecord_t **records = pass == 1 ?
 		map->env->xdf1.recs : map->env->xdf2.recs;
 	xrecord_t *record = records[line - 1], *other;
@@ -138,6 +137,58 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
 	map->nr++;
 }
 
+static void match_record(xpparam_t const *xpp, int line, struct hashmap *map)
+{
+	int pass = 2;
+	xrecord_t **records = pass == 1 ?
+		map->env->xdf1.recs : map->env->xdf2.recs;
+	xrecord_t *record = records[line - 1], *other;
+	/*
+	 * After xdl_prepare_env() (or more precisely, due to
+	 * xdl_classify_record()), the "ha" member of the records (AKA lines)
+	 * is _not_ the hash anymore, but a linearized version of it.  In
+	 * other words, the "ha" member is guaranteed to start with 0 and
+	 * the second record's ha can only be 0 or 1, etc.
+	 *
+	 * So we multiply ha by 2 in the hope that the hashing was
+	 * "unique enough".
+	 */
+	int index = (int)((record->ha << 1) % map->alloc);
+
+	while (map->entries[index].line1) {
+		other = map->env->xdf1.recs[map->entries[index].line1 - 1];
+		if (map->entries[index].hash != record->ha ||
+				!xdl_recmatch(record->ptr, record->size,
+					other->ptr, other->size,
+					map->xpp->flags)) {
+			if (++index >= map->alloc)
+				index = 0;
+			continue;
+		}
+		if (pass == 2)
+			map->has_matches = 1;
+		if (pass == 1 || map->entries[index].line2)
+			map->entries[index].line2 = NON_UNIQUE;
+		else
+			map->entries[index].line2 = line;
+		return;
+	}
+	if (pass == 2)
+		return;
+	map->entries[index].line1 = line;
+	map->entries[index].hash = record->ha;
+	map->entries[index].anchor = is_anchor(xpp, map->env->xdf1.recs[line - 1]->ptr);
+	if (!map->first)
+		map->first = map->entries + index;
+	if (map->last) {
+		map->last->next = map->entries + index;
+		map->entries[index].previous = map->last;
+	}
+	map->last = map->entries + index;
+	map->nr++;
+}
+
+
 /*
  * This function has to be called for each recursion into the inter-hunk
  * parts, as previously non-unique lines can become unique when being
@@ -165,11 +216,11 @@ static int fill_hashmap(mmfile_t *file1, mmfile_t *file2,
 
 	/* First, fill with entries from the first file */
 	while (count1--)
-		insert_record(xpp, line1++, result, 1);
+		insert_record(xpp, line1++, result);
 
 	/* Then search for matches in the second file */
 	while (count2--)
-		insert_record(xpp, line2++, result, 2);
+		match_record(xpp, line2++, result);
 
 	return 0;
 }
