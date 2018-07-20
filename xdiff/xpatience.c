@@ -88,9 +88,7 @@ static int is_anchor(xpparam_t const *xpp, const char *line)
 
 static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map)
 {
-	int pass = 1;
-	xrecord_t **records = pass == 1 ?
-		map->env->xdf1.recs : map->env->xdf2.recs;
+	xrecord_t **records = map->env->xdf1.recs;
 	xrecord_t *record = records[line - 1], *other;
 	/*
 	 * After xdl_prepare_env() (or more precisely, due to
@@ -114,16 +112,12 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map)
 				index = 0;
 			continue;
 		}
-		if (pass == 2)
-			map->has_matches = 1;
-		if (pass == 1 || map->entries[index].line2)
+		if (map->entries[index].line2)
 			map->entries[index].line2 = NON_UNIQUE;
 		else
 			map->entries[index].line2 = line;
 		return;
 	}
-	if (pass == 2)
-		return;
 	map->entries[index].line1 = line;
 	map->entries[index].hash = record->ha;
 	map->entries[index].anchor = is_anchor(xpp, map->env->xdf1.recs[line - 1]->ptr);
@@ -139,9 +133,7 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map)
 
 static void match_record(xpparam_t const *xpp, int line, struct hashmap *map)
 {
-	int pass = 2;
-	xrecord_t **records = pass == 1 ?
-		map->env->xdf1.recs : map->env->xdf2.recs;
+	xrecord_t **records = map->env->xdf2.recs;
 	xrecord_t *record = records[line - 1], *other;
 	/*
 	 * After xdl_prepare_env() (or more precisely, due to
@@ -165,27 +157,13 @@ static void match_record(xpparam_t const *xpp, int line, struct hashmap *map)
 				index = 0;
 			continue;
 		}
-		if (pass == 2)
-			map->has_matches = 1;
-		if (pass == 1 || map->entries[index].line2)
+		map->has_matches = 1;
+		if (map->entries[index].line2)
 			map->entries[index].line2 = NON_UNIQUE;
 		else
 			map->entries[index].line2 = line;
 		return;
 	}
-	if (pass == 2)
-		return;
-	map->entries[index].line1 = line;
-	map->entries[index].hash = record->ha;
-	map->entries[index].anchor = is_anchor(xpp, map->env->xdf1.recs[line - 1]->ptr);
-	if (!map->first)
-		map->first = map->entries + index;
-	if (map->last) {
-		map->last->next = map->entries + index;
-		map->entries[index].previous = map->last;
-	}
-	map->last = map->entries + index;
-	map->nr++;
 }
 
 
