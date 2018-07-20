@@ -1,0 +1,152 @@
+On diff algortihms
+==================
+
+There are three diff algorithms availble in Git
+(1) Myers (defualt)
+(2) patience
+(3) histogram
+
+(1) Myers
+=========
+
+This was implemented after the paper by Myers.
+http://www.xmailserver.org/diff2.pdf
+
+Roughly:
+
+Given two input sequences A, B put them up on orthogonally to each other
+in a grid and imagine "slides" whenever a input symbols are the same:
+
+A = XYZXW, B= YZXWXX
+
+    A|X|Y|Z|X|W|
+   BS| | | | | |
+   --|-----------
+   Y | |\| | | |
+   --|-----------
+   Z | | |\| | |
+   --|-----------
+   X |\| | |\| |
+   --|-----------
+   W | | | | |\|
+   --|-----------
+   X |\| | |\| |
+   --|-----------
+   X |\| | |\| |
+   --------------
+     | | | | | |F
+
+Now the goal is to go from start (S) to finish (F). Each vertical or
+horizontal move has a cost of 1 associated with it, whereas a slide is free.
+An optimized version of Dijkstras shortest path is used to find the shortest
+path.
+
+(2) Patience
+============
+    The patience diff algorithm produces slightly more intuitive output
+    than the classic Myers algorithm, as it does not try to minimize the
+    number of +/- lines first, but tries to preserve the lines that are
+    unique.
+
+    To this end, it first determines lines that are unique in both files,
+    then the maximal sequence which preserves the order (relative to both
+    files) is extracted.
+
+    Starting from this initial set of common lines, the rest of the lines
+    is handled recursively, with Myers' algorithm as a fallback when
+    the patience algorithm fails (due to no common unique lines).
+
+
+
+
+(3) Histogram
+=============
+
+From JGit:
+/**
+ * An extended form of Bram Cohen's patience diff algorithm.
+ * <p>
+ * This implementation was derived by using the 4 rules that are outlined in
+ * Bram Cohen's <a href="http://bramcohen.livejournal.com/73318.html">blog</a>,
+ * and then was further extended to support low-occurrence common elements.
+ * <p>
+ * The basic idea of the algorithm is to create a histogram of occurrences for
+ * each element of sequence A. Each element of sequence B is then considered in
+ * turn. If the element also exists in sequence A, and has a lower occurrence
+ * count, the positions are considered as a candidate for the longest common
+ * subsequence (LCS). After scanning of B is complete the LCS that has the
+ * lowest number of occurrences is chosen as a split point. The region is split
+ * around the LCS, and the algorithm is recursively applied to the sections
+ * before and after the LCS.
+ * <p>
+ * By always selecting a LCS position with the lowest occurrence count, this
+ * algorithm behaves exactly like Bram Cohen's patience diff whenever there is a
+ * unique common element available between the two sequences. When no unique
+ * elements exist, the lowest occurrence element is chosen instead. This offers
+ * more readable diffs than simply falling back on the standard Myers' O(ND)
+ * algorithm would produce.
+ * <p>
+ * To prevent the algorithm from having an O(N^2) running time, an upper limit
+ * on the number of unique elements in a histogram bucket is configured by
+ * {@link #setMaxChainLength(int)}. If sequence A has more than this many
+ * elements that hash into the same hash bucket, the algorithm passes the region
+ * to {@link #setFallbackAlgorithm(DiffAlgorithm)}. If no fallback algorithm is
+ * configured, the region is emitted as a replace edit.
+ * <p>
+ * During scanning of sequence B, any element of A that occurs more than
+ * {@link #setMaxChainLength(int)} times is never considered for an LCS match
+ * position, even if it is common between the two sequences. This limits the
+ * number of locations in sequence A that must be considered to find the LCS,
+ * and helps maintain a lower running time bound.
+ * <p>
+ * So long as {@link #setMaxChainLength(int)} is a small constant (such as 64),
+ * the algorithm runs in O(N * D) time, where N is the sum of the input lengths
+ * and D is the number of edits in the resulting EditList. If the supplied
+ * {@link org.eclipse.jgit.diff.SequenceComparator} has a good hash function,
+ * this implementation typically out-performs
+ * {@link org.eclipse.jgit.diff.MyersDiff}, even though its theoretical running
+ * time is the same.
+ * <p>
+ * This implementation has an internal limitation that prevents it from handling
+ * sequences with more than 268,435,456 (2^28) elements.
+
+With Brams blog:
+
+There's no coherent explanation of what the advantages of Patience Diff are, so I'll explain now. First, a quick overview of how Patience Diff works -
+Match the first lines of both if they're identical, then match the second, third, etc. until a pair doesn't match.
+Match the last lines of both if they're identical, then match the next to last, second to last, etc. until a pair doesn't match.
+Find all lines which occur exactly once on both sides, then do longest common subsequence on those lines, matching them up.
+Do steps 1-2 on each section between matched lines
+I've previously described it with the ordering a bit different and a recursive step at the end, but this ordering always gives the same result and performs much better, and the performance hit of doing the recursion isn't worth it, because it rarely if ever finds any more matches, and even when it does it isn't clear whether the extra matches produce a functionally superior diff. A much more detailed and more graphical explanation is here. A side by side of how that particular diff gets mangled by standard diff algorithms is here. This is the example which motivated patience diff in the first place. If you make extensive changes to a file and remove a function from the end of it and add a function to the beginning, there will be a tendency for an LCS based diff algorithm to match up all of the curly brackets instead of the functions, so if it's matching F1 F2 F3 to F4 F1 F2 instead of viewing F4 as new and F3 as deleted, it will match the curly brackets of F1 to F4, F2 to F1, and F3 to F2. The result is every bit as gross and useless as it sounds, and can easily force a merge conflict in cases which could have been resolved completely cleanly. This has a particularly strong tendency to happen if you put curly brackets on lines by themselves or are religious about putting curly brackets around single-line blocks even though it isn't technically necessary or even if you just put lots of blank lines between your functions.
+
+Another advantage of patience diff is that it frequently doesn't match lines which just plain shouldn't match. For example, if you've completely rewritten a section of code it shouldn't match up the blank lines in each version, as this example shows. Finally, there's this example:
+
+
+ void func1() {
+     x += 1
+ }
+
++void functhreehalves() {
++    x += 1.5
++}
++
+ void func2() {
+     x += 2
+ }
+Which is straightforward and obvious, but frequently diff algorithms will interpret it like this:
+
+
+ void func1() {
+     x += 1
++}
++
++void functhreehalves() {
++    x += 1.5
+ }
+
+ void func2() {
+     x += 2
+ }
+
+While technically that works, it's obviously inferior and is a bit of a pet peeve of mine. In principle one could tweak an LCS-based diff to always do the right thing here, but the algorithmic complexity of LCS make implementations of it essentially unmaintainable. That's another another advantage of patience diff - it's simple and understandable that it can be modified and extended reasonably, and why it performs correctly in all these examples can be easily analyzed.
+
