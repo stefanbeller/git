@@ -337,7 +337,7 @@ static int patience_diff(mmfile_t *file1, mmfile_t *file2,
 		int line1, int count1, int line2, int count2)
 {
 	struct hashmap map;
-	struct entry *first;
+	struct entry *lcs;
 	int result = 0;
 
 	/* trivial case: one side is empty */
@@ -366,9 +366,9 @@ static int patience_diff(mmfile_t *file1, mmfile_t *file2,
 		return 0;
 	}
 
-	first = find_longest_common_sequence(&map);
-	if (first)
-		result = walk_common_sequence(&map, first,
+	lcs = find_longest_common_sequence(&map);
+	if (lcs)
+		result = walk_common_sequence(&map, lcs,
 			line1, count1, line2, count2);
 	else
 		result = fall_back_to_classic_diff(&map,
