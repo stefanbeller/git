@@ -91,14 +91,18 @@ appearing as a deletion or addition in the output. It uses the "patience
 diff" algorithm internally.
 
 --diff-algorithm={patience|minimal|histogram|myers}::
-	Choose a diff algorithm. The variants are as follows:
+	Choose a diff algorithm. See the DIFF ALGORITHMS section
+ifndef::git-diff[]
+	in linkgit:git-diff[1]
+endif::git-diff[]
+	for more discussion. The variants are as follows:
 +
 --
 `default`, `myers`;;
 	The basic greedy diff algorithm. Currently, this is the default.
 `minimal`;;
-	Spend extra time to make sure the smallest possible diff is
-	produced.
+	The same algorithm as `myers`, but spend extra time to make
+	sure the smallest possible diff is produced.
 `patience`;;
 	Use "patience diff" algorithm when generating patches.
 `histogram`;;

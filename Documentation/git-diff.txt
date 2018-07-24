@@ -119,6 +119,78 @@ include::diff-options.txt[]
 
 include::diff-format.txt[]
 
+DIFF ALGORITHMS
+---------------
+
+This section explains background on the diff algorithms. All of them
+operate on two input sequences of symbols. In Git each symbol is
+represented by a line of a file unless the option to diff based on
+words is given. The following diff algorithms are available:
+
+`Myers`
+
+A diff as produced by the basic greedy algorithm described in
+link:http://www.xmailserver.org/diff2.pdf[An O(ND) Difference Algorithm and its Variations].
+with a run time of O(M + N + D^2). To understand this algorithm, one
+can imagine a table spanned by the two input sequences with slides
+where there are the same symbols. For example the sequences 'ABCD' and 'ADB'
+the graph would look like
+
+	S | A | B | C | A
+	---------------------
+	A | \ |   |   | \ |
+	---------------------
+	D |   |   |   |   |
+	---------------------
+	B |   | \ |   |   |
+	---------------------
+	  |   |   |   |   |F
+
+and a greedy algorithm is used to find the cheapest path from start S to
+finish F, with each horizontal and vertical step having a cost of one and
+the diagonal slides having a cost of zero.
+
+This is simplified as the real algorithm only needs O(N+M) in terms of memory.
+In addition it employs a heuristic to allow for a faster diff at the small
+cost of diff size. The `minimal` algorithm has that heuristic turned off.
+
+`Minimal`
+The exact algorithm as described in the `Myers` paper without the heuristic
+that trades execution time for slightly worse diffs.
+
+`Patience`
+
+This algorithm by Bram Cohen originally for the bzr version control
+system matches the longest common subsequence of unique lines on
+both sides, recursively. It obtained its name by the way the longest
+subsequence is found, as that is a byproduct of the patience sorting
+algorithm. If there are no unique lines left it falls back to `myers`.
+Empirically this algorithm produces a more readable output for code,
+but it does not guarantee the shortest output.
+
+`Histogram`
+
+This algorithm by Shawn Pearce, originally implemented for
+JGit, finds the longest common substring and recursively
+diffs the content before and after the longest common substring.
+If there are no common substrings left, fall back to `myers`.
+This is often the fastest, but in corner cases (when there are
+many common substrings of the same length) it produces unexpected
+results as seen in:
+
+	seq 1 100 >one
+	echo 99 > two
+	seq 1 2 98 >>two
+	git diff --no-index --histogram one two
+
+
+Note how both `patience` and `histogram` use a concept that is abbreviated
+as 'LCS' (longest common subsequence and longest common substring).
+The longest common subsequence is a sequence of symbols that are found
+on both sides in the same order. The symbols do not need to be adjacent.
+The longest common substring is a sequence of adjacent symbols in order
+on both sides.
+
 EXAMPLES
 --------
 
