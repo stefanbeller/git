@@ -580,43 +580,52 @@ static void emit_line_0(struct diff_options *o,
 			int first, const char *line, int len)
 {
 	int has_trailing_newline, has_trailing_carriage_return;
-	int nofirst;
 	int reverse = !!set && !!set_sign;
+	int needs_reset = 0;
+
 	FILE *file = o->file;
 
 	fputs(diff_line_prefix(o), file);
 
-	if (len == 0) {
-		has_trailing_newline = (first == '\n');
-		has_trailing_carriage_return = (!has_trailing_newline &&
-						(first == '\r'));
-		nofirst = has_trailing_newline || has_trailing_carriage_return;
-	} else {
-		has_trailing_newline = (len > 0 && line[len-1] == '\n');
-		if (has_trailing_newline)
-			len--;
-		has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
-		if (has_trailing_carriage_return)
-			len--;
-		nofirst = 0;
+	has_trailing_newline = (len > 0 && line[len-1] == '\n');
+	if (has_trailing_newline)
+		len--;
+
+	has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
+	if (has_trailing_carriage_return)
+		len--;
+
+	if (!len && !first)
+		goto end_of_line;
+
+	if (reverse && want_color(o->use_color)) {
+		fputs(GIT_COLOR_REVERSE, file);
+		needs_reset = 1;
 	}
 
-	if (len || !nofirst) {
-		if (reverse && want_color(o->use_color))
-			fputs(GIT_COLOR_REVERSE, file);
-		if (set_sign || set)
-			fputs(set_sign ? set_sign : set, file);
-		if (first && !nofirst)
-			fputc(first, file);
-		if (len) {
-			if (set_sign && set && set != set_sign)
-				fputs(reset, file);
-			if (set)
-				fputs(set, file);
-			fwrite(line, len, 1, file);
-		}
-		fputs(reset, file);
+	if (set_sign || set) {
+		fputs(set_sign ? set_sign : set, file);
+		needs_reset = 1;
 	}
+
+	if (first)
+		fputc(first, file);
+
+	if (!len)
+		goto end_of_line;
+
+	if (set) {
+		if (set_sign && set != set_sign)
+			fputs(reset, file);
+		fputs(set, file);
+		needs_reset = 1;
+	}
+	fwrite(line, len, 1, file);
+	needs_reset |= len > 0;
+
+end_of_line:
+	if (needs_reset)
+		fputs(reset, file);
 	if (has_trailing_carriage_return)
 		fputc('\r', file);
 	if (has_trailing_newline)
@@ -626,7 +635,7 @@ static void emit_line_0(struct diff_options *o,
 static void emit_line(struct diff_options *o, const char *set, const char *reset,
 		      const char *line, int len)
 {
-	emit_line_0(o, set, NULL, reset, line[0], line+1, len-1);
+	emit_line_0(o, set, NULL, reset, 0, line, len);
 }
 
 enum diff_symbol {
