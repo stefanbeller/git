@@ -66,12 +66,60 @@ The multiple matches are due to resend, the no-matches are still
 a bit of a mystery to me, as I do not suspect Junio to edit the
 commit messages that often.
 
-For the record of how I arrived at the numbers above, checkout
+[For the record of how I arrived at the numbers above, checkout
 the commit which contains the report up to now and the scripts to produce
-the numbers.
+the numbers.]
 
+The long tail of 74 matches for one commit was an empty string subject
+line by H.P Anvin in 2005
 
+The 27 occurrences that lead to one commit were
+"Documentation: Spelling fixes" (2006, Horst H von Brand)
 
+The less extreme long tails were just patches that were reposted
+quite some time:
+count, subject, [(date, name)]
+27 Documentation: Spelling fixes" [('"2006-06-03 16:27:26 -0400', 'Horst H. von Brand')]
+21 refs.c: change update_ref to use a transaction" [('"2014-04-24 16:36:55 -0700', 'Ronnie Sahlberg')]
+22 branch.c: use ref transaction for all ref updates" [('"2014-04-16 16:21:53 -0700', 'Ronnie Sahlberg')]
+22 walker.c: use ref transaction for ref updates" [('"2014-04-17 11:31:06 -0700', 'Ronnie Sahlberg')]
+22 submodule update: expose parallelism to the user" [('"2016-02-29 18:07:19 -0800', 'Stefan Beller')]
+22 clone: allow an explicit argument for parallel submodule clones" [('"2016-02-29 18:07:20 -0800', 'Stefan Beller')]
+22 commit.c: use ref transactions for updates" [('"2014-04-16 15:34:19 -0700', 'Ronnie Sahlberg')]
+22 tag.c: use ref transactions when doing updates" [('"2014-04-16 15:30:41 -0700', 'Ronnie Sahlberg')]
+74 " [('"2005-09-28 16:53:56 -0700', 'Peter Anvin')]
+22 fast-import.c: change update_branch to use ref transactions" [('"2014-04-16 16:21:13 -0700', 'Ronnie Sahlberg')]
+22 fetch.c: change s_update_ref to use a ref transaction" [('"2014-04-28 13:49:07 -0700', 'Ronnie Sahlberg')]
+22 sequencer.c: use ref transactions for all ref updates" [('"2014-04-16 15:37:45 -0700', 'Ronnie Sahlberg')]
+21 Build in merge" [('"2008-07-07 19:24:20 +0200', 'Miklos Vajna')]
+22 replace.c: use the ref transaction functions for updates" [('"2014-04-16 15:32:29 -0700', 'Ronnie Sahlberg')]
+23 git submodule update: have a dedicated helper for cloning" [('"2016-02-29 18:07:17 -0800', 'Stefan Beller')]
+21 refs.c: make write_ref_sha1 static" [('"2014-04-28 15:36:58 -0700', 'Ronnie Sahlberg')]
+22 refs.c: change ref_transaction_create to do error checking and return status" [('"2014-04-16 15:26:44 -0700', 'Ronnie Sahlberg')]
+
+The other end with 0 occurrences are either Junio editing commit
+messages or an incomplete archive, so let's modify the log to only start
+after 2011 (picked the half way point arbitrarily). We still have
+*a lot* commits that have no matches on the mailing list:
+count, ocurrence
+0 3333
+1 6633
+2 3214
+3 1598
+...
+
+I checked some examples, such as
+d3c0811467 parse-options.h: OPTION_{BIT,SET_INT} do not store pointer to defval
+which was rewritten by Junio, c.f. mailing list has
+5b496ef29 "[PATCH v2] parse-options: fix the description of defval", 2015-03-29
+   
+Another example is where the mailing list discusses and proposes different
+patches inline, hence the subject line cannot be matched directly, but
+we would need to parse the email instead, c.f.
+https://public-inbox.org/git/20130924051908.GG2766@sigill.intra.peff.net/
+
+Looking at the numbers above, these account for ~25% of the patches
+(10k out of 38k commits in git.git), I'll ignore them for now.
 
 
 

@@ -16,8 +16,8 @@ def strip_subject_line(s):
 	# strip of "RE: " ?
 	return s
 
-def run_log_in(where):
-	cmd = ['git', '--no-pager', '-C', where,  'log',  '--no-merges', '--date=iso', '--format="%ad' +sep + '%an' + sep + '%s"']
+def run_log_in(where, args):
+	cmd = ['git', '--no-pager', '-C', where,  'log',  '--no-merges', ] + args + [ '--date=iso', '--format="%ad' +sep + '%an' + sep + '%s"']
 	p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 	r = {}
 	while p.returncode is None:
@@ -31,13 +31,13 @@ def run_log_in(where):
 					r[ss] = []
 				r[ss] += [(d, a)]
 			except Exception as e:
-				print "X",line, "X"
+				print "Problem with line X",line, "X"
 	return r
 
 print "checking repo"
-data_in_repo = run_log_in(gitrepo);
+data_in_repo = run_log_in(gitrepo, ['--since=2011']);
 print "reading ml"
-data_in_ml = run_log_in(gitml);
+data_in_ml = run_log_in(gitml, []);
 
 nonuniquecounter=0
 dates = []
@@ -46,7 +46,6 @@ mlmatches = {}
 for item in data_in_repo:
 	if len(data_in_repo[item]) != 1:
 		nonuniquecounter = nonuniquecounter+1
-		# ~ print data_in_repo[item], item 
 	else:
 		if not item in data_in_ml:
 			m = 0
@@ -57,6 +56,8 @@ for item in data_in_repo:
 			mlmatches[m] = 0
 		
 		mlmatches[m] = mlmatches[m] + 1
+		if m == 0:
+			print m, item, data_in_repo[item]
 		
 print "non-unique subject lines", nonuniquecounter
 
