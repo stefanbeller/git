@@ -2,6 +2,8 @@
 
 import subprocess
 import os
+from datetime import datetime
+from datetime import timedelta
 
 gitrepo = os.getenv("HOME") + "/git"
 gitml =   os.getenv("HOME") + "/git-ml"
@@ -17,7 +19,7 @@ def strip_subject_line(s):
 	return s
 
 def run_log_in(where, args):
-	cmd = ['git', '--no-pager', '-C', where,  'log',  '--no-merges', ] + args + [ '--date=iso', '--format="%ad' +sep + '%an' + sep + '%s"']
+	cmd = ['git', '--no-pager', '-C', where,  'log',  '--no-merges', ] + args + [ '--date=iso', '--format=%ad' +sep + '%an' + sep + '%s']
 	p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 	r = {}
 	while p.returncode is None:
@@ -57,7 +59,17 @@ for item in data_in_repo:
 		
 		mlmatches[m] = mlmatches[m] + 1
 		if m == 0:
-			print m, item, data_in_repo[item]
+			continue
+			
+		# find the earliest appearance on the mailing list
+		youngest = datetime.now()
+		for i in data_in_ml[item]:
+			d = datetime.strptime(i[0][:19], '%Y-%m-%d %H:%M:%S')
+			if d < youngest:
+				youngest = d
+		applied = datetime.strptime(data_in_repo[item][0][0][:19], '%Y-%m-%d %H:%M:%S')
+		t = (applied - youngest)
+		print applied, t
 		
 print "non-unique subject lines", nonuniquecounter
 
