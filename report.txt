@@ -1,0 +1,83 @@
+
+Notes on our mailing list based workflow
+
+I wanted to gather some statistics regarding working on the mailing list
+and wanted to share my insights.
+
+I wrote a python script that essentially runs "git log --format='%ad %an %s'"
+on both git.git as well as the mailing list with the intent to match up
+commits to mails.
+
+I tried using the subject lines as a dictionary key, only to find out
+there are duplicates. 1318 commit subject lines occur in more than one commit
+in git.git. From a cursory read, most of them are merges.
+
+When accounting for merges by adding '--no-merges' to the invocation of
+git-log, we're down to 491 subject lines that are not unique.
+
+Looking at these non-uniques, a lot of them look like they were reverted
+once and the re-introduced. An example from this year is Eliahs rename
+detection series which was reverted and re-introduced, making ~20
+subject lines not unique.
+
+Another occurrence of these non-unique subject lines are either
+re-occurring tasks (e.g. "l10n: de.po: fix typos",
+"l10n: Update Swedish translation", "Update draft release notes to 2.2")
+
+For further analysis I will ignore the effects of non-unique subject lines.
+
+Then I tried matching subject lines of the mailing list to subject lines
+of commits and counting how many such messages were on the mailing list.
+When only stripping of the "[PATCH ...]" prefix, we get the following
+count, occurrence:
+0 10915
+1 16644
+2 5012
+3 2312
+4 996
+5 533
+6 277
+7 220
+8 124
+9 77
+10 35
+11 13
+12 11
+13 14
+14 6
+15 3
+16 8
+17 9
+18 11
+19 3
+20 4
+21 3
+22 11
+23 1
+27 1
+74 1
+
+The table indicates that we have 10915 commits in git.git that did not
+have an accompanying email with the same subject on the mailing list;
+16644 commits had exactly one match on the mailing list; 5012 commits
+had 2 matches, and so on.
+
+The multiple matches are due to resend, the no-matches are still
+a bit of a mystery to me, as I do not suspect Junio to edit the
+commit messages that often.
+
+For the record of how I arrived at the numbers above, checkout
+the commit which contains the report up to now and the scripts to produce
+the numbers.
+
+
+
+
+
+
+
+
+
+
+
+
