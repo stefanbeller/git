@@ -85,6 +85,7 @@ static int read_patches(const char *range, struct string_list *list)
 			strbuf_addch(&buf, '\n');
 			if (!util->diff_offset)
 				util->diff_offset = buf.len;
+			strbuf_addch(&buf, ' ');
 			strbuf_addbuf(&buf, &line);
 		} else if (in_header) {
 			if (starts_with(line.buf, "Author: ")) {
@@ -121,6 +122,7 @@ static int read_patches(const char *range, struct string_list *list)
 			strbuf_addch(&buf, ' ');
 			strbuf_add(&buf, line.buf + 1, line.len - 1);
 		} else {
+			strbuf_addch(&buf, ' ');
 			strbuf_addbuf(&buf, &line);
 		}
 
