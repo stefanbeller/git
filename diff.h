@@ -217,7 +217,7 @@ struct diff_options {
 		COLOR_MOVED_PLAIN = 1,
 		COLOR_MOVED_ZEBRA = 2,
 		COLOR_MOVED_ZEBRA_DIM = 3,
-	} color_moved;
+	} markup_moved;
 	#define COLOR_MOVED_DEFAULT COLOR_MOVED_ZEBRA
 	#define COLOR_MOVED_MIN_ALNUM_COUNT 20
 };

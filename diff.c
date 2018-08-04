@@ -821,7 +821,7 @@ static int shrink_potential_moved_blocks(struct moved_entry **pmb,
 }
 
 /*
- * If o->color_moved is COLOR_MOVED_PLAIN, this function does nothing.
+ * If o->markup_moved is COLOR_MOVED_PLAIN, this function does nothing.
  *
  * Otherwise, if the last block has fewer alphanumeric characters than
  * COLOR_MOVED_MIN_ALNUM_COUNT, unset DIFF_SYMBOL_MOVED_LINE on all lines in
@@ -836,7 +836,7 @@ static int shrink_potential_moved_blocks(struct moved_entry **pmb,
 static void adjust_last_block(struct diff_options *o, int n, int block_length)
 {
 	int i, alnum_count = 0;
-	if (o->color_moved == COLOR_MOVED_PLAIN)
+	if (o->markup_moved == COLOR_MOVED_PLAIN)
 		return;
 	for (i = 1; i < block_length + 1; i++) {
 		const char *c = o->emitted_symbols->buf[n - i].line;
@@ -895,7 +895,7 @@ static void mark_color_as_moved(struct diff_options *o,
 
 		l->flags |= DIFF_SYMBOL_MOVED_LINE;
 
-		if (o->color_moved == COLOR_MOVED_PLAIN)
+		if (o->markup_moved == COLOR_MOVED_PLAIN)
 			continue;
 
 		/* Check any potential block runs, advance each or nullify */
@@ -4220,7 +4220,7 @@ void diff_setup(struct diff_options *options)
 		options->b_prefix = "b/";
 	}
 
-	options->color_moved = diff_color_moved_default;
+	options->markup_moved = diff_color_moved_default;
 }
 
 void diff_setup_done(struct diff_options *options)
@@ -4333,7 +4333,7 @@ void diff_setup_done(struct diff_options *options)
 		die(_("--follow requires exactly one pathspec"));
 
 	if (!options->use_color || external_diff())
-		options->color_moved = 0;
+		options->markup_moved = 0;
 }
 
 static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *val)
@@ -4796,16 +4796,16 @@ int diff_opt_parse(struct diff_options *options,
 		options->use_color = 0;
 	else if (!strcmp(arg, "--color-moved")) {
 		if (diff_color_moved_default)
-			options->color_moved = diff_color_moved_default;
-		if (options->color_moved == COLOR_MOVED_NO)
-			options->color_moved = COLOR_MOVED_DEFAULT;
+			options->markup_moved = diff_color_moved_default;
+		if (options->markup_moved == COLOR_MOVED_NO)
+			options->markup_moved = COLOR_MOVED_DEFAULT;
 	} else if (!strcmp(arg, "--no-color-moved"))
-		options->color_moved = COLOR_MOVED_NO;
+		options->markup_moved = COLOR_MOVED_NO;
 	else if (skip_prefix(arg, "--color-moved=", &arg)) {
 		int cm = parse_color_moved(arg);
 		if (cm < 0)
 			die("bad --color-moved argument: %s", arg);
-		options->color_moved = cm;
+		options->markup_moved = cm;
 	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
@@ -5623,7 +5623,7 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 	if (WSEH_NEW & WS_RULE_MASK)
 		BUG("WS rules bit mask overlaps with diff symbol flags");
 
-	if (o->color_moved)
+	if (o->markup_moved)
 		o->emitted_symbols = &esm;
 
 	for (i = 0; i < q->nr; i++) {
@@ -5633,7 +5633,7 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 	}
 
 	if (o->emitted_symbols) {
-		if (o->color_moved) {
+		if (o->markup_moved) {
 			struct hashmap add_lines, del_lines;
 
 			hashmap_init(&del_lines,
@@ -5643,7 +5643,7 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 
 			add_lines_to_move_detection(o, &add_lines, &del_lines);
 			mark_color_as_moved(o, &add_lines, &del_lines);
-			if (o->color_moved == COLOR_MOVED_ZEBRA_DIM)
+			if (o->markup_moved == COLOR_MOVED_ZEBRA_DIM)
 				dim_moved_lines(o);
 
 			hashmap_free(&add_lines, 0);
@@ -5731,7 +5731,7 @@ void diff_flush(struct diff_options *options)
 			fclose(options->file);
 		options->file = xfopen("/dev/null", "w");
 		options->close_file = 1;
-		options->color_moved = 0;
+		options->markup_moved = 0;
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			if (check_pair_status(p))
