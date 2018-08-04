@@ -1028,6 +1028,48 @@ static void emit_line_ws_markup(struct diff_options *o,
 	}
 }
 
+static const char *determine_line_color(struct diff_options *o,
+					struct emitted_diff_symbol *eds)
+{
+	const char *set;
+	unsigned flags = eds->flags;
+
+	/*
+	 * To have these offsets work, we need to keep
+	 * DIFF_FILE_OLD_MOVED{_ALT, _ALT_DIM, DIM, _}
+	 * in the same order as their _NEW_ equivalents; we do not need
+	 * to care about DIFF_FILE_{NEW, OLD} and their relations to others.
+	 */
+	const int off = (eds->s == DIFF_SYMBOL_PLUS) ?
+		DIFF_FILE_NEW_MOVED - DIFF_FILE_OLD_MOVED : 0;
+
+	switch (flags & (DIFF_SYMBOL_MOVED_LINE |
+			 DIFF_SYMBOL_MOVED_LINE_ALT |
+			 DIFF_SYMBOL_MOVED_LINE_UNINTERESTING)) {
+	case DIFF_SYMBOL_MOVED_LINE |
+	     DIFF_SYMBOL_MOVED_LINE_ALT |
+	     DIFF_SYMBOL_MOVED_LINE_UNINTERESTING:
+		set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED_ALT_DIM + off);
+		break;
+	case DIFF_SYMBOL_MOVED_LINE |
+	     DIFF_SYMBOL_MOVED_LINE_ALT:
+		set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED_ALT + off);
+		break;
+	case DIFF_SYMBOL_MOVED_LINE |
+	     DIFF_SYMBOL_MOVED_LINE_UNINTERESTING:
+		set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED_DIM + off);
+		break;
+	case DIFF_SYMBOL_MOVED_LINE:
+		set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED + off);
+		break;
+	default:
+		set = (eds->s == DIFF_SYMBOL_PLUS) ?
+			diff_get_color_opt(o, DIFF_FILE_NEW):
+			diff_get_color_opt(o, DIFF_FILE_OLD);
+	}
+	return set;
+}
+
 static void emit_diff_symbol_from_struct(struct diff_options *o,
 					 struct emitted_diff_symbol *eds)
 {
@@ -1089,28 +1131,7 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 				    flags & (DIFF_SYMBOL_CONTENT_WS_MASK), 0);
 		break;
 	case DIFF_SYMBOL_PLUS:
-		switch (flags & (DIFF_SYMBOL_MOVED_LINE |
-				 DIFF_SYMBOL_MOVED_LINE_ALT |
-				 DIFF_SYMBOL_MOVED_LINE_UNINTERESTING)) {
-		case DIFF_SYMBOL_MOVED_LINE |
-		     DIFF_SYMBOL_MOVED_LINE_ALT |
-		     DIFF_SYMBOL_MOVED_LINE_UNINTERESTING:
-			set = diff_get_color_opt(o, DIFF_FILE_NEW_MOVED_ALT_DIM);
-			break;
-		case DIFF_SYMBOL_MOVED_LINE |
-		     DIFF_SYMBOL_MOVED_LINE_ALT:
-			set = diff_get_color_opt(o, DIFF_FILE_NEW_MOVED_ALT);
-			break;
-		case DIFF_SYMBOL_MOVED_LINE |
-		     DIFF_SYMBOL_MOVED_LINE_UNINTERESTING:
-			set = diff_get_color_opt(o, DIFF_FILE_NEW_MOVED_DIM);
-			break;
-		case DIFF_SYMBOL_MOVED_LINE:
-			set = diff_get_color_opt(o, DIFF_FILE_NEW_MOVED);
-			break;
-		default:
-			set = diff_get_color_opt(o, DIFF_FILE_NEW);
-		}
+		set = determine_line_color(o, eds);
 		reset = diff_get_color_opt(o, DIFF_RESET);
 		if (!o->flags.dual_color_diffed_diffs)
 			set_sign = NULL;
@@ -1136,28 +1157,7 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 				    flags & DIFF_SYMBOL_CONTENT_BLANK_LINE_EOF);
 		break;
 	case DIFF_SYMBOL_MINUS:
-		switch (flags & (DIFF_SYMBOL_MOVED_LINE |
-				 DIFF_SYMBOL_MOVED_LINE_ALT |
-				 DIFF_SYMBOL_MOVED_LINE_UNINTERESTING)) {
-		case DIFF_SYMBOL_MOVED_LINE |
-		     DIFF_SYMBOL_MOVED_LINE_ALT |
-		     DIFF_SYMBOL_MOVED_LINE_UNINTERESTING:
-			set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED_ALT_DIM);
-			break;
-		case DIFF_SYMBOL_MOVED_LINE |
-		     DIFF_SYMBOL_MOVED_LINE_ALT:
-			set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED_ALT);
-			break;
-		case DIFF_SYMBOL_MOVED_LINE |
-		     DIFF_SYMBOL_MOVED_LINE_UNINTERESTING:
-			set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED_DIM);
-			break;
-		case DIFF_SYMBOL_MOVED_LINE:
-			set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED);
-			break;
-		default:
-			set = diff_get_color_opt(o, DIFF_FILE_OLD);
-		}
+		set = determine_line_color(o, eds);
 		reset = diff_get_color_opt(o, DIFF_RESET);
 		if (!o->flags.dual_color_diffed_diffs)
 			set_sign = NULL;
