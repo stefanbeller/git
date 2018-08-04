@@ -2900,6 +2900,12 @@ static int apply_one_fragment(struct apply_state *state,
 			    ws_blank_line(patch + 1, plen, ws_rule))
 				is_blank_context = 1;
 			/* fallthrough */
+		case '~':
+			/*
+			 * For now ignore moved line indicators and apply
+			 * as a regular old line
+			 */
+			/* fallthrough */
 		case '-':
 			memcpy(old, patch + 1, plen);
 			add_line_info(&preimage, old, plen,
@@ -2907,6 +2913,12 @@ static int apply_one_fragment(struct apply_state *state,
 			old += plen;
 			if (first == '-')
 				break;
+			/* fallthrough */
+		case '*':
+			/*
+			 * For now ignore moved line indicators and apply
+			 * as a regular new line
+			 */
 			/* fallthrough */
 		case '+':
 			/* --no-add does not add new lines */

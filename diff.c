@@ -1043,6 +1043,9 @@ static const char *determine_line_color(struct diff_options *o,
 	const int off = (eds->s == DIFF_SYMBOL_PLUS) ?
 		DIFF_FILE_NEW_MOVED - DIFF_FILE_OLD_MOVED : 0;
 
+	if (!o->color_moved)
+		goto default_color;
+
 	switch (flags & (DIFF_SYMBOL_MOVED_LINE |
 			 DIFF_SYMBOL_MOVED_LINE_ALT |
 			 DIFF_SYMBOL_MOVED_LINE_UNINTERESTING)) {
@@ -1063,6 +1066,7 @@ static const char *determine_line_color(struct diff_options *o,
 		set = diff_get_color_opt(o, DIFF_FILE_OLD_MOVED + off);
 		break;
 	default:
+default_color:
 		set = (eds->s == DIFF_SYMBOL_PLUS) ?
 			diff_get_color_opt(o, DIFF_FILE_NEW):
 			diff_get_color_opt(o, DIFF_FILE_OLD);
@@ -1152,6 +1156,9 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 
 		first = o->output_indicators[OI_NEW] ?
 			o->output_indicators[OI_NEW] : "+";
+		if (o->output_indicators[OI_MOVED_NEW] &&
+		   (flags & DIFF_SYMBOL_MOVED_LINE))
+			first = "*";
 		emit_line_ws_markup(o, set_sign, set, reset, first, line, len,
 				    flags & DIFF_SYMBOL_CONTENT_WS_MASK,
 				    flags & DIFF_SYMBOL_CONTENT_BLANK_LINE_EOF);
@@ -1176,6 +1183,9 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 		}
 		first = o->output_indicators[OI_OLD] ?
 			o->output_indicators[OI_OLD] : "-";
+		if (o->output_indicators[OI_MOVED_NEW] &&
+		   (flags & DIFF_SYMBOL_MOVED_LINE))
+			first = "~";
 		emit_line_ws_markup(o, set_sign, set, reset, first, line, len,
 				    flags & DIFF_SYMBOL_CONTENT_WS_MASK, 0);
 		break;
@@ -4795,6 +4805,7 @@ int diff_opt_parse(struct diff_options *options,
 	else if (!strcmp(arg, "--no-color"))
 		options->use_color = 0;
 	else if (!strcmp(arg, "--color-moved")) {
+		options->color_moved = 1;
 		if (diff_color_moved_default)
 			options->markup_moved = diff_color_moved_default;
 		if (options->markup_moved == COLOR_MOVED_NO)
@@ -4806,6 +4817,16 @@ int diff_opt_parse(struct diff_options *options,
 		if (cm < 0)
 			die("bad --color-moved argument: %s", arg);
 		options->markup_moved = cm;
+		options->color_moved = 1;
+	} else if (skip_prefix(arg, "--mark-moved", &arg)) {
+		/*
+		 * NEEDSWORK:
+		 * Once merged with 51da15eb230 (diff.c: add a blocks mode for
+		 * moved code detection, 2018-07-16), make it COLOR_MOVED_BLOCKS
+		 */
+		options->markup_moved = COLOR_MOVED_PLAIN;
+		options->output_indicators[OI_MOVED_NEW] = "*";
+		options->output_indicators[OI_MOVED_OLD] = "~";
 	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;

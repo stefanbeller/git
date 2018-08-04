@@ -197,7 +197,9 @@ struct diff_options {
 #define OI_NEW 0
 #define OI_OLD 1
 #define OI_CONTEXT 2
-	const char *output_indicators[3];
+#define OI_MOVED_NEW 3
+#define OI_MOVED_OLD 4
+	const char *output_indicators[5];
 
 	struct pathspec pathspec;
 	pathchange_fn_t pathchange;
@@ -211,6 +213,7 @@ struct diff_options {
 
 	int diff_path_counter;
 
+	unsigned color_moved : 1;
 	struct emitted_diff_symbols *emitted_symbols;
 	enum {
 		COLOR_MOVED_NO = 0,
