@@ -221,9 +221,6 @@ int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 	return 0;
 }
 
-/*
- * Determine if a submodule has been initialized at a given 'path'
- */
 int is_submodule_active(struct repository *repo, const char *path)
 {
 	int ret = 0;
@@ -267,7 +264,7 @@ int is_submodule_active(struct repository *repo, const char *path)
 
 	/* fallback to checking if the URL is set */
 	key = xstrfmt("submodule.%s.url", module->name);
-	ret = !repo_config_get_string(repo, key, &value);
+	ret = !repo_config_get_string(repo, key, &value) ? 2 : 0;
 
 	free(value);
 	free(key);

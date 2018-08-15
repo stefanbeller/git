@@ -45,6 +45,12 @@ extern int git_default_submodule_config(const char *var, const char *value, void
 struct option;
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 						     const char *arg, int unset);
+/*
+ * Determine if a submodule has been initialized at a given 'path'.
+ * Returns 1 if it is considered active via the submodule.[<name>.]active
+ * setting, or return 2 if it is active via the older submodule.url setting.
+ */
+#define SUBMODULE_ACTIVE_VIA_URL 2
 extern int is_submodule_active(struct repository *repo, const char *path);
 /*
  * Determine if a submodule has been populated at a given 'path' by checking if
