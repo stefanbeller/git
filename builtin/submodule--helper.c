@@ -922,8 +922,10 @@ static void sync_submodule(const char *path, const char *prefix,
 	struct strbuf sb = STRBUF_INIT;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *sub_config_path = NULL;
+	int active, r;
 
-	if (!is_submodule_active(the_repository, path))
+	active = is_submodule_active(the_repository, path);
+	if (!active)
 		return;
 
 	sub = submodule_from_path(the_repository, &null_oid, path);
@@ -983,13 +985,15 @@ static void sync_submodule(const char *path, const char *prefix,
 	strbuf_strip_suffix(&sb, "\n");
 	remote_key = xstrfmt("remote.%s.url", sb.buf);
 
+	if (active == SUBMODULE_ACTIVE_VIA_URL)
+		FREE_AND_NULL(sub_origin_url);
 	strbuf_reset(&sb);
 	submodule_to_gitdir(&sb, path);
 	strbuf_addstr(&sb, "/config");
-
-	if (git_config_set_in_file_gently(sb.buf, remote_key, sub_origin_url))
-		die(_("failed to update remote for submodule '%s'"),
-		      path);
+	if ((r = git_config_set_in_file_gently(sb.buf, remote_key, sub_origin_url)))
+		if (sub_origin_url || r != CONFIG_NOTHING_SET)
+			die(_("failed to update remote for submodule '%s'"),
+			      path);
 
 	if (flags & OPT_RECURSIVE) {
 		struct child_process cpr = CHILD_PROCESS_INIT;
