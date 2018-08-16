@@ -1515,6 +1515,7 @@ struct update_clone_data {
 	struct object_id oid;
 	unsigned just_cloned;
 	unsigned retried;
+	unsigned cleanup_url;
 };
 
 struct submodule_update_clone {
@@ -1590,7 +1591,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	struct strbuf displaypath_sb = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	const char *displaypath = NULL;
-	int needs_cloning = 0;
+	int needs_cloning = 0, active;
 
 	if (ce_stage(ce)) {
 		if (suc->recursive_prefix)
@@ -1632,7 +1633,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	}
 
 	/* Check if the submodule has been initialized. */
-	if (!is_submodule_active(the_repository, ce->name)) {
+	active = is_submodule_active(the_repository, ce->name);
+	if (!active) {
 		next_submodule_warn_missing(suc, out, displaypath);
 		goto cleanup;
 	}
@@ -1653,6 +1655,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	suc->update_clone[suc->update_clone_nr].sub = sub;
 	suc->update_clone[suc->update_clone_nr].retried = 0;
 	suc->update_clone[suc->update_clone_nr].ce = ce;
+	suc->update_clone[suc->update_clone_nr].cleanup_url =
+		(active != SUBMODULE_ACTIVE_VIA_URL);
 	suc->update_clone_nr++;
 
 	if (!needs_cloning)
@@ -1801,6 +1805,22 @@ static int git_update_clone_config(const char *var, const char *value,
 
 static void update_submodule(struct update_clone_data *ucd)
 {
+	if (ucd->cleanup_url) {
+		struct strbuf cfg = STRBUF_INIT;
+		struct strbuf submodule_url = STRBUF_INIT;
+		int r;
+
+		strbuf_addf(&submodule_url, "submodule.%s.url", ucd->sub->name);
+		strbuf_repo_git_path(&cfg, the_repository, "config");
+
+		r = git_config_set_in_file_gently(cfg.buf, submodule_url.buf, NULL);
+		if (r && r != CONFIG_NOTHING_SET)
+			die(_("failed to remove '%s'"), submodule_url.buf);
+
+		strbuf_release(&cfg);
+		strbuf_release(&submodule_url);
+	}
+
 	fprintf(stdout, "dummy %s %d\t%s\n",
 		oid_to_hex(&ucd->oid),
 		ucd->just_cloned,

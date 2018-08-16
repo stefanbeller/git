@@ -508,7 +508,7 @@ test_expect_success "'fetch.recurseSubmodules=on-demand' works also without .git
 		git config -f .gitmodules submodule.fake.path fake &&
 		git config -f .gitmodules submodule.fake.url fakeurl &&
 		git add .gitmodules &&
-		git config --unset submodule.submodule.url &&
+		test_might_fail git config --unset submodule.submodule.url &&
 		git fetch >../actual.out 2>../actual.err &&
 		# cleanup
 		git config --unset fetch.recurseSubmodules &&

@@ -55,7 +55,7 @@ test_expect_failure 'can see submodule diffs just after checkout' '
 test_expect_success 'checkout main and initialize independent clones' '
 	mkdir fully_cloned_submodule &&
 	git -C clone/main worktree add "$base_path/fully_cloned_submodule/main" "$rev1_hash_main" &&
-	git -C fully_cloned_submodule/main submodule update
+	git -C fully_cloned_submodule/main submodule update --init
 '
 
 test_expect_success 'can see submodule diffs after independent cloning' '
