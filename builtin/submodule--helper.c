@@ -1511,8 +1511,10 @@ static int module_update_module_mode(int argc, const char **argv, const char *pr
 
 struct update_clone_data {
 	const struct submodule *sub;
+	const struct cache_entry *ce;
 	struct object_id oid;
 	unsigned just_cloned;
+	unsigned retried;
 };
 
 struct submodule_update_clone {
@@ -1541,8 +1543,8 @@ struct submodule_update_clone {
 	/* If we want to stop as fast as possible and return an error */
 	unsigned quickstop : 1;
 
-	/* failed clones to be retried again */
-	const struct cache_entry **failed_clones;
+	/* failed clones to be retried again, indexes into update_clone */
+	int *failed_clones;
 	int failed_clones_nr, failed_clones_alloc;
 
 	int max_jobs;
@@ -1649,6 +1651,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	oidcpy(&suc->update_clone[suc->update_clone_nr].oid, &ce->oid);
 	suc->update_clone[suc->update_clone_nr].just_cloned = needs_cloning;
 	suc->update_clone[suc->update_clone_nr].sub = sub;
+	suc->update_clone[suc->update_clone_nr].retried = 0;
+	suc->update_clone[suc->update_clone_nr].ce = ce;
 	suc->update_clone_nr++;
 
 	if (!needs_cloning)
@@ -1707,7 +1711,8 @@ static int update_clone_get_next_task(struct child_process *child,
 	for (; suc->current < suc->list.nr; suc->current++) {
 		ce = suc->list.entries[suc->current];
 		if (prepare_to_clone_next_submodule(ce, child, suc, err)) {
-			*idx_task_cb = update_clone_alloc_cb(suc->current);
+			*idx_task_cb = update_clone_alloc_cb(
+				suc->update_clone_nr - 1);
 			suc->current++;
 			return 1;
 		}
@@ -1720,7 +1725,9 @@ static int update_clone_get_next_task(struct child_process *child,
 	 */
 	index = suc->current - suc->list.nr;
 	if (index < suc->failed_clones_nr) {
-		ce = suc->failed_clones[index];
+		int ucd_index = suc->failed_clones[index];
+		struct update_clone_data *ucd = &suc->update_clone[ucd_index];
+		ce = ucd->ce;
 		if (!prepare_to_clone_next_submodule(ce, child, suc, err)) {
 			suc->current ++;
 			strbuf_addstr(err, "BUG: submodule considered for "
@@ -1728,7 +1735,7 @@ static int update_clone_get_next_task(struct child_process *child,
 					   "any more?\n");
 			return 0;
 		}
-		*idx_task_cb = update_clone_alloc_cb(suc->current);
+		*idx_task_cb = update_clone_alloc_cb(ucd_index);
 		suc->current ++;
 		return 1;
 	}
@@ -1750,31 +1757,31 @@ static int update_clone_task_finished(int result,
 				      void *suc_cb,
 				      void *idx_task_cb)
 {
-	const struct cache_entry *ce;
 	struct submodule_update_clone *suc = suc_cb;
+	struct update_clone_data *ucd;
 
 	int *idxP = idx_task_cb;
 	int idx = *idxP;
+	ucd = &suc->update_clone[idx];
 	free(idxP);
 
 	if (!result)
 		return 0;
 
-	if (idx < suc->list.nr) {
-		ce  = suc->list.entries[idx];
+	if (!ucd->retried) {
+		ucd->retried = 1;
 		strbuf_addf(err, _("Failed to clone '%s'. Retry scheduled"),
-			    ce->name);
+			    ucd->ce->name);
 		strbuf_addch(err, '\n');
 		ALLOC_GROW(suc->failed_clones,
 			   suc->failed_clones_nr + 1,
 			   suc->failed_clones_alloc);
-		suc->failed_clones[suc->failed_clones_nr++] = ce;
+		suc->failed_clones[suc->failed_clones_nr++] = idx;
 		return 0;
 	} else {
 		idx -= suc->list.nr;
-		ce  = suc->failed_clones[idx];
 		strbuf_addf(err, _("Failed to clone '%s' a second time, aborting"),
-			    ce->name);
+			    ucd->ce->name);
 		strbuf_addch(err, '\n');
 		suc->quickstop = 1;
 		return 1;
