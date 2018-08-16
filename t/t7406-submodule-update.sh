@@ -84,6 +84,14 @@ test_expect_success 'submodule update detaching the HEAD ' '
 	)
 '
 
+test_expect_success 'active submodule leaves no URL config in superproject' '
+	# relies on previous test
+	(
+		cd super &&
+		test_must_fail git config -f .git/config submodule.submodule.url
+	)
+'
+
 test_expect_success 'submodule update from subdirectory' '
 	(cd super/submodule &&
 	 git reset --hard HEAD~1
