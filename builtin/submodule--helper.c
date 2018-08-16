@@ -1688,6 +1688,13 @@ cleanup:
 	return needs_cloning;
 }
 
+static void *update_clone_alloc_cb(int i)
+{
+	int *p = xmalloc(sizeof(*p));
+	*p = i;
+	return p;
+}
+
 static int update_clone_get_next_task(struct child_process *child,
 				      struct strbuf *err,
 				      void *suc_cb,
@@ -1700,9 +1707,7 @@ static int update_clone_get_next_task(struct child_process *child,
 	for (; suc->current < suc->list.nr; suc->current++) {
 		ce = suc->list.entries[suc->current];
 		if (prepare_to_clone_next_submodule(ce, child, suc, err)) {
-			int *p = xmalloc(sizeof(*p));
-			*p = suc->current;
-			*idx_task_cb = p;
+			*idx_task_cb = update_clone_alloc_cb(suc->current);
 			suc->current++;
 			return 1;
 		}
@@ -1715,7 +1720,6 @@ static int update_clone_get_next_task(struct child_process *child,
 	 */
 	index = suc->current - suc->list.nr;
 	if (index < suc->failed_clones_nr) {
-		int *p;
 		ce = suc->failed_clones[index];
 		if (!prepare_to_clone_next_submodule(ce, child, suc, err)) {
 			suc->current ++;
@@ -1724,9 +1728,7 @@ static int update_clone_get_next_task(struct child_process *child,
 					   "any more?\n");
 			return 0;
 		}
-		p = xmalloc(sizeof(*p));
-		*p = suc->current;
-		*idx_task_cb = p;
+		*idx_task_cb = update_clone_alloc_cb(suc->current);
 		suc->current ++;
 		return 1;
 	}
