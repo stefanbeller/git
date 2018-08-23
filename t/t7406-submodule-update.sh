@@ -260,6 +260,28 @@ test_expect_success 'submodule update --remote should fetch upstream changes wit
 	)
 '
 
+test_expect_success 'submodule update --remote should not fetch upstream when no branch is set' '
+	(
+		cd super &&
+		test_might_fail git config --unset -f .gitmodules submodule.submodule.branch &&
+		git add .gitmodules &&
+		git commit --allow-empty -m "submodules: pin in superproject branch"
+	) &&
+	(
+		cd submodule &&
+		echo line4b >>file &&
+		git add file &&
+		test_tick &&
+		git commit -m "upstream line4b"
+	) &&
+	(
+		cd super &&
+		git submodule update --remote --force submodule &&
+		git -C submodule log -1 --oneline >actual &&
+		! grep line4b actual
+	)
+'
+
 test_expect_success 'local config should override .gitmodules branch' '
 	(cd submodule &&
 	 git checkout test-branch &&
