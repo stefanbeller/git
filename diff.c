@@ -5023,6 +5023,8 @@ int diff_opt_parse(struct diff_options *options,
 		handle_ignore_submodules_arg(options, arg);
 	} else if (skip_to_optional_arg_default(arg, "--submodule", &arg, "log"))
 		return parse_submodule_opt(options, arg);
+	else if (skip_to_optional_arg_default(arg, "--recurse-submodules", &arg, "log"))
+		return parse_submodule_opt(options, arg);
 	else if (skip_prefix(arg, "--ws-error-highlight=", &arg))
 		return parse_ws_error_highlight_opt(options, arg);
 	else if (!strcmp(arg, "--ita-invisible-in-index"))

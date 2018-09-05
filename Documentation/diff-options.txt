@@ -227,6 +227,7 @@ linkgit:git-config[1]).
 	of the `--diff-filter` option on what the status letters mean.
 
 --submodule[=<format>]::
+--recurse-submodules[=<format>]::
 	Specify how differences in submodules are shown.  When specifying
 	`--submodule=short` the 'short' format is used.  This format just
 	shows the names of the commits at the beginning and end of the range.
