@@ -713,11 +713,14 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
 {
 	struct cache_entry *ce;
 
+	trace_printf("index_file_exists %s", name);
 	lazy_init_name_hash(istate);
 
 	ce = hashmap_get_from_hash(&istate->name_hash,
 				   memihash(name, namelen), NULL);
+
 	while (ce) {
+		trace_printf("index_file_exists check %s", ce->name);
 		if (same_name(ce, name, namelen, icase))
 			return ce;
 		ce = hashmap_get_next(&istate->name_hash, ce);

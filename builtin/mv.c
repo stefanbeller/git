@@ -292,9 +292,11 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		rename_cache_entry_at(pos, dst);
 	}
 
-	if (gitmodules_modified)
+	if (gitmodules_modified) {
+		trace_printf("need to stage .gitmodules");
 		stage_updated_gitmodules(&the_index);
-
+	}
+	trace_printf("writing out index ?");
 	if (write_locked_index(&the_index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));

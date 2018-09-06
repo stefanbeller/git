@@ -149,6 +149,7 @@ int remove_path_from_gitmodules(const char *path)
 
 void stage_updated_gitmodules(struct index_state *istate)
 {
+	trace_printf("calling add_file_to_index");
 	if (add_file_to_index(istate, GITMODULES_FILE, 0))
 		die(_("staging updated .gitmodules failed"));
 }

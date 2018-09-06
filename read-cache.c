@@ -738,8 +738,10 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		adjust_dirname_case(istate, ce->name);
 	}
 	if (!(flags & HASH_RENORMALIZE)) {
+		trace_printf("regular add?");
 		alias = index_file_exists(istate, ce->name,
 					  ce_namelen(ce), ignore_case);
+		trace_printf("alias %p", alias);
 		if (alias &&
 		    !ce_stage(alias) &&
 		    !ie_match_stat(istate, alias, st, ce_option)) {

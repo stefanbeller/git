@@ -26,7 +26,14 @@ test_expect_success 'submodule config cache setup' '
 		git submodule add ../submodule &&
 		git submodule add ../submodule a &&
 		git commit -m "add as submodule and as a" &&
-		git mv a b &&
+		test_tick &&
+		test_tick &&
+		test_tick &&
+		test_tick &&
+		test_tick &&
+		test_pause &&
+		git mv -v -v a b &&
+		#~ test_pause &&
 		git commit -m "move a to b"
 	)
 '
