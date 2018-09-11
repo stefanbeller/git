@@ -5,6 +5,23 @@ test_description='stash apply can handle submodules'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-submodule-update.sh
 
+
+test_expect_success 'test reported regression' '
+	mkdir test &&
+	(
+		cd test &&
+		git init &&
+		echo 1 >file &&
+		git add file &&
+		git commit file -m "message" &&
+		git submodule add ./ mysubmod &&
+		git commit -m "Add submodule" &&
+		echo 2 >mysubmod/file &&
+		git checkout -b mybranch &&
+		git rebase -i --autosquash master
+	)
+'
+
 git_stash () {
 	git status -su >expect &&
 	ls -1pR * >>expect &&
