@@ -11,12 +11,14 @@ test_expect_success 'prepare reference tree' '
 '
 
 test_expect_success 'moving the file out of subdirectory' '
-	cd path0 && git mv COPYING ../path1/COPYING
+	cd path0 &&
+	git mv COPYING ../path1/COPYING
 '
 
 # in path0 currently
 test_expect_success 'commiting the change' '
-	cd .. && git commit -m move-out -a
+	cd .. &&
+	git commit -m move-out -a
 '
 
 test_expect_success 'checking the commit' '
@@ -25,12 +27,14 @@ test_expect_success 'checking the commit' '
 '
 
 test_expect_success 'moving the file back into subdirectory' '
-	cd path0 && git mv ../path1/COPYING COPYING
+	cd path0 &&
+	git mv ../path1/COPYING COPYING
 '
 
 # in path0 currently
 test_expect_success 'commiting the change' '
-	cd .. && git commit -m move-in -a
+	cd .. &&
+	git commit -m move-in -a
 '
 
 test_expect_success 'checking the commit' '
@@ -97,7 +101,8 @@ test_expect_success 'moving to existing untracked target with trailing slash' '
 
 test_expect_success 'moving to existing tracked target with trailing slash' '
 	mkdir path2 &&
-	>path2/file && git add path2/file &&
+	>path2/file &&
+	git add path2/file &&
 	git mv path1/path0/ path2/ &&
 	test_path_is_dir path2/path0/
 '
@@ -145,7 +150,9 @@ test_expect_success 'checking the commit' '
 '
 
 test_expect_success 'do not move directory over existing directory' '
-	mkdir path0 && mkdir path0/path2 && test_must_fail git mv path2 path0
+	mkdir path0 &&
+	mkdir path0/path2 &&
+	test_must_fail git mv path2 path0
 '
 
 test_expect_success 'move into "."' '
@@ -220,7 +227,8 @@ test_expect_success 'absolute pathname outside should fail' '(
 )'
 
 test_expect_success 'git mv to move multiple sources into a directory' '
-	rm -fr .git && git init &&
+	rm -fr .git &&
+	git init &&
 	mkdir dir other &&
 	>dir/a.txt &&
 	>dir/b.txt &&
