@@ -78,7 +78,7 @@ static int process_commit(struct walker *walker, struct commit *commit)
 {
 	struct commit_list *parents;
 
-	if (parse_commit(commit))
+	if (parse_commit(the_repository, commit))
 		return -1;
 
 	while (complete && complete->item->date >= commit->date) {

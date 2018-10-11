@@ -1455,7 +1455,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 
 			if (sg_origin[i])
 				continue;
-			if (parse_commit(p))
+			if (parse_commit(the_repository, p))
 				continue;
 			porigin = find(sb->repo, p, origin);
 			if (!porigin)
@@ -1594,7 +1594,7 @@ void assign_blame(struct blame_scoreboard *sb, int opt)
 		 * so hold onto it in the meantime.
 		 */
 		blame_origin_incref(suspect);
-		parse_commit(commit);
+		parse_commit(the_repository, commit);
 		if (sb->reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
 		     !(revs->max_age != -1 && commit->date < revs->max_age)))

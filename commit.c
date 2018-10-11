@@ -70,7 +70,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 	if (get_oid_committish(name, &oid))
 		return NULL;
 	commit = lookup_commit_reference(the_repository, &oid);
-	if (parse_commit(commit))
+	if (parse_commit(the_repository, commit))
 		return NULL;
 	return commit;
 }
@@ -483,7 +483,7 @@ int parse_commit_gently_the_repository(struct commit *item, int quiet_on_missing
 
 void parse_commit_or_die(struct commit *item)
 {
-	if (parse_commit(item))
+	if (parse_commit(the_repository, item))
 		die("unable to parse commit %s",
 		    item ? oid_to_hex(&item->object.oid) : "(null)");
 }
@@ -588,7 +588,7 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 
 	while (parents) {
 		struct commit *commit = parents->item;
-		if (!parse_commit(commit) && !(commit->object.flags & mark)) {
+		if (!parse_commit(the_repository, commit) && !(commit->object.flags & mark)) {
 			commit->object.flags |= mark;
 			commit_list_insert_by_date(commit, list);
 		}
@@ -918,7 +918,7 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n,
 			parents = parents->next;
 			if ((p->object.flags & flags) == flags)
 				continue;
-			if (parse_commit(p))
+			if (parse_commit(the_repository, p))
 				return NULL;
 			p->object.flags |= flags;
 			prio_queue_put(&queue, p);
@@ -944,10 +944,10 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 			return commit_list_insert(one, &result);
 	}
 
-	if (parse_commit(one))
+	if (parse_commit(the_repository, one))
 		return NULL;
 	for (i = 0; i < n; i++) {
-		if (parse_commit(twos[i]))
+		if (parse_commit(the_repository, twos[i]))
 			return NULL;
 	}
 
@@ -1006,7 +1006,7 @@ static int remove_redundant(struct commit **array, int cnt)
 	ALLOC_ARRAY(filled_index, cnt - 1);
 
 	for (i = 0; i < cnt; i++)
-		parse_commit(array[i]);
+		parse_commit(the_repository, array[i]);
 	for (i = 0; i < cnt; i++) {
 		struct commit_list *common;
 		uint32_t min_generation = array[i]->generation;
@@ -1135,10 +1135,10 @@ int in_merge_bases_many(struct commit *commit, int nr_reference, struct commit *
 	int ret = 0, i;
 	uint32_t min_generation = GENERATION_NUMBER_INFINITY;
 
-	if (parse_commit(commit))
+	if (parse_commit(the_repository, commit))
 		return ret;
 	for (i = 0; i < nr_reference; i++) {
-		if (parse_commit(reference[i]))
+		if (parse_commit(the_repository, reference[i]))
 			return ret;
 		if (reference[i]->generation < min_generation)
 			min_generation = reference[i]->generation;

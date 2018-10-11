@@ -435,7 +435,7 @@ static void write_graph_chunk_data(struct hashfile *f, int hash_len,
 		int edge_value;
 		uint32_t packedDate[2];
 
-		parse_commit(*list);
+		parse_commit(the_repository, *list);
 		hashwrite(f, get_commit_tree_oid(*list)->hash, hash_len);
 
 		parent = (*list)->parents;
@@ -606,7 +606,7 @@ static void close_reachable(struct packed_oid_list *oids)
 	for (i = 0; i < oids->nr; i++) {
 		commit = lookup_commit(the_repository, &oids->list[i]);
 
-		if (commit && !parse_commit(commit))
+		if (commit && !parse_commit(the_repository, commit))
 			add_missing_parents(oids, commit);
 	}
 
@@ -783,7 +783,7 @@ void write_commit_graph(const char *obj_dir,
 			continue;
 
 		commits.list[commits.nr] = lookup_commit(the_repository, &oids.list[i]);
-		parse_commit(commits.list[commits.nr]);
+		parse_commit(the_repository, commits.list[commits.nr]);
 
 		for (parent = commits.list[commits.nr]->parents;
 		     parent; parent = parent->next)
