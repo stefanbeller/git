@@ -443,7 +443,7 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	return 0;
 }
 
-int parse_commit_internal(struct commit *item, int quiet_on_missing, int use_commit_graph)
+int parse_commit_internal_the_repository(struct commit *item, int quiet_on_missing, int use_commit_graph)
 {
 	enum object_type type;
 	void *buffer;
@@ -478,7 +478,7 @@ int parse_commit_internal(struct commit *item, int quiet_on_missing, int use_com
 
 int parse_commit_gently_the_repository(struct commit *item, int quiet_on_missing)
 {
-	return parse_commit_internal(item, quiet_on_missing, 1);
+	return parse_commit_internal(the_repository, item, quiet_on_missing, 1);
 }
 
 void parse_commit_or_die(struct commit *item)
