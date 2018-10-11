@@ -3130,7 +3130,7 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 		      git_path_merge_head(the_repository), 0);
 	write_message("no-ff", 5, git_path_merge_mode(the_repository), 0);
 
-	bases = get_merge_bases(head_commit, merge_commit);
+	bases = get_merge_bases(the_repository, head_commit, merge_commit);
 	if (bases && !oidcmp(&merge_commit->object.oid,
 			     &bases->item->object.oid)) {
 		ret = 0;
