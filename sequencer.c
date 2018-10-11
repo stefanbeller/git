@@ -327,7 +327,8 @@ static int get_message(struct commit *commit, struct commit_message *out)
 	const char *abbrev, *subject;
 	int subject_len;
 
-	out->message = logmsg_reencode(commit, NULL, get_commit_output_encoding());
+	out->message = logmsg_reencode(the_repository, commit, NULL,
+				       get_commit_output_encoding());
 	abbrev = short_commit_name(commit);
 
 	subject_len = find_commit_subject(out->message, &subject);
@@ -1259,7 +1260,8 @@ static int try_to_commit(struct strbuf *msg, const char *author,
 	if (flags & AMEND_MSG) {
 		const char *exclude_gpgsig[] = { "gpgsig", NULL };
 		const char *out_enc = get_commit_output_encoding();
-		const char *message = logmsg_reencode(current_head, NULL,
+		const char *message = logmsg_reencode(the_repository,
+						      current_head, NULL,
 						      out_enc);
 
 		if (!msg) {
