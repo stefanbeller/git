@@ -1551,7 +1551,7 @@ static int update_squash_messages(enum todo_command command,
 			return error(_("need a HEAD to fixup"));
 		if (!(head_commit = lookup_commit_reference(the_repository, &head)))
 			return error(_("could not read HEAD"));
-		if (!(head_message = get_commit_buffer(head_commit, NULL)))
+		if (!(head_message = get_commit_buffer(the_repository, head_commit, NULL)))
 			return error(_("could not read HEAD's commit message"));
 
 		find_commit_subject(head_message, &body);
@@ -1572,7 +1572,7 @@ static int update_squash_messages(enum todo_command command,
 		unuse_commit_buffer(head_commit, head_message);
 	}
 
-	if (!(message = get_commit_buffer(commit, NULL)))
+	if (!(message = get_commit_buffer(the_repository, commit, NULL)))
 		return error(_("could not read commit message of %s"),
 			     oid_to_hex(&commit->object.oid));
 	find_commit_subject(message, &body);
@@ -2345,7 +2345,8 @@ static int walk_revs_populate_todo(struct todo_list *todo_list,
 
 	while ((commit = get_revision(opts->revs))) {
 		struct todo_item *item = append_new_todo(todo_list);
-		const char *commit_buffer = get_commit_buffer(commit, NULL);
+		const char *commit_buffer = get_commit_buffer(the_repository,
+							      commit, NULL);
 		const char *subject;
 		int subject_len;
 
@@ -2613,7 +2614,8 @@ static int make_patch(struct commit *commit, struct replay_opts *opts)
 
 	strbuf_addf(&buf, "%s/message", get_dir(opts));
 	if (!file_exists(buf.buf)) {
-		const char *commit_buffer = get_commit_buffer(commit, NULL);
+		const char *commit_buffer = get_commit_buffer(the_repository,
+							      commit, NULL);
 		find_commit_subject(commit_buffer, &subject);
 		res |= write_message(subject, strlen(subject), buf.buf, 1);
 		unuse_commit_buffer(commit, commit_buffer);
@@ -3000,7 +3002,7 @@ static int do_merge(struct commit *commit, const char *arg, int arg_len,
 	}
 
 	if (commit) {
-		const char *message = get_commit_buffer(commit, NULL);
+		const char *message = get_commit_buffer(the_repository, commit, NULL);
 		const char *body;
 		int len;
 
@@ -3656,7 +3658,7 @@ static int commit_staged_changes(struct replay_opts *opts,
 				const char *path = rebase_path_squash_msg();
 
 				if (parse_head(&commit) ||
-				    !(p = get_commit_buffer(commit, NULL)) ||
+				    !(p = get_commit_buffer(the_repository, commit, NULL)) ||
 				    write_message(p, strlen(p), path, 0)) {
 					unuse_commit_buffer(commit, p);
 					return error(_("could not write file: "
@@ -4692,7 +4694,8 @@ int rearrange_squash(void)
 		*commit_todo_item_at(&commit_todo, item->commit) = item;
 
 		parse_commit(the_repository, item->commit);
-		commit_buffer = get_commit_buffer(item->commit, NULL);
+		commit_buffer = get_commit_buffer(the_repository,
+						  item->commit, NULL);
 		find_commit_subject(commit_buffer, &subject);
 		format_subject(&buf, subject, " ");
 		subject = subjects[i] = strbuf_detach(&buf, &subject_len);

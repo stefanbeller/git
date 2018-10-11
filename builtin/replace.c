@@ -447,7 +447,7 @@ static int create_graft(int argc, const char **argv, int force, int gentle)
 	if (!commit)
 		return error(_("could not parse %s"), old_ref);
 
-	buffer = get_commit_buffer(commit, &size);
+	buffer = get_commit_buffer(the_repository, commit, &size);
 	strbuf_add(&buf, buffer, size);
 	unuse_commit_buffer(commit, buffer);
 
