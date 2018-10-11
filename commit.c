@@ -477,9 +477,11 @@ int parse_commit_internal(struct repository *r, struct commit *item,
 	return ret;
 }
 
-int parse_commit_gently_the_repository(struct commit *item, int quiet_on_missing)
+int parse_commit_gently_the_repository(struct repository *r,
+				       struct commit *item,
+				       int quiet_on_missing)
 {
-	return parse_commit_internal(the_repository, item, quiet_on_missing, 1);
+	return parse_commit_internal(r, item, quiet_on_missing, 1);
 }
 
 void parse_commit_or_die(struct commit *item)
