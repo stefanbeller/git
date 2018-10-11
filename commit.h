@@ -83,10 +83,9 @@ int parse_commit_internal(struct repository *r, struct commit *item,
 			  int quiet_on_missing, int use_commit_graph);
 int parse_commit_gently(struct repository *r, struct commit *item, int quiet_on_missing);
 
-#define parse_commit(r, i) parse_commit_##r(i)
-static inline int parse_commit_the_repository(struct commit *item)
+static inline int parse_commit(struct repository *r, struct commit *item)
 {
-	return parse_commit_gently(the_repository, item, 0);
+	return parse_commit_gently(r, item, 0);
 }
 void parse_commit_or_die(struct commit *item);
 
