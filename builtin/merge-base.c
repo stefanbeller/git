@@ -8,6 +8,7 @@
 #include "parse-options.h"
 #include "repository.h"
 #include "commit-reach.h"
+#define NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 
 static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 {
@@ -37,27 +38,28 @@ static const char * const merge_base_usage[] = {
 	NULL
 };
 
-static struct commit *get_commit_reference(const char *arg)
+static struct commit *get_commit_reference(struct repository *r,
+					   const char *arg)
 {
 	struct object_id revkey;
-	struct commit *r;
+	struct commit *ref;
 
 	if (get_oid(arg, &revkey))
 		die("Not a valid object name %s", arg);
-	r = lookup_commit_reference(the_repository, &revkey);
-	if (!r)
+	ref = lookup_commit_reference(r, &revkey);
+	if (!ref)
 		die("Not a valid commit name %s", arg);
 
-	return r;
+	return ref;
 }
 
-static int handle_independent(int count, const char **args)
+static int handle_independent(struct repository *r, int count, const char **args)
 {
 	struct commit_list *revs = NULL, *rev;
 	int i;
 
 	for (i = count - 1; i >= 0; i--)
-		commit_list_insert(get_commit_reference(args[i]), &revs);
+		commit_list_insert(get_commit_reference(r, args[i]), &revs);
 
 	reduce_heads_replace(&revs);
 
@@ -71,14 +73,16 @@ static int handle_independent(int count, const char **args)
 	return 0;
 }
 
-static int handle_octopus(int count, const char **args, int show_all)
+static int handle_octopus(struct repository *r,
+			  int count, const char **args,
+			  int show_all)
 {
 	struct commit_list *revs = NULL;
 	struct commit_list *result, *rev;
 	int i;
 
 	for (i = count - 1; i >= 0; i--)
-		commit_list_insert(get_commit_reference(args[i]), &revs);
+		commit_list_insert(get_commit_reference(r, args[i]), &revs);
 
 	result = get_octopus_merge_bases(revs);
 	free_commit_list(revs);
@@ -97,15 +101,15 @@ static int handle_octopus(int count, const char **args, int show_all)
 	return 0;
 }
 
-static int handle_is_ancestor(int argc, const char **argv)
+static int handle_is_ancestor(struct repository *r, int argc, const char **argv)
 {
 	struct commit *one, *two;
 
 	if (argc != 2)
 		die("--is-ancestor takes exactly two commits");
-	one = get_commit_reference(argv[0]);
-	two = get_commit_reference(argv[1]);
-	if (in_merge_bases(one, two))
+	one = get_commit_reference(r, argv[0]);
+	two = get_commit_reference(r, argv[1]);
+	if (repo_in_merge_bases(r, one, two))
 		return 0;
 	else
 		return 1;
@@ -116,19 +120,22 @@ struct rev_collect {
 	int nr;
 	int alloc;
 	unsigned int initial : 1;
+	struct repository *repo;
 };
 
-static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
+static void add_one_commit(struct repository *r,
+			   struct object_id *oid,
+			   struct rev_collect *revs)
 {
 	struct commit *commit;
 
 	if (is_null_oid(oid))
 		return;
 
-	commit = lookup_commit(the_repository, oid);
+	commit = lookup_commit(r, oid);
 	if (!commit ||
 	    (commit->object.flags & TMP_MARK) ||
-	    parse_commit(commit))
+	    repo_parse_commit(r, commit))
 		return;
 
 	ALLOC_GROW(revs->commit, revs->nr + 1, revs->alloc);
@@ -144,13 +151,13 @@ static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid
 
 	if (revs->initial) {
 		revs->initial = 0;
-		add_one_commit(ooid, revs);
+		add_one_commit(revs->repo, ooid, revs);
 	}
-	add_one_commit(noid, revs);
+	add_one_commit(revs->repo, noid, revs);
 	return 0;
 }
 
-static int handle_fork_point(int argc, const char **argv)
+static int handle_fork_point(struct repository *r, int argc, const char **argv)
 {
 	struct object_id oid;
 	char *refname;
@@ -173,13 +180,14 @@ static int handle_fork_point(int argc, const char **argv)
 	if (get_oid(commitname, &oid))
 		die("Not a valid object name: '%s'", commitname);
 
-	derived = lookup_commit_reference(the_repository, &oid);
+	derived = lookup_commit_reference(r, &oid);
 	memset(&revs, 0, sizeof(revs));
 	revs.initial = 1;
+	revs.repo = r;
 	for_each_reflog_ent(refname, collect_one_reflog_ent, &revs);
 
 	if (!revs.nr && !get_oid(refname, &oid))
-		add_one_commit(&oid, &revs);
+		add_one_commit(r, &oid, &revs);
 
 	for (i = 0; i < revs.nr; i++)
 		revs.commit[i]->object.flags &= ~TMP_MARK;
@@ -217,6 +225,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	int rev_nr = 0;
 	int show_all = 0;
 	int cmdmode = 0;
+	struct repository *r = get_the_repository();
 
 	struct option options[] = {
 		OPT_BOOL('a', "all", &show_all, N_("output all common ancestors")),
@@ -239,22 +248,22 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 			usage_with_options(merge_base_usage, options);
 		if (show_all)
 			die("--is-ancestor cannot be used with --all");
-		return handle_is_ancestor(argc, argv);
+		return handle_is_ancestor(r, argc, argv);
 	}
 
 	if (cmdmode == 'r' && show_all)
 		die("--independent cannot be used with --all");
 
 	if (cmdmode == 'o')
-		return handle_octopus(argc, argv, show_all);
+		return handle_octopus(r, argc, argv, show_all);
 
 	if (cmdmode == 'r')
-		return handle_independent(argc, argv);
+		return handle_independent(r, argc, argv);
 
 	if (cmdmode == 'f') {
 		if (argc < 1 || 2 < argc)
 			usage_with_options(merge_base_usage, options);
-		return handle_fork_point(argc, argv);
+		return handle_fork_point(r, argc, argv);
 	}
 
 	if (argc < 2)
@@ -262,6 +271,6 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 
 	ALLOC_ARRAY(rev, argc);
 	while (argc-- > 0)
-		rev[rev_nr++] = get_commit_reference(*argv++);
+		rev[rev_nr++] = get_commit_reference(r, *argv++);
 	return show_merge_base(rev, rev_nr, show_all);
 }
