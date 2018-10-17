@@ -1318,7 +1318,7 @@ struct object_context {
 	GET_OID_TREE | GET_OID_TREEISH | \
 	GET_OID_BLOB)
 
-extern int get_oid(const char *str, struct object_id *oid);
+int repo_get_oid(const char *str, struct object_id *oid);
 extern int get_oid_commit(const char *str, struct object_id *oid);
 extern int get_oid_committish(const char *str, struct object_id *oid);
 extern int get_oid_tree(const char *str, struct object_id *oid);
@@ -1326,6 +1326,9 @@ extern int get_oid_treeish(const char *str, struct object_id *oid);
 extern int get_oid_blob(const char *str, struct object_id *oid);
 extern void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
 extern int get_oid_with_context(const char *str, unsigned flags, struct object_id *oid, struct object_context *oc);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define get_oid(str, oid) repo_get_oid(the_repository, str, oid)
+#endif
 
 
 typedef int each_abbrev_fn(const struct object_id *oid, void *);
