@@ -114,12 +114,23 @@ void repo_set_gitdir(struct repository *repo, const char *root,
 		     const struct set_gitdir_args *extra_args);
 void repo_set_worktree(struct repository *repo, const char *path);
 void repo_set_hash_algo(struct repository *repo, int algo);
-void initialize_the_repository(void);
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
 int repo_submodule_init(struct repository *submodule,
 			struct repository *superproject,
 			const char *path);
 void repo_clear(struct repository *repo);
+
+/*
+ * Initializes the repository 'the_repository', which is used in the transition
+ * phase of moving globals into the repository struct.
+ */
+void initialize_the_repository(void);
+
+/*
+ * To be called once; after the call use only returned repository, and do not
+ * use the_repository any more
+ */
+struct repository *get_the_repository(void);
 
 /*
  * Populates the repository's index from its index_file, an index struct will

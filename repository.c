@@ -20,6 +20,16 @@ void initialize_the_repository(void)
 	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
 
+struct repository *get_the_repository(void)
+{
+	struct repository *r = the_repository;
+
+	if (getenv("GIT_NO_THE_REPOSITORY"))
+		the_repository = NULL;
+
+	return r;
+}
+
 static void expand_base_dir(char **out, const char *in,
 			    const char *base_dir, const char *def_in)
 {
