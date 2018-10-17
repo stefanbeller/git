@@ -1,3 +1,4 @@
+#define NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
@@ -8,7 +9,6 @@
 #include "parse-options.h"
 #include "repository.h"
 #include "commit-reach.h"
-#define NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 
 static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 {
@@ -225,7 +225,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	int rev_nr = 0;
 	int show_all = 0;
 	int cmdmode = 0;
-	struct repository *r = get_the_repository();
+	struct repository *r;
 
 	struct option options[] = {
 		OPT_BOOL('a', "all", &show_all, N_("output all common ancestors")),
@@ -242,6 +242,12 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, merge_base_usage, 0);
+
+	/*
+	 * TODO: once the config machinery can cope without proper setup of
+	 * the_repository, move this call up
+	 */
+	r = get_the_repository();
 
 	if (cmdmode == 'a') {
 		if (argc < 2)
