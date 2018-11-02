@@ -291,7 +291,7 @@ static int parse_color_moved(const char *arg)
 		return error(_("color moved setting must be one of 'no', 'default', 'blocks', 'zebra', 'dimmed-zebra', 'plain'"));
 }
 
-static int parse_color_moved_ws(const char *arg)
+static unsigned parse_color_moved_ws(const char *arg)
 {
 	int ret = 0;
 	struct string_list l = STRING_LIST_INIT_DUP;
@@ -312,15 +312,19 @@ static int parse_color_moved_ws(const char *arg)
 			ret |= XDF_IGNORE_WHITESPACE;
 		else if (!strcmp(sb.buf, "allow-indentation-change"))
 			ret |= COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE;
-		else
+		else {
+			ret |= COLOR_MOVED_WS_ERROR;
 			error(_("ignoring unknown color-moved-ws mode '%s'"), sb.buf);
+		}
 
 		strbuf_release(&sb);
 	}
 
 	if ((ret & COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) &&
-	    (ret & XDF_WHITESPACE_FLAGS))
-		die(_("color-moved-ws: allow-indentation-change cannot be combined with other white space modes"));
+	    (ret & XDF_WHITESPACE_FLAGS)) {
+		error(_("color-moved-ws: allow-indentation-change cannot be combined with other white space modes"));
+		ret |= COLOR_MOVED_WS_ERROR;
+	}
 
 	string_list_clear(&l, 0);
 
@@ -341,8 +345,8 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "diff.colormovedws")) {
-		int cm = parse_color_moved_ws(value);
-		if (cm < 0)
+		unsigned cm = parse_color_moved_ws(value);
+		if (cm & COLOR_MOVED_WS_ERROR)
 			return -1;
 		diff_color_moved_ws_default = cm;
 		return 0;
@@ -5035,7 +5039,10 @@ int diff_opt_parse(struct diff_options *options,
 			die("bad --color-moved argument: %s", arg);
 		options->color_moved = cm;
 	} else if (skip_prefix(arg, "--color-moved-ws=", &arg)) {
-		options->color_moved_ws_handling = parse_color_moved_ws(arg);
+		unsigned cm = parse_color_moved_ws(arg);
+		if (cm & COLOR_MOVED_WS_ERROR)
+			die("bad --color-moved-ws argument: %s", arg);
+		options->color_moved_ws_handling = cm;
 	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
