@@ -314,7 +314,7 @@ static unsigned parse_color_moved_ws(const char *arg)
 			ret |= COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE;
 		else {
 			ret |= COLOR_MOVED_WS_ERROR;
-			error(_("ignoring unknown color-moved-ws mode '%s'"), sb.buf);
+			error(_("unknown color-moved-ws mode '%s'"), sb.buf);
 		}
 
 		strbuf_release(&sb);
@@ -5036,12 +5036,12 @@ int diff_opt_parse(struct diff_options *options,
 	else if (skip_prefix(arg, "--color-moved=", &arg)) {
 		int cm = parse_color_moved(arg);
 		if (cm < 0)
-			die("bad --color-moved argument: %s", arg);
+			return error("bad --color-moved argument: %s", arg);
 		options->color_moved = cm;
 	} else if (skip_prefix(arg, "--color-moved-ws=", &arg)) {
 		unsigned cm = parse_color_moved_ws(arg);
 		if (cm & COLOR_MOVED_WS_ERROR)
-			die("bad --color-moved-ws argument: %s", arg);
+			return -1;
 		options->color_moved_ws_handling = cm;
 	} else if (skip_to_optional_arg_default(arg, "--color-words", &options->word_regex, NULL)) {
 		options->use_color = 1;
