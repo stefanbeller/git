@@ -23,7 +23,36 @@ There are two types of semantic patches:
  * Using semantic transformations in large scale refactorings throughout
    the code base.
 
-   These changes are expected to have a lot of textual and semantic conflicts
+   When applying the semantic patch into a real patch, sending it to the
+   mailing list in the usual way, such a patch would be expected to have a
+   lot of textual and semantic conflicts as such large scale refactorings
+   change function signatures that are used widely in the code base.
+   A textual conflict would arise if surrounding code near any call of such
+   function changes. A semantic conflict arises when other patch series in
+   flight introduce calls to such functions.
+
+   So to aid these large scale refactorings, semantic patches can be used,
+   using the process as follows:
+
+   1) Figure out what kind of large scale refactoring we need
+      -> This is usually done by another unrelated series.
+   2) Create the sematic patch needed for the large scale refactoring
+      and store it in contrib/coccinelle/*.pending.cocci
+      -> The suffix containing 'pending' is important to differentiate
+      this case from the other use case of checking for bad patterns.
+   3) Apply the semantic patch only partially, where needed for the patch series
+      that motivates the large scale refactoring and then build that series
+      on top of it.
+      By applying the semantic patch only partially where needed, the series
+      is less likely to conflict with other series in flight.
+   4) Send the series as usual.
+
+   Later steps (not necessarily by the original author) are to apply the
+   semantic patch
+
+
+
+
 
 
 
