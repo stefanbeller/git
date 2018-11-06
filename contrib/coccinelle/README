@@ -1,2 +1,33 @@
 This directory provides examples of Coccinelle (http://coccinelle.lip6.fr/)
 semantic patches that might be useful to developers.
+
+There are two types of semantic patches:
+
+ * Using the semantic transformation to check for bad patterns in the code;
+   This is what the original target 'make coccicheck' is designed to do and
+   it is expected that any resulting patch indicates a regression.
+   The patches resulting from 'make coccicheck' are small and infrequent,
+   so once they are found, they can be sent to the mailing list as per usual.
+
+   Example for introducing new patterns:
+   67947c34ae (convert "hashcmp() != 0" to "!hasheq()", 2018-08-28)
+   b84c783882 (fsck: s/++i > 1/i++/, 2018-10-24)
+
+   Example of fixes using this approach:
+   248f66ed8e (run-command: use strbuf_addstr() for adding a string to a strbuf, 2018-03-25)
+   f919ffebed (Use MOVE_ARRAY, 2018-01-22)
+
+   Behavior of these
+   0860a7641b (travis-ci: fail if Coccinelle static analysis found something to transform, 2018-07-23)
+
+ * Using semantic transformations in large scale refactorings throughout
+   the code base.
+
+   These changes are expected to have a lot of textual and semantic conflicts
+
+
+
+
+
+
+
