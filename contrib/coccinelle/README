@@ -45,10 +45,15 @@ There are two types of semantic patches:
       on top of it.
       By applying the semantic patch only partially where needed, the series
       is less likely to conflict with other series in flight.
+      To make it possible to apply the semantic patch partially, there needs
+      to be mechanism for backwards compatibility to keep those places working
+      where the semantic patch is not applied. This can be done via a
+      #define
+
    4) Send the series as usual.
 
    Later steps (not necessarily by the original author) are to apply the
-   semantic patch
+   semantic patch in a way
 
 
 
